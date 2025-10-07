@@ -586,6 +586,79 @@ export default { name: 'Test' }
     </div>
   </section>
 
+  <!-- What We Do -->
+  <section id="what-we-do" class="bg-[#eef2f7] py-12 sm:py-16 md:py-20">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <h2 class="text-center text-3xl sm:text-4xl md:text-6xl font-black text-neutral-900 mb-8 sm:mb-12 md:mb-14">
+        What We Do
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 md:gap-8">
+        <!-- Strategy -->
+        <article class="md:col-span-6 bg-white rounded-2xl md:rounded-[32px] p-5 sm:p-6 md:p-8 shadow-sm">
+          <div class="flex items-start gap-4 md:gap-6">
+            <div class="w-14 h-14 md:w-20 md:h-20 rounded-2xl flex items-center justify-center text-4xl md:text-5xl select-none">
+              🎯
+            </div>
+            <div>
+              <h3 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-neutral-900">Strategy</h3>
+              <p class="mt-2 sm:mt-3 text-[15px] sm:text-base text-neutral-600 leading-relaxed">
+                We will help create a business plan, develop a product development strategy,
+                and turn goals into reality.
+              </p>
+            </div>
+          </div>
+        </article>
+
+        <!-- Growth -->
+        <article class="md:col-span-6 bg-white rounded-2xl md:rounded-[32px] p-5 sm:p-6 md:p-8 shadow-sm">
+          <div class="flex items-start gap-4 md:gap-6">
+            <div class="w-14 h-14 md:w-20 md:h-20 rounded-2xl flex items-center justify-center text-4xl md:text-5xl select-none">
+              🚀
+            </div>
+            <div>
+              <h3 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-neutral-900">Growth</h3>
+              <p class="mt-2 sm:mt-3 text-[15px] sm:text-base text-neutral-600 leading-relaxed">
+                We will conduct research and analysis of your digital product, update your web
+                resources, and adjust the marketing strategy to enhance the efficiency of your
+                business.
+              </p>
+            </div>
+          </div>
+        </article>
+
+        <!-- Development (wide) -->
+        <article class="md:col-span-8 bg-white rounded-2xl md:rounded-[32px] p-5 sm:p-6 md:p-8 shadow-sm">
+          <div class="flex items-start gap-4 md:gap-6">
+            <div class="w-14 h-14 md:w-20 md:h-20 rounded-2xl flex items-center justify-center text-4xl md:text-5xl select-none">
+              ⚙️
+            </div>
+            <div>
+              <h3 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-neutral-900">Development</h3>
+              <p class="mt-2 sm:mt-3 text-[15px] sm:text-base text-neutral-600 leading-relaxed">
+                We will create compelling websites or efficient web applications, assist in
+                automating business processes, and integrate with other information systems to
+                enhance overall functionality.
+              </p>
+            </div>
+          </div>
+        </article>
+
+        <!-- CTA card -->
+        <aside class="md:col-span-4 bg-[#1f5bd8] text-white rounded-2xl md:rounded-[32px] p-6 sm:p-8 shadow-sm flex items-center">
+          <p class="text-base sm:text-lg md:text-xl font-medium">
+            We offer a complete range of turnkey digital solutions for your business
+          </p>
+        </aside>
+      </div>
+
+      <div class="mt-8 sm:mt-10 flex justify-center">
+        <a href="#" class="inline-flex items-center gap-2 px-6 py-3 md:px-8 md:py-4 rounded-full bg-neutral-900 text-white text-base md:text-lg font-semibold shadow-sm hover:bg-neutral-800 transition-colors">
+          Learn More
+        </a>
+      </div>
+    </div>
+  </section>
+
   <section id="stats-section" class="bg-white text-neutral-900 py-16">
     <div class="max-w-5xl mx-auto px-6">
       <h2 class="text-sm tracking-widest font-semibold text-neutral-500 mb-8">КЛЮЧЕВЫЕ ЦИФРЫ</h2>
