@@ -73,8 +73,25 @@ const techs: Tech[] = [
     description: 'Проектирование схем, индексы и оптимизация запросов.',
   },
 ]
-const activeTechKey = ref<string>(techs[0].key)
+const activeTechKey = ref<string>(techs[0]?.key ?? 'git')
 const activeTech = computed(() => techs.find((t) => t.key === activeTechKey.value)!)
+
+// Form data for CTA section
+const formData = ref({
+  name: '',
+  phone: '',
+  email: '',
+  privacyAccepted: false
+})
+
+const submitForm = () => {
+  if (!formData.value.privacyAccepted) {
+    alert('Please accept the Privacy Policy to continue.')
+    return
+  }
+  // Handle form submission here
+  console.log('Form submitted:', formData.value)
+}
 
 onMounted(() => {
   // HERO Slides logic
@@ -100,12 +117,14 @@ onMounted(() => {
       index = wrapIndex(index)
       const tl = gsap.timeline({
         defaults: { duration: 1, ease: 'expo.inOut' },
-        onComplete: () => (animating = false),
+        onComplete: () => {
+          animating = false
+        },
       })
 
-      const currentSection = sections[currentIndex]
+      const currentSection = sections[currentIndex]!
       const heading = currentSection.querySelector('.slide__heading') as HTMLElement
-      const nextSection = sections[index]
+      const nextSection = sections[index]!
       const nextHeading = nextSection.querySelector('.slide__heading') as HTMLElement
 
       gsap.set([sections as unknown as HTMLElement[], images as unknown as HTMLElement[]], {
@@ -116,8 +135,8 @@ onMounted(() => {
       gsap.set([sections[index], images[currentIndex] as HTMLElement], { zIndex: 2, autoAlpha: 1 })
 
       tl.set(count, { textContent: String(index + 1) }, 0.32)
-        .fromTo(outerWrappers[index], { xPercent: 100 * direction }, { xPercent: 0 }, 0)
-        .fromTo(innerWrappers[index], { xPercent: -100 * direction }, { xPercent: 0 }, 0)
+        .fromTo(outerWrappers[index]!, { xPercent: 100 * direction }, { xPercent: 0 }, 0)
+        .fromTo(innerWrappers[index]!, { xPercent: -100 * direction }, { xPercent: 0 }, 0)
         .to(heading, { xPercent: 30 * direction }, 0)
         .fromTo(nextHeading, { xPercent: -30 * direction }, { xPercent: 0 }, 0)
         .fromTo(
@@ -198,8 +217,8 @@ onMounted(() => {
       },
     })
     for (let i = 1; i < total; i++) {
-      const prev = panels[i - 1]
-      const next = panels[i]
+      const prev = panels[i - 1]!
+      const next = panels[i]!
       tl.to(prev, { yPercent: -100 }, 'step' + i)
         .fromTo(next, { yPercent: 100 }, { yPercent: 0 }, 'step' + i)
         .fromTo(
@@ -288,7 +307,7 @@ onMounted(() => {
 </script>
 
 <script lang="ts">
-export default { name: 'Test' }
+export default { name: 'TestSection' }
 </script>
 
 <template>
@@ -778,6 +797,83 @@ export default { name: 'Test' }
             </div>
           </footer>
         </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- основа -->
+  <section class="bg-gray-100 py-16 md:py-24 relative overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="relative bg-blue-600 rounded-4xl md:rounded-4xl p-6 md:p-12 lg:p-16">
+        <!-- содержимое-->
+        <div class="max-w-3xl">
+          <h2 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4">
+            Become our new partner
+          </h2>
+          <p class="text-lg sm:text-xl md:text-2xl text-white/90 mb-8 md:mb-12 max-w-2xl">
+            Leave a request for cooperation right now and get project price today
+          </p>
+
+          <!-- форма -->
+          <form @submit.prevent="submitForm" class="space-y-4 md:space-y-6">
+            <!-- кнопки и сенд(ужаснамучался сорян) -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
+              <div>
+                <input
+                  v-model="formData.name"
+                  type="text"
+                  placeholder="Your name"
+                  required
+                  class="w-full px-4 py-3 md:py-4 rounded-full border-2 border-white/30 bg-transparent text-white placeholder-white/70 focus:border-white focus:outline-none transition-colors"
+                />
+              </div>
+              <div>
+                <input
+                  v-model="formData.phone"
+                  type="tel"
+                  placeholder="Phone"
+                  required
+                  class="w-full px-4 py-3 md:py-4 rounded-full border-2 border-white/30 bg-transparent text-white placeholder-white/70 focus:border-white focus:outline-none transition-colors"
+                />
+              </div>
+              <div>
+                <input
+                  v-model="formData.email"
+                  type="email"
+                  placeholder="E-mail"
+                  required
+                  class="w-full px-4 py-3 md:py-4 rounded-full border-2 border-white/30 bg-transparent text-white placeholder-white/70 focus:border-white focus:outline-none transition-colors"
+                />
+              </div>
+              <div>
+                  <button
+                    type="submit"
+                    class="w-123 px-4 py-3 md:py-4  bg-white text-blue-600 rounded-full font-semibold text-lg hover:bg-gray-100 transition-colors focus:outline-none"
+                  >
+                    Send
+                  </button>
+              </div>
+            </div>
+
+            <!-- приваси полис -->
+            <div class="mt-6">
+              <div class="flex items-start gap-3">
+                <label class="flex items-start gap-3 cursor-pointer">
+                  <input
+                    v-model="formData.privacyAccepted"
+                    type="checkbox"
+                    required
+                    class="mt-1 w-5 h-5 rounded border-2 border-white/30 bg-transparent text-blue-600 focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-blue-600"
+                  />
+                  <span class="text-white/90 text-sm md:text-base leading-relaxed">
+                    By clicking Send button you accept the
+                    <span class="font-semibold underline">Privacy Policy</span>
+                  </span>
+                </label>
+              </div>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </section>
