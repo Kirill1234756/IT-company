@@ -1,4 +1,58 @@
 @import "tailwindcss";
 
+body {
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
 /* Optional: app-wide base styles can go below */
 
+/* Tailwind v4 theme tokens */
+@theme {
+  --color-bg: #030F0F;
+  /* dark background */
+  --color-accent: #00DF82;
+  /* green accent */
+  --color-border: #03624C;
+  /* deep teal border */
+  --color-purple: #7D53FF;
+  /* purple accent for effects */
+}
+
+/* Convenience CSS vars for inline usage (e.g., JS/GSAP) */
+:root {
+  --color-bg: #030F0F;
+  --color-accent: #00DF82;
+  --color-border: #03624C;
+  --color-purple: #7D53FF;
+}
+
+/* Hide scrollbar but keep scrolling */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, Opera */
+}
+
+/* Line clamp utilities */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

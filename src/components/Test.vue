@@ -73,7 +73,7 @@ const techs: Tech[] = [
     description: 'Проектирование схем, индексы и оптимизация запросов.',
   },
 ]
-const activeTechKey = ref<string>(techs[0].key)
+const activeTechKey = ref<string>(techs[0]?.key || 'frontend')
 const activeTech = computed(() => techs.find((t) => t.key === activeTechKey.value)!)
 
 onMounted(() => {
@@ -100,13 +100,15 @@ onMounted(() => {
       index = wrapIndex(index)
       const tl = gsap.timeline({
         defaults: { duration: 1, ease: 'expo.inOut' },
-        onComplete: () => (animating = false),
+        onComplete: () => {
+          animating = false
+        },
       })
 
       const currentSection = sections[currentIndex]
-      const heading = currentSection.querySelector('.slide__heading') as HTMLElement
+      const heading = currentSection?.querySelector('.slide__heading') as HTMLElement
       const nextSection = sections[index]
-      const nextHeading = nextSection.querySelector('.slide__heading') as HTMLElement
+      const nextHeading = nextSection?.querySelector('.slide__heading') as HTMLElement
 
       gsap.set([sections as unknown as HTMLElement[], images as unknown as HTMLElement[]], {
         zIndex: 0,
@@ -115,17 +117,27 @@ onMounted(() => {
       gsap.set([sections[currentIndex], images[index] as HTMLElement], { zIndex: 1, autoAlpha: 1 })
       gsap.set([sections[index], images[currentIndex] as HTMLElement], { zIndex: 2, autoAlpha: 1 })
 
-      tl.set(count, { textContent: String(index + 1) }, 0.32)
-        .fromTo(outerWrappers[index], { xPercent: 100 * direction }, { xPercent: 0 }, 0)
-        .fromTo(innerWrappers[index], { xPercent: -100 * direction }, { xPercent: 0 }, 0)
-        .to(heading, { xPercent: 30 * direction }, 0)
-        .fromTo(nextHeading, { xPercent: -30 * direction }, { xPercent: 0 }, 0)
-        .fromTo(
-          images[index] as HTMLElement,
-          { xPercent: 125 * direction, scaleX: 1.5, scaleY: 1.3 },
-          { xPercent: 0, scaleX: 1, scaleY: 1, duration: 1 },
+      if (outerWrappers[index] && innerWrappers[index]) {
+        tl.set(count, { textContent: String(index + 1) }, 0.32)
+          .fromTo(outerWrappers[index]!, { xPercent: 100 * direction }, { xPercent: 0 }, 0)
+          .fromTo(innerWrappers[index]!, { xPercent: -100 * direction }, { xPercent: 0 }, 0)
+      }
+
+      if (heading && nextHeading) {
+        tl.to(heading, { xPercent: 30 * direction }, 0).fromTo(
+          nextHeading,
+          { xPercent: -30 * direction },
+          { xPercent: 0 },
           0
         )
+      }
+
+      tl.fromTo(
+        images[index] as HTMLElement,
+        { xPercent: 125 * direction, scaleX: 1.5, scaleY: 1.3 },
+        { xPercent: 0, scaleX: 1, scaleY: 1, duration: 1 },
+        0
+      )
         .fromTo(
           images[currentIndex] as HTMLElement,
           { xPercent: 0, scaleX: 1, scaleY: 1 },
@@ -200,14 +212,16 @@ onMounted(() => {
     for (let i = 1; i < total; i++) {
       const prev = panels[i - 1]
       const next = panels[i]
-      tl.to(prev, { yPercent: -100 }, 'step' + i)
-        .fromTo(next, { yPercent: 100 }, { yPercent: 0 }, 'step' + i)
-        .fromTo(
-          next.querySelectorAll('.panel-title, .panel-text'),
-          { y: 40, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.8, stagger: 0.08 },
-          'step' + i + '+=0.2'
-        )
+      if (prev && next) {
+        tl.to(prev, { yPercent: -100 }, 'step' + i)
+          .fromTo(next, { yPercent: 100 }, { yPercent: 0 }, 'step' + i)
+          .fromTo(
+            next.querySelectorAll('.panel-title, .panel-text'),
+            { y: 40, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.8, stagger: 0.08 },
+            'step' + i + '+=0.2'
+          )
+      }
     }
     document.querySelectorAll('#dotnav .dot')?.forEach((dot) => {
       dot.addEventListener('click', () => {
