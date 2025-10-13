@@ -27,11 +27,43 @@ const router = createRouter({
       }
     },
     {
+      path: '/services/growth',
+      name: 'services-growth',
+      component: ServicesPage,
+      meta: {
+        title: 'Услуги роста'
+      }
+    },
+    {
+      path: '/services/strategy',
+      name: 'services-strategy',
+      component: ServicesPage,
+      meta: {
+        title: 'Стратегические услуги'
+      }
+    },
+    {
+      path: '/services/development',
+      name: 'services-development',
+      component: ServicesPage,
+      meta: {
+        title: 'Услуги разработки'
+      }
+    },
+    {
       path: '/services/:id',
       name: 'service-detail',
       component: () => import('@/pages/ServiceDetailPage.vue'),
       meta: {
         title: 'Детали услуги'
+      }
+    },
+    {
+      path: '/blog',
+      name: 'blog',
+      component: () => import('../sections/BlogSection.vue'),
+      meta: {
+        title: 'Блог'
       }
     }
   ],

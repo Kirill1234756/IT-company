@@ -6,7 +6,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 const WhatWeDoCard = defineAsyncComponent(() => import('../components/WhatWeDoCard.vue'))
 const WhatWeDoCta = defineAsyncComponent(() => import('../components/WhatWeDoCta.vue'))
 const PortfolioCard = defineAsyncComponent(() => import('../components/PortfolioCard.vue'))
-const PortfolioModal = defineAsyncComponent(() => import('../components/PortfolioModal.vue'))
+const PortfolioModal = defineAsyncComponent(() => import('../modal/PortfolioModal.vue'))
 const AdvantageCard = defineAsyncComponent(() => import('../components/AdvantageCard.vue'))
 
 gsap.registerPlugin(ScrollTrigger)
@@ -18,18 +18,23 @@ const router = useRouter()
 const handleCardClick = (cardTitle: string) => {
   switch (cardTitle) {
     case 'Стратегия':
-      router.push('/services')
+      router.push('/services/strategy')
       break
     case 'Рост':
-      router.push('/growth')
+      router.push('/services/growth')
       break
     case 'Разработка':
-      router.push('/services')
+      router.push('/services/development')
       break
     default:
       router.push('/services')
   }
 }
+
+// Handle service card click (kept for potential future use)
+// const handleServiceClick = (service: any) => {
+//   router.push(`/services/${service.id}`)
+// }
 
 // Portfolio data
 const filters = [
@@ -183,6 +188,64 @@ const advantages: Advantage[] = [
       'Небольшая команда адаптируется под процессы заказчика и оперативно принимает решения.',
   },
 ]
+// Services data for "What We Do" section (kept for potential future use)
+// const servicesData = {
+//   strategy: [
+//     {
+//       id: 1,
+//       title: 'Business Strategy Development',
+//       description: 'Comprehensive business strategy development including market analysis, competitive positioning, and growth planning.',
+//       priceFrom: '€800',
+//       icon: '🎯',
+//       iconBg: 'from-red-50 to-rose-100'
+//     },
+//     {
+//       id: 2,
+//       title: 'Digital Transformation',
+//       description: 'Complete digital transformation strategy including technology assessment and process optimization.',
+//       priceFrom: '€1200',
+//       icon: '🚀',
+//       iconBg: 'from-cyan-50 to-sky-100'
+//     }
+//   ],
+//   growth: [
+//     {
+//       id: 3,
+//       title: 'Promoting',
+//       description: "Essential element of any company's development in digital, allowing to attract customers for any product or service.",
+//       priceFrom: '€400',
+//       icon: '✅',
+//       iconBg: 'from-green-50 to-emerald-100'
+//     },
+//     {
+//       id: 4,
+//       title: 'Marketing Strategy',
+//       description: 'Developing a business development path in the market and increasing its competitiveness.',
+//       priceFrom: '€500',
+//       icon: '📣',
+//       iconBg: 'from-blue-50 to-indigo-100'
+//     }
+//   ],
+//   development: [
+//     {
+//       id: 5,
+//       title: 'Web Development',
+//       description: 'Custom web application development using modern technologies for scalable and performant solutions.',
+//       priceFrom: '€600',
+//       icon: '💻',
+//       iconBg: 'from-indigo-50 to-blue-100'
+//     },
+//     {
+//       id: 6,
+//       title: 'Mobile App Development',
+//       description: 'Native and cross-platform mobile application development for iOS and Android.',
+//       priceFrom: '€800',
+//       icon: '📱',
+//       iconBg: 'from-pink-50 to-rose-100'
+//     }
+//   ]
+// }
+
 // What We Do cards data (RU)
 const whatWeDoCards = [
   {

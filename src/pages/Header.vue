@@ -281,12 +281,12 @@ onMounted(() => {
 
     <!-- Right Navigation -->
     <div ref="navRightRef" class="hidden md:flex gap-3">
-      <a
-        href="#blog"
+    <router-link
+        to="/blog"
         class="rounded-2xl py-1 px-3 text-accent border border-border hover:bg-border hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
       >
         Blog
-      </a>
+    </router-link>
       <a
         href="#careers"
         class="rounded-2xl py-1 px-3 text-accent border border-border hover:bg-border hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
