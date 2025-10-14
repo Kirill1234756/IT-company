@@ -21,8 +21,8 @@ const leftNav = [
 ]
 const rightNav = [
   { to: '/blog', label: 'Blog', type: 'route' as const },
-  { to: '/cases', label: 'Cases', type: 'anchor' as const },
-  { to: '/client-form', label: 'Стать клиентом', type: 'anchor' as const },
+  { to: '/cases', label: 'Cases', type: 'route' as const },
+  { to: '/client-form', label: 'Стать клиентом', type: 'route' as const },
 ]
 
 // Refs for animations

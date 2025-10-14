@@ -69,14 +69,6 @@ const router = createRouter({
       }
     },
     {
-      path: '/services/:id',
-      name: 'service-detail',
-      component: () => import('@/pages/ServiceDetailPage.vue'),
-      meta: {
-        title: 'Детали услуги'
-      }
-    },
-    {
       path: '/blog',
       name: 'blog',
       component: () => import('../sections/BlogSection.vue'),

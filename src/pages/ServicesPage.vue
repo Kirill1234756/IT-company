@@ -1,34 +1,82 @@
 <script setup lang="ts">
-import { ref, onMounted, defineAsyncComponent } from 'vue'
+import { ref, onMounted, defineAsyncComponent, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import type { ServiceCardProps } from '../components/ServiceCard.vue'
 import { cn } from '../utils/cn'
-import { useServicesStore } from '../stores/services'
 
 const Breadcrumbs = defineAsyncComponent(() => import('../components/ui/Breadcrumbs.vue'))
 const ServiceCard = defineAsyncComponent(() => import('../components/ServiceCard.vue'))
 
 const router = useRouter()
 
-// Use services store instead of local data
-const servicesStore = useServicesStore()
-
-// Local UI state (keeping search in component)
-const searchQuery = ref('')
-
-// Filter functions using store
-const filterServices = (category: string) => {
-  servicesStore.setActiveFilter(category as 'Growth' | 'Strategy' | 'Development' | 'All')
+// Local state + lazy data
+type ServiceCategory = 'Growth' | 'Strategy' | 'Development' | 'All'
+type Service = {
+  id: number
+  title: string
+  description: string
+  priceFrom: string
+  icon: string
+  iconBg: string
+  category?: string
 }
 
-// Search functionality
+const growthServices = ref<Service[]>([])
+const strategyServices = ref<Service[]>([])
+const developmentServices = ref<Service[]>([])
+
+const activeFilter = ref<ServiceCategory>('All')
+const isLoading = ref(false)
+const isLoaded = ref(false)
+const searchQuery = ref('')
+
+const allServices = computed(() => [
+  ...growthServices.value,
+  ...strategyServices.value,
+  ...developmentServices.value,
+])
+
+const availableCategories = computed(() => [
+  { key: 'All', label: 'Все услуги', count: allServices.value.length },
+  { key: 'Growth', label: 'Рост', count: growthServices.value.length },
+  { key: 'Strategy', label: 'Стратегия', count: strategyServices.value.length },
+  { key: 'Development', label: 'Разработка', count: developmentServices.value.length },
+])
+
+const priceStats = computed(() => {
+  const prices = allServices.value.map((s) => {
+    const n = parseInt(s.priceFrom.replace('€', ''))
+    return isNaN(n) ? 0 : n
+  })
+  return {
+    min: prices.length ? Math.min(...prices) : 0,
+    max: prices.length ? Math.max(...prices) : 0,
+    average: prices.length ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length) : 0,
+  }
+})
+
+const filteredServices = computed(() => {
+  let list = allServices.value
+  if (activeFilter.value !== 'All') list = list.filter((s) => s.category === activeFilter.value)
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase()
+    list = list.filter(
+      (s) => s.title.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)
+    )
+  }
+  return list
+})
+
+const filterServices = (category: string) => {
+  activeFilter.value = category as ServiceCategory
+}
+
 const handleSearch = () => {
-  servicesStore.setSearchQuery(searchQuery.value)
+  // reactive via searchQuery; no-op
 }
 
 const clearSearch = () => {
   searchQuery.value = ''
-  servicesStore.setSearchQuery('')
 }
 
 // Handle service click
@@ -42,10 +90,20 @@ const goHome = () => {
   router.push('/')
 }
 
-// Initialize filter based on route and load services
-onMounted(() => {
-  // Load services from store
-  servicesStore.fetchServices()
+// Initialize filter based on route and lazy-load data
+onMounted(async () => {
+  if (!isLoaded.value && !isLoading.value) {
+    try {
+      isLoading.value = true
+      const dataModule = await import('../stores/services.data')
+      growthServices.value = dataModule.growthServices
+      strategyServices.value = dataModule.strategyServices
+      developmentServices.value = dataModule.developmentServices
+      isLoaded.value = true
+    } finally {
+      isLoading.value = false
+    }
+  }
 
   // Set filter based on route
   const route = router.currentRoute.value
@@ -145,13 +203,13 @@ onMounted(() => {
       <!-- Filter Buttons -->
       <div class="flex flex-wrap gap-4 mb-12">
         <button
-          v-for="category in servicesStore.availableCategories"
+          v-for="category in availableCategories"
           :key="category.key"
           @click="filterServices(category.key)"
           :class="
             cn(
               'px-6 py-3 rounded-full font-semibold transition-all duration-300',
-              servicesStore.activeFilter === category.key
+              activeFilter === category.key
                 ? 'bg-[#2455ff] text-white shadow-lg'
                 : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-[#2455ff] hover:shadow-md'
             )
@@ -165,13 +223,13 @@ onMounted(() => {
       <div class="mb-8 bg-blue-50 rounded-lg p-4">
         <div class="flex items-center justify-between text-sm text-blue-700">
           <span>Диапазон цен:</span>
-          <span>€{{ servicesStore.priceStats.min }} - €{{ servicesStore.priceStats.max }}</span>
-          <span>Средняя цена: €{{ servicesStore.priceStats.average }}</span>
+          <span>€{{ priceStats.min }} - €{{ priceStats.max }}</span>
+          <span>Средняя цена: €{{ priceStats.average }}</span>
         </div>
       </div>
 
       <!-- Loading State -->
-      <div v-if="servicesStore.isLoading" class="text-center py-12">
+      <div v-if="isLoading" class="text-center py-12">
         <div
           class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
         ></div>
@@ -179,9 +237,9 @@ onMounted(() => {
       </div>
 
       <!-- Services List -->
-      <div v-else-if="servicesStore.filteredServices.length > 0" class="space-y-10">
+      <div v-else-if="filteredServices.length > 0" class="space-y-10">
         <ServiceCard
-          v-for="service in servicesStore.filteredServices"
+          v-for="service in filteredServices"
           :key="service.id"
           :id="service.id"
           :title="service.title"
@@ -212,7 +270,12 @@ onMounted(() => {
         <h3 class="mt-4 text-lg font-medium text-gray-900">Услуги не найдены</h3>
         <p class="mt-2 text-gray-600">Попробуйте изменить фильтры или поисковый запрос</p>
         <button
-          @click="servicesStore.clearFilters()"
+          @click="
+            () => {
+              activeFilter = 'All'
+              searchQuery = ''
+            }
+          "
           class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           Сбросить фильтры

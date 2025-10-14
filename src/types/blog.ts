@@ -20,3 +20,4 @@ export interface BlogPost {
 export type RelatedPost = Pick<BlogPost, 'id' | 'image' | 'title' | 'date' | 'readTime' | 'category'>
 
 
+
