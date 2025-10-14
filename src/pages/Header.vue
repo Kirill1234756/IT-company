@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
-import { gsap } from 'gsap'
+import { ref, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
+import { useRoute } from 'vue-router'
 
 defineOptions({ name: 'AppHeader' })
 
+// menu state
 const isMobileMenuOpen = ref(false)
 const toggleMobileMenu = () => {
   isMobileMenuOpen.value = !isMobileMenuOpen.value
@@ -12,7 +13,19 @@ const closeMobileMenu = () => {
   isMobileMenuOpen.value = false
 }
 
-// Refs for GSAP animations
+// navigation model
+const leftNav = [
+  { to: '/services', label: 'Services', type: 'route' as const },
+  { href: '#projects', label: 'Projects', type: 'anchor' as const },
+  { href: '#about', label: 'About', type: 'anchor' as const },
+]
+const rightNav = [
+  { to: '/blog', label: 'Blog', type: 'route' as const },
+  { to: '/cases', label: 'Cases', type: 'anchor' as const },
+  { to: '/client-form', label: 'Стать клиентом', type: 'anchor' as const },
+]
+
+// Refs for animations
 const headerRef = ref<HTMLElement>()
 const navLeftRef = ref<HTMLElement>()
 const navRightRef = ref<HTMLElement>()
@@ -23,55 +36,60 @@ const brandCodeRef = ref<HTMLElement>()
 const brandUnderlineRef = ref<HTMLElement>()
 const mobileMenuRef = ref<HTMLElement>()
 
-// GSAP timeline for code animation
-let codeTimeline: gsap.core.Timeline | null = null
+// gsap references (loaded dynamically)
+let gsapRef: any = null
+let codeTimeline: any = null
 
 const initCodeAnimation = () => {
+  if (!gsapRef) return
   const codeElements = Array.from(brandCodeRef.value?.querySelectorAll('[data-code]') ?? [])
-  if (codeElements.length) {
-    gsap.set(codeElements, {
-      transformPerspective: 800,
-      transformStyle: 'preserve-3d',
-      backfaceVisibility: 'hidden',
-      willChange: 'transform, color',
-      force3D: true,
-    })
+  if (!codeElements.length) return
 
-    codeTimeline = gsap.timeline({ paused: true })
-    codeTimeline
-      .to(codeElements, {
-        rotateY: 360,
-        color: '#7D53FF',
-        duration: 1.1,
-        ease: 'power2.out',
-        stagger: { each: 0.06, from: 'center' },
-      })
-      .to(
-        codeElements,
-        {
-          rotateY: 0,
-          color: 'currentColor',
-          duration: 0.6,
-          ease: 'power2.inOut',
-          stagger: { each: 0.04, from: 'end' },
-        },
-        '>-0.05'
-      )
-  }
+  gsapRef.set(codeElements, {
+    transformPerspective: 800,
+    transformStyle: 'preserve-3d',
+    backfaceVisibility: 'hidden',
+    willChange: 'transform, color',
+    force3D: true,
+  })
+
+  codeTimeline = gsapRef.timeline({ paused: true })
+  codeTimeline
+    .to(codeElements, {
+      rotateY: 360,
+      color: '#7D53FF',
+      duration: 1.1,
+      ease: 'power2.out',
+      stagger: { each: 0.06, from: 'center' },
+    })
+    .to(
+      codeElements,
+      {
+        rotateY: 0,
+        color: 'currentColor',
+        duration: 0.6,
+        ease: 'power2.inOut',
+        stagger: { each: 0.04, from: 'end' },
+      },
+      '>-0.05'
+    )
 }
 
 const playCodeAnimation = () => {
   if (!codeTimeline) initCodeAnimation()
   codeTimeline?.restart()
 }
+const reverseCodeAnimation = () => codeTimeline?.reverse()
 
-const reverseCodeAnimation = () => {
-  codeTimeline?.reverse()
-}
+// active-route helper
+const route = useRoute()
+const isActive = (to?: string) => computed(() => (to ? route.path.startsWith(to) : false))
 
-onMounted(() => {
+onMounted(async () => {
+  const { gsap } = await import('gsap')
+  gsapRef = gsap
+
   nextTick(() => {
-    // Setup code animation event listeners
     if (brandLogoRef.value) {
       brandLogoRef.value.addEventListener('pointerenter', playCodeAnimation, { passive: true })
       brandLogoRef.value.addEventListener('pointerleave', reverseCodeAnimation, { passive: true })
@@ -79,15 +97,13 @@ onMounted(() => {
 
     if (!codeTimeline) initCodeAnimation()
 
-    // Main header animation timeline
     const navLeftLinks = Array.from(navLeftRef.value?.querySelectorAll('a') ?? [])
     const navRightLinks = Array.from(navRightRef.value?.querySelectorAll('a') ?? [])
     const allNavLinks = [...navLeftLinks, ...navRightLinks]
 
     const brandChars = Array.from(brandCharsRef.value?.querySelectorAll('[data-ch]') ?? [])
-    const codeElements = Array.from(brandCodeRef.value?.querySelectorAll('[data-code]') ?? [])
 
-    const timeline = gsap.timeline({ defaults: { ease: 'power3.out' } })
+    const timeline = gsapRef.timeline({ defaults: { ease: 'power3.out' } })
 
     if (brandFirstRef.value) {
       timeline.from(brandFirstRef.value, {
@@ -108,7 +124,7 @@ onMounted(() => {
 
         switch (animationType) {
           case 0:
-            gsap.from(char, {
+            gsapRef.from(char, {
               opacity: 0,
               y: 22,
               rotateX: -70,
@@ -118,27 +134,13 @@ onMounted(() => {
             })
             break
           case 1:
-            gsap.from(char, {
-              opacity: 0,
-              x: -18,
-              rotate: -12,
-              skewY: 8,
-              duration,
-              delay,
-            })
+            gsapRef.from(char, { opacity: 0, x: -18, rotate: -12, skewY: 8, duration, delay })
             break
           case 2:
-            gsap.from(char, {
-              opacity: 0,
-              y: -20,
-              scale: 0.6,
-              rotate: 10,
-              duration,
-              delay,
-            })
+            gsapRef.from(char, { opacity: 0, y: -20, scale: 0.6, rotate: 10, duration, delay })
             break
           default:
-            gsap.from(char, {
+            gsapRef.from(char, {
               opacity: 0,
               x: 20,
               rotateY: -90,
@@ -153,71 +155,29 @@ onMounted(() => {
     if (brandUnderlineRef.value) {
       timeline.from(
         brandUnderlineRef.value,
-        {
-          scaleX: 0,
-          opacity: 0,
-          transformOrigin: '0% 50%',
-          duration: 0.6,
-        },
+        { scaleX: 0, opacity: 0, transformOrigin: '0% 50%', duration: 0.6 },
         '-=0.15'
       )
-    }
-
-    if (brandFirstRef.value) {
-      timeline.to(
-        brandFirstRef.value,
-        {
-          textShadow: '0 0 12px rgba(16,185,129,0.7)',
-          duration: 0.25,
-          yoyo: true,
-          repeat: 1,
-        },
-        '-=0.1'
-      )
-    }
-
-    timeline.from(
-      allNavLinks,
-      {
-        y: 14,
-        opacity: 0,
-        duration: 0.5,
-        stagger: 0.12,
-      },
-      '-=0.2'
-    )
-
-    if (mobileMenuRef.value) {
-      timeline.from(
-        mobileMenuRef.value,
-        {
-          opacity: 0,
-          scale: 0.9,
-          duration: 0.4,
-        },
-        '-=0.3'
-      )
-    }
-
-    // Animated background for underline
-    if (brandUnderlineRef.value) {
-      gsap.fromTo(
+      gsapRef.fromTo(
         brandUnderlineRef.value,
         { backgroundPositionX: '0%' },
-        {
-          backgroundPositionX: '200%',
-          duration: 4,
-          repeat: -1,
-          ease: 'none',
-        }
+        { backgroundPositionX: '200%', duration: 4, repeat: -1, ease: 'none' }
       )
     }
 
-    // Initialize code animation
-    if (codeElements.length) {
-      initCodeAnimation()
+    timeline.from(allNavLinks, { y: 14, opacity: 0, duration: 0.5, stagger: 0.12 }, '-=0.2')
+
+    if (mobileMenuRef.value) {
+      timeline.from(mobileMenuRef.value, { opacity: 0, scale: 0.9, duration: 0.4 }, '-=0.3')
     }
   })
+
+  // accessibility: close on Escape
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') closeMobileMenu()
+  }
+  window.addEventListener('keydown', onKey)
+  onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 })
 </script>
 
@@ -228,24 +188,23 @@ onMounted(() => {
   >
     <!-- Left Navigation -->
     <div ref="navLeftRef" class="hidden md:flex gap-3">
-      <router-link
-        to="/services"
-        class="rounded-2xl py-1 px-3 text-accent border border-border hover:bg-border hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
-      >
-        Services
-      </router-link>
-      <a
-        href="#projects"
-        class="rounded-2xl py-1 px-3 text-accent border border-border hover:bg-border hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
-      >
-        Projects
-      </a>
-      <a
-        href="#about"
-        class="rounded-2xl py-1 px-3 text-accent border border-border hover:bg-border hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
-      >
-        About
-      </a>
+      <template v-for="item in leftNav" :key="item.label">
+        <router-link
+          v-if="item.type === 'route'"
+          :to="item.to!"
+          class="rounded-2xl py-1 px-3 text-accent border border-border hover:bg-border hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
+          :aria-current="isActive(item.to).value ? 'page' : undefined"
+        >
+          {{ item.label }}
+        </router-link>
+        <a
+          v-else
+          :href="item.href"
+          class="rounded-2xl py-1 px-3 text-accent border border-border hover:bg-border hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
+        >
+          {{ item.label }}
+        </a>
+      </template>
     </div>
 
     <!-- Center Logo -->
@@ -281,24 +240,23 @@ onMounted(() => {
 
     <!-- Right Navigation -->
     <div ref="navRightRef" class="hidden md:flex gap-3">
-    <router-link
-        to="/blog"
-        class="rounded-2xl py-1 px-3 text-accent border border-border hover:bg-border hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
-      >
-        Blog
-    </router-link>
-      <a
-        href="#careers"
-        class="rounded-2xl py-1 px-3 text-accent border border-border hover:bg-border hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
-      >
-        Careers
-      </a>
-      <a
-        href="#contact"
-        class="rounded-2xl py-1 px-3 text-accent border border-border hover:bg-border hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
-      >
-        Contact
-      </a>
+      <template v-for="item in rightNav" :key="item.label">
+        <router-link
+          v-if="item.type === 'route'"
+          :to="item.to!"
+          class="rounded-2xl py-1 px-3 text-accent border border-border hover:bg-border hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
+          :aria-current="isActive(item.to).value ? 'page' : undefined"
+        >
+          {{ item.label }}
+        </router-link>
+        <a
+          v-else
+          :href="item.href"
+          class="rounded-2xl py-1 px-3 text-accent border border-border hover:bg-border hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
+        >
+          {{ item.label }}
+        </a>
+      </template>
     </div>
 
     <!-- Mobile Menu Button -->
@@ -333,62 +291,42 @@ onMounted(() => {
   </nav>
 
   <!-- Mobile Menu -->
-  <div
-    v-if="isMobileMenuOpen"
-    ref="mobileMenuRef"
-    id="mobile-menu"
-    class="md:hidden absolute top-[64px] left-0 w-full px-4"
-    role="dialog"
-    aria-modal="true"
-  >
-    <div class="bg-bg/95 backdrop-blur rounded-2xl border border-border/30 p-4">
-      <nav class="flex flex-col space-y-3">
-        <router-link
-          to="/services"
-          @click="closeMobileMenu"
-          class="rounded-2xl py-2 px-4 text-accent border border-border hover:bg-border hover:text-white transition-colors duration-300"
-          active-class="bg-border text-white"
-        >
-          Services
-        </router-link>
-        <a
-          href="#projects"
-          @click="closeMobileMenu"
-          class="rounded-2xl py-2 px-4 text-accent border border-border hover:bg-border hover:text-white transition-colors duration-300"
-        >
-          Projects
-        </a>
-        <a
-          href="#about"
-          @click="closeMobileMenu"
-          class="rounded-2xl py-2 px-4 text-accent border border-border hover:bg-border hover:text-white transition-colors duration-300"
-        >
-          About
-        </a>
-        <a
-          href="#blog"
-          @click="closeMobileMenu"
-          class="rounded-2xl py-2 px-4 text-accent border border-border hover:bg-border hover:text-white transition-colors duration-300"
-        >
-          Blog
-        </a>
-        <a
-          href="#careers"
-          @click="closeMobileMenu"
-          class="rounded-2xl py-2 px-4 text-accent border border-border hover:bg-border hover:text-white transition-colors duration-300"
-        >
-          Careers
-        </a>
-        <a
-          href="#contact"
-          @click="closeMobileMenu"
-          class="rounded-2xl py-2 px-4 text-accent border border-border hover:bg-border hover:text-white transition-colors duration-300"
-        >
-          Contact
-        </a>
-      </nav>
-    </div>
-  </div>
+  <Teleport to="body">
+    <Transition name="mobile-menu">
+      <div
+        v-if="isMobileMenuOpen"
+        ref="mobileMenuRef"
+        id="mobile-menu"
+        class="md:hidden absolute top-[64px] left-0 w-full px-4"
+        role="dialog"
+        aria-modal="true"
+      >
+        <div class="bg-bg/95 backdrop-blur rounded-2xl border border-border/30 p-4">
+          <nav class="flex flex-col space-y-3">
+            <template v-for="item in [...leftNav, ...rightNav]" :key="item.label">
+              <router-link
+                v-if="item.type === 'route'"
+                :to="item.to!"
+                @click="closeMobileMenu"
+                class="rounded-2xl py-2 px-4 text-accent border border-border hover:bg-border hover:text-white transition-colors duration-300"
+                active-class="bg-border text-white"
+              >
+                {{ item.label }}
+              </router-link>
+              <a
+                v-else
+                :href="item.href"
+                @click="closeMobileMenu"
+                class="rounded-2xl py-2 px-4 text-accent border border-border hover:bg-border hover:text-white transition-colors duration-300"
+              >
+                {{ item.label }}
+              </a>
+            </template>
+          </nav>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <style scoped>

@@ -1,25 +1,10 @@
 <script setup lang="ts">
 import { ref, defineAsyncComponent } from 'vue'
+import type { BlogPost } from '@/types/blog'
 
 const BlogCard = defineAsyncComponent(() => import('../components/BlogCard.vue'))
-const BlogDetail = defineAsyncComponent(() => import('../components/BlogDetail.vue'))
-
-interface BlogPost {
-  id: number
-  image: string
-  title: string
-  date: string
-  readTime: string
-  category: string
-  fullTitle?: string
-  summary?: string
-  content?: Array<{
-    heading: string
-    text: string
-  }>
-  views?: number
-  author?: string
-}
+const BlogModal = defineAsyncComponent(() => import('@/modal/BlogModal.vue'))
+const Breadcrumbs = defineAsyncComponent(() => import('@/components/ui/Breadcrumbs.vue'))
 
 const activeTab = ref('all')
 const selectedPost = ref<BlogPost | null>(null)
@@ -195,13 +180,9 @@ const getRelatedPosts = (currentPost: BlogPost) => {
 
 <template>
   <section class="py-16 bg-gray-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto px-[8rem] sm:px-6 lg:px-8">
       <!-- Breadcrumbs -->
-      <div class="text-sm text-gray-500 mb-2">
-        <span class="cursor-pointer hover:text-gray-700">Дом</span>
-        <span class="mx-1">/</span>
-        <span class="cursor-default">Блог</span>
-      </div>
+      <Breadcrumbs :items="[{ label: 'Дом', to: '/' }, { label: 'Блог' }]" />
 
       <!-- Main Title -->
       <h2 class="text-5xl md:text-6xl font-extrabold text-gray-900 mb-10">Блог</h2>
@@ -235,7 +216,7 @@ const getRelatedPosts = (currentPost: BlogPost) => {
     </div>
 
     <!-- Blog Detail Modal -->
-    <BlogDetail
+    <BlogModal
       v-if="selectedPost"
       :post="selectedPost"
       :relatedPosts="getRelatedPosts(selectedPost)"

@@ -1,33 +1,8 @@
 <script setup lang="ts">
 import { defineProps, defineEmits, defineAsyncComponent } from 'vue'
+import type { BlogPost, RelatedPost } from '@/types/blog'
 
-const BlogCard = defineAsyncComponent(() => import('./BlogCard.vue'))
-
-interface BlogPost {
-  id: number
-  image: string
-  title: string
-  date: string
-  readTime: string
-  category: string
-  fullTitle?: string
-  summary?: string
-  content?: Array<{
-    heading: string
-    text: string
-  }>
-  views?: number
-  author?: string
-}
-
-interface RelatedPost {
-  id: number
-  image: string
-  title: string
-  date: string
-  readTime: string
-  category: string
-}
+const BlogCard = defineAsyncComponent(() => import('../components/BlogCard.vue'))
 
 const props = defineProps<{
   post: BlogPost
@@ -49,7 +24,7 @@ const handleRelatedClick = (post: RelatedPost) => {
     <div class="min-h-screen bg-white">
       <!-- Close Button -->
       <div class="sticky top-0 bg-white border-b border-gray-200 z-10">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="max-w-4xl mx-auto px-[8rem] sm:px-6 lg:px-8 py-4">
           <button
             @click="$emit('close')"
             class="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
@@ -89,7 +64,7 @@ const handleRelatedClick = (post: RelatedPost) => {
             <!-- Main Image -->
             <div class="lg:w-2/3">
               <img
-                :src="post.image"
+                v-lazy="post.image"
                 :alt="post.title"
                 class="w-full h-64 lg:h-80 object-cover rounded-2xl"
               />

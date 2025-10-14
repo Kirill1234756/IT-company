@@ -1,14 +1,6 @@
 <script setup lang="ts">
 import { defineProps, defineEmits } from 'vue'
-
-interface BlogPost {
-  id: number
-  image: string
-  title: string
-  date: string
-  readTime: string
-  category: string
-}
+import type { BlogPost } from '@/types/blog'
 
 const props = defineProps<{
   post: BlogPost
@@ -31,7 +23,7 @@ const handleClick = () => {
     <!-- Image with overlay avatar -->
     <div class="relative h-48 w-full overflow-hidden rounded-t-3xl">
       <img
-        :src="post.image"
+        v-lazy="post.image"
         :alt="post.title"
         class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
       />
@@ -75,3 +67,4 @@ const handleClick = () => {
   overflow: hidden;
 }
 </style>
+

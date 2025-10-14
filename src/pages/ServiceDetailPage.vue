@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-
-gsap.registerPlugin(ScrollTrigger)
+let gsapRef: any = null
+let scrollTriggerRef: any = null
+const Breadcrumbs = defineAsyncComponent(() => import('@/components/ui/Breadcrumbs.vue'))
 
 const route = useRoute()
 const router = useRouter()
@@ -121,7 +120,12 @@ const goBack = () => {
   router.push('/services')
 }
 
-onMounted(() => {
+onMounted(async () => {
+  const { gsap } = await import('gsap')
+  const { ScrollTrigger } = await import('gsap/ScrollTrigger')
+  gsap.registerPlugin(ScrollTrigger)
+  gsapRef = gsap
+  scrollTriggerRef = ScrollTrigger
   if (!currentService.value) {
     router.push('/services')
     return
@@ -184,6 +188,7 @@ onMounted(() => {
   >
     <!-- Header -->
     <div class="page-header container mx-auto px-4 py-16">
+      <Breadcrumbs />
       <button
         @click="goBack"
         class="mb-8 flex items-center gap-2 text-[var(--color-accent)] hover:text-white transition-colors"

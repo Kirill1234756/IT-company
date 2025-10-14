@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import ServicesPage from '@/pages/ServicesPage.vue'
-import GrowComponent from '@/components/services/GrowComponent.vue'
+const ServicesPage = () => import('@/pages/ServicesPage.vue')
+const GrowComponent = () => import('@/components/services/GrowComponent.vue')
+
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -8,7 +9,8 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => import('@/pages/HomePage.vue')
+      component: () => import('@/pages/HomePage.vue'),
+      meta: { title: 'Главная' }
     },
     {
       path: '/growth',
@@ -32,6 +34,22 @@ const router = createRouter({
       component: ServicesPage,
       meta: {
         title: 'Услуги роста'
+      }
+    },
+    {
+      path: '/cases',
+      name: 'cases',
+      component: () => import('@/pages/CasesPage.vue'),
+      meta: {
+        title: 'cases'
+      }
+    },
+    {
+      path: '/client-form',
+      name: 'client-form',
+      component: () => import('@/pages/ClientFormPage.vue'),
+      meta: {
+        title: 'client-form'
       }
     },
     {
@@ -64,6 +82,14 @@ const router = createRouter({
       component: () => import('../sections/BlogSection.vue'),
       meta: {
         title: 'Блог'
+      }
+    },
+    {
+      path: '/become-client',
+      name: 'become-client',
+      component: () => import('@/pages/ClientFormPage.vue'),
+      meta: {
+        title: 'Стать клиентом'
       }
     }
   ],
