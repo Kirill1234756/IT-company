@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ref, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
 import { useRoute } from 'vue-router'
 
@@ -16,7 +17,7 @@ const closeMobileMenu = () => {
 // navigation model
 const leftNav = [
   { to: '/services', label: 'Services', type: 'route' as const },
-  { href: '#projects', label: 'Projects', type: 'anchor' as const },
+  { href: '#projects', label: 'Контакты', type: 'anchor' as const },
   { href: '#about', label: 'About', type: 'anchor' as const },
 ]
 const rightNav = [
@@ -26,7 +27,7 @@ const rightNav = [
 ]
 
 // Refs for animations
-const headerRef = ref<HTMLElement>()
+// removed unused headerRef
 const navLeftRef = ref<HTMLElement>()
 const navRightRef = ref<HTMLElement>()
 const brandLogoRef = ref<HTMLElement>()
@@ -84,8 +85,15 @@ const reverseCodeAnimation = () => codeTimeline?.reverse()
 // active-route helper
 const route = useRoute()
 const isActive = (to?: string) => computed(() => (to ? route.path.startsWith(to) : false))
+const getRouteTo = (item: { to?: string }) => (item.to ? item.to : '/')
 
 onMounted(async () => {
+  // Defer GSAP to next frame/idle to avoid early layout shifts impacting CLS
+  await new Promise((r) => requestAnimationFrame(() => r(null)))
+  if ('requestIdleCallback' in window) {
+    await new Promise<void>((resolve) => (window as any).requestIdleCallback(() => resolve()))
+  }
+
   const { gsap } = await import('gsap')
   gsapRef = gsap
 
@@ -191,7 +199,7 @@ onMounted(async () => {
       <template v-for="item in leftNav" :key="item.label">
         <router-link
           v-if="item.type === 'route'"
-          :to="item.to!"
+          :to="getRouteTo(item)"
           class="rounded-2xl py-1 px-3 text-accent border border-border hover:bg-border hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
           :aria-current="isActive(item.to).value ? 'page' : undefined"
         >
@@ -239,11 +247,11 @@ onMounted(async () => {
     </div>
 
     <!-- Right Navigation -->
-    <div ref="navRightRef" class="hidden md:flex gap-3">
+    <div ref="navRightRef" class="hidden md:flex gap-3" v-route-prefetch>
       <template v-for="item in rightNav" :key="item.label">
         <router-link
           v-if="item.type === 'route'"
-          :to="item.to!"
+          :to="getRouteTo(item)"
           class="rounded-2xl py-1 px-3 text-accent border border-border hover:bg-border hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
           :aria-current="isActive(item.to).value ? 'page' : undefined"
         >
@@ -306,7 +314,7 @@ onMounted(async () => {
             <template v-for="item in [...leftNav, ...rightNav]" :key="item.label">
               <router-link
                 v-if="item.type === 'route'"
-                :to="item.to!"
+                :to="getRouteTo(item)"
                 @click="closeMobileMenu"
                 class="rounded-2xl py-2 px-4 text-accent border border-border hover:bg-border hover:text-white transition-colors duration-300"
                 active-class="bg-border text-white"

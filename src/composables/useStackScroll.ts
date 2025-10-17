@@ -32,6 +32,12 @@ export function useStackScroll(
   let scrollTriggerRef: ScrollTriggerLite | null = null
 
   onMounted(async () => {
+    // Defer heavy GSAP initialization to next frame/idle to avoid blocking LCP
+    await new Promise((r) => requestAnimationFrame(() => r(null)))
+    if ('requestIdleCallback' in window) {
+      await new Promise<void>((resolve) => (window as any).requestIdleCallback(() => resolve()))
+    }
+
     const { gsap } = await import('gsap')
     const { ScrollTrigger } = await import('gsap/ScrollTrigger')
     gsap.registerPlugin(ScrollTrigger)

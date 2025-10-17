@@ -20,7 +20,19 @@ onMounted(() => {
       ref="headerRef"
       class="fixed top-[0.7rem] left-0 w-full flex justify-center items-center z-10 px-3 md:px-12 lg:px-[8rem]"
     >
-      <Header />
+      <!-- Reserve space to avoid CLS when header fonts load -->
+      <div
+        style="
+          height: 48px;
+          width: 100%;
+          max-width: 1280px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        "
+      >
+        <Header />
+      </div>
     </header>
     <RouterView />
 
@@ -142,6 +154,17 @@ a {
 img {
   max-width: 100%;
   height: auto;
+}
+
+/* Aspect ratio helpers to reduce CLS on media containers */
+.aspect-16\/9 {
+  aspect-ratio: 16 / 9;
+}
+.aspect-4\/3 {
+  aspect-ratio: 4 / 3;
+}
+.aspect-1 {
+  aspect-ratio: 1 / 1;
 }
 
 /* Utility classes */

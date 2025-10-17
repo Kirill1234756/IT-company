@@ -293,7 +293,12 @@ export const useServicesStore = defineStore('services', {
           answer: 'SaaS solutions are designed to scale with your business. We can accommodate from a few users to thousands depending on your needs.'
         }
       ]
-    } as ServiceDetail
+    } as ServiceDetail,
+    // Cached services data (lazy-loaded on first use)
+    growthServices: [] as Array<{ id: number; title: string; description: string; priceFrom: string; icon: string; iconBg: string }>,
+    strategyServices: [] as Array<{ id: number; title: string; description: string; priceFrom: string; icon: string; iconBg: string }>,
+    developmentServices: [] as Array<{ id: number; title: string; description: string; priceFrom: string; icon: string; iconBg: string }>,
+    servicesDataLoaded: false,
   }),
 
   getters: {
@@ -336,6 +341,18 @@ export const useServicesStore = defineStore('services', {
   },
 
   actions: {
-    // Действия для работы с сервисами
+    // Lazy-load services data once and cache across navigations
+    async loadDataIfNeeded() {
+      if (this.servicesDataLoaded) return
+      const dataModule: {
+        growthServices: Array<{ id: number; title: string; description: string; priceFrom: string; icon: string; iconBg: string }>
+        strategyServices: Array<{ id: number; title: string; description: string; priceFrom: string; icon: string; iconBg: string }>
+        developmentServices: Array<{ id: number; title: string; description: string; priceFrom: string; icon: string; iconBg: string }>
+      } = await import('./services.data')
+      this.growthServices = dataModule.growthServices
+      this.strategyServices = dataModule.strategyServices
+      this.developmentServices = dataModule.developmentServices
+      this.servicesDataLoaded = true
+    },
   }
 })

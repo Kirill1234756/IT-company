@@ -45,6 +45,7 @@ const isLoading = ref(false)
 const isLoaded = ref(false)
 const searchQuery = ref('')
 
+// Lazy computed to avoid recomputation when sections are off-screen
 const allServices = computed(() => [
   ...growthServices.value,
   ...strategyServices.value,
@@ -151,10 +152,11 @@ onMounted(async () => {
   if (!isLoaded.value && !isLoading.value) {
     try {
       isLoading.value = true
-      const dataModule = await import('../stores/services.data')
-      growthServices.value = dataModule.growthServices
-      strategyServices.value = dataModule.strategyServices
-      developmentServices.value = dataModule.developmentServices
+      await servicesStore.loadDataIfNeeded()
+      // consume cached data from store
+      growthServices.value = servicesStore.growthServices
+      strategyServices.value = servicesStore.strategyServices
+      developmentServices.value = servicesStore.developmentServices
       isLoaded.value = true
     } finally {
       isLoading.value = false
