@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import type { ClientFormData, ClientFormErrors } from '../types/client-form'
 import { useClientForm } from '../composables/useClientForm'
-import FormSection from '../components/ClientFromCard.vue'
+import FormSection from '../components/client-form/FormSection.vue'
 
 const router = useRouter()
 
@@ -173,7 +173,7 @@ const updateFormField = (field: keyof ClientFormData, value: string) => {
           <button
             type="submit"
             class="bg-gray-800 hover:bg-gray-900 text-white px-12 py-4 rounded-xl text-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            :disabled="!!isSubmitting"
+            :disabled="isSubmitting"
           >
             <span v-if="isSubmitting">Отправка...</span>
             <span v-else>Отправить ответы</span>

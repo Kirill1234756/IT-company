@@ -1,11 +1,21 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
-import { defineAsyncComponent } from 'vue'
+import { defineAsyncComponent, onMounted } from 'vue'
+import Loader from './components/Loader.vue'
+import { usePageLoader } from './composables/usePageLoader'
 const Header = defineAsyncComponent(() => import('./pages/Header.vue'))
+
+const { isLoading, progress, isRouteChange, initLoader, initRouterLoader } = usePageLoader()
+
+onMounted(() => {
+  initLoader()
+  initRouterLoader()
+})
 </script>
 
 <template>
   <main id="app">
+    <Loader v-if="isLoading" :progress="progress" :is-route-change="isRouteChange" />
     <header
       ref="headerRef"
       class="fixed top-[0.7rem] left-0 w-full flex justify-center items-center z-10 px-3 md:px-12 lg:px-[8rem]"
@@ -58,7 +68,6 @@ body {
   background-color: var(--color-bg);
   color: white;
   overflow-x: hidden;
-  overflow-y: auto;
 }
 
 #app {

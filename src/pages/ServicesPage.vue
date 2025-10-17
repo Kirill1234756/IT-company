@@ -1,16 +1,31 @@
 <script setup lang="ts">
-import { ref, onMounted, defineAsyncComponent, computed } from 'vue'
+import { ref, shallowRef, onMounted, defineAsyncComponent, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import type { ServiceCardProps } from '../components/ServiceCard.vue'
 import { cn } from '../utils/cn'
+import { useServicesStore } from '../stores/services'
+import type { ServiceCategory, ServiceItem, ServiceDetail } from '../types/services'
 
 const Breadcrumbs = defineAsyncComponent(() => import('../components/ui/Breadcrumbs.vue'))
 const ServiceCard = defineAsyncComponent(() => import('../components/ServiceCard.vue'))
+const ServiceListModal = defineAsyncComponent(
+  () => import('../components/modals/ServiceListModal.vue')
+)
+const ServiceDetailModal = defineAsyncComponent(
+  () => import('../components/modals/ServiceDetailModal.vue')
+)
 
 const router = useRouter()
+const servicesStore = useServicesStore()
+
+// Modal state
+const activeModal = ref<'list' | 'detail' | null>(null)
+const selectedCategory = ref<ServiceCategory | null>(null)
+const selectedService = ref<ServiceItem | null>(null)
+const selectedServiceDetail = shallowRef<ServiceDetail | null>(null)
 
 // Local state + lazy data
-type ServiceCategory = 'Growth' | 'Strategy' | 'Development' | 'All'
+type ServiceFilter = 'Growth' | 'Strategy' | 'Development' | 'All'
 type Service = {
   id: number
   title: string
@@ -21,11 +36,11 @@ type Service = {
   category?: string
 }
 
-const growthServices = ref<Service[]>([])
-const strategyServices = ref<Service[]>([])
-const developmentServices = ref<Service[]>([])
+const growthServices = shallowRef<Service[]>([])
+const strategyServices = shallowRef<Service[]>([])
+const developmentServices = shallowRef<Service[]>([])
 
-const activeFilter = ref<ServiceCategory>('All')
+const activeFilter = ref<ServiceFilter>('All')
 const isLoading = ref(false)
 const isLoaded = ref(false)
 const searchQuery = ref('')
@@ -45,13 +60,15 @@ const availableCategories = computed(() => [
 
 const priceStats = computed(() => {
   const prices = allServices.value.map((s) => {
-    const n = parseInt(s.priceFrom.replace('€', ''))
-    return isNaN(n) ? 0 : n
+    const n = parseInt(String(s.priceFrom).replace(/[^0-9]/g, ''))
+    return Number.isFinite(n) ? n : 0
   })
+  if (!prices.length) return { min: 0, max: 0, average: 0 }
+  const sum = prices.reduce((a, b) => a + b, 0)
   return {
-    min: prices.length ? Math.min(...prices) : 0,
-    max: prices.length ? Math.max(...prices) : 0,
-    average: prices.length ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length) : 0,
+    min: Math.min(...prices),
+    max: Math.max(...prices),
+    average: Math.round(sum / prices.length),
   }
 })
 
@@ -68,7 +85,7 @@ const filteredServices = computed(() => {
 })
 
 const filterServices = (category: string) => {
-  activeFilter.value = category as ServiceCategory
+  activeFilter.value = category as ServiceFilter
 }
 
 const handleSearch = () => {
@@ -80,9 +97,48 @@ const clearSearch = () => {
 }
 
 // Handle service click
-const handleServiceClick = (service: ServiceCardProps) => {
-  // Navigate to service detail page
-  router.push(`/services/${service.id}`)
+const handleServiceClick = (service: ServiceCardProps & { category?: ServiceCategory }) => {
+  if (service.category) {
+    // Если есть категория, открываем модальное окно со списком услуг
+    selectedCategory.value = service.category
+    activeModal.value = 'list'
+    // Обновляем URL с slug
+    router.push(`/services/${service.category.slug || service.category.id}`)
+  } else {
+    // Иначе открываем детальную информацию
+    const serviceDetail = servicesStore.getServiceDetail(service.id)
+    if (serviceDetail) {
+      selectedServiceDetail.value = serviceDetail
+      activeModal.value = 'detail'
+      // Обновляем URL для детальной информации
+      router.push(`/services/${service.id}`)
+    }
+  }
+}
+
+// Handle service item click from list modal
+const handleServiceItemClick = (service: ServiceItem) => {
+  const serviceDetail = servicesStore.getServiceDetail(service.id)
+  if (serviceDetail) {
+    selectedServiceDetail.value = serviceDetail
+    activeModal.value = 'detail'
+    // Обновляем URL для детальной информации с slug-ами
+    const categorySlug = selectedCategory.value?.slug || selectedCategory.value?.id
+    const serviceSlug = service.slug || service.id
+    if (categorySlug) {
+      router.push(`/services/${categorySlug}/${serviceSlug}`)
+    }
+  }
+}
+
+// Close modals
+const closeModal = () => {
+  activeModal.value = null
+  selectedCategory.value = null
+  selectedService.value = null
+  selectedServiceDetail.value = null
+  // Возвращаемся к основному списку услуг
+  router.push('/services')
 }
 
 // Handle back to home
@@ -105,10 +161,38 @@ onMounted(async () => {
     }
   }
 
-  // Set filter based on route
-  const route = router.currentRoute.value
-  const path = route.path
+  // Handle URL parameters for modals
+  handleRouteParams()
+})
 
+// Handle route parameters for modals
+const handleRouteParams = () => {
+  const route = router.currentRoute.value
+  const { category, service } = route.params
+
+  if (category && service) {
+    // URL: /services/:category/:service - открыть детальную информацию
+    const categoryData = servicesStore.getCategoryBySlug(category as string)
+    if (categoryData) {
+      const serviceDetail = servicesStore.getServiceDetailBySlug(service as string)
+      if (serviceDetail) {
+        selectedServiceDetail.value = serviceDetail
+        activeModal.value = 'detail'
+        return
+      }
+    }
+  } else if (category) {
+    // URL: /services/:category - открыть список услуг
+    const categoryData = servicesStore.getCategoryBySlug(category as string)
+    if (categoryData) {
+      selectedCategory.value = categoryData
+      activeModal.value = 'list'
+      return
+    }
+  }
+
+  // Set filter based on route
+  const path = route.path
   if (path.includes('/growth')) {
     filterServices('Growth')
   } else if (path.includes('/strategy')) {
@@ -118,7 +202,17 @@ onMounted(async () => {
   } else {
     filterServices('All')
   }
-})
+}
+
+// Watch for route changes
+import { watch } from 'vue'
+watch(
+  () => router.currentRoute.value,
+  () => {
+    handleRouteParams()
+  },
+  { deep: true }
+)
 </script>
 
 <template>
@@ -307,6 +401,21 @@ onMounted(async () => {
         </div>
       </section>
     </main>
+
+    <!-- Service List Modal -->
+    <ServiceListModal
+      v-if="activeModal === 'list' && selectedCategory"
+      :category="selectedCategory"
+      @close="closeModal"
+      @serviceClick="handleServiceItemClick"
+    />
+
+    <!-- Service Detail Modal -->
+    <ServiceDetailModal
+      v-if="activeModal === 'detail' && selectedServiceDetail"
+      :service="selectedServiceDetail"
+      @close="closeModal"
+    />
   </div>
 </template>
 

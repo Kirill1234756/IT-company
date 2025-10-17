@@ -1,5 +1,6 @@
 import { computed } from 'vue'
 import { useServicesStore } from '../stores/services'
+import type { ServiceCategory, ServiceDetail, ServiceItem } from '../types/services'
 
 /**
  * Composable for services-related functionality
@@ -8,72 +9,71 @@ import { useServicesStore } from '../stores/services'
 export function useServices() {
     const servicesStore = useServicesStore()
 
-    // Computed properties for common use cases
-    const featuredServices = computed(() => {
-        // Return services with lower prices as "featured"
-        return servicesStore.allServices
-            .filter(service => {
-                const price = parseInt(service.priceFrom.replace('€', ''))
-                return price <= 1000 // Services under €1000
-            })
-            .slice(0, 6) // Limit to 6 featured services
-    })
+    type FlattenedService = (ServiceItem & { category?: string }) | (ServiceDetail & { category?: string; price?: string; priceFrom?: string })
 
-    const servicesByCategory = computed(() => ({
-        growth: servicesStore.getServicesByCategory('Growth'),
-        strategy: servicesStore.getServicesByCategory('Strategy'),
-        development: servicesStore.getServicesByCategory('Development')
-    }))
-
-    const popularServices = computed(() => {
-        // Return services with specific popular IDs
-        const popularIds = [1, 7, 10] // Promoting, Business Plan, Site Development
-        return servicesStore.allServices.filter(service =>
-            popularIds.includes(service.id)
-        )
-    })
-
-    // Helper functions
-    const getServicePrice = (service: any) => {
-        return parseInt(service.priceFrom.replace('€', ''))
-    }
-
-    const formatPrice = (price: number) => {
-        return `€${price.toLocaleString()}`
-    }
-
-    const getServiceIcon = (service: any) => {
-        return service.icon || '🔧'
-    }
-
-    const getServiceCategoryColor = (category: string) => {
-        const colors = {
-            'Growth': 'text-green-600 bg-green-100',
-            'Strategy': 'text-blue-600 bg-blue-100',
-            'Development': 'text-purple-600 bg-purple-100'
+    // Memoized projections from store data
+    const allServiceItems = computed<FlattenedService[]>(() => {
+        // Flatten all category items where type === 'detail' or list items
+        const out: FlattenedService[] = []
+        for (const cat of servicesStore.categories as ServiceCategory[]) {
+            if (cat.type === 'list' && Array.isArray(cat.items)) {
+                for (const it of cat.items as ServiceItem[]) out.push({ ...it, category: cat.title })
+            } else if (cat.type === 'detail' && cat.detail) {
+                out.push({ ...(cat.detail as ServiceDetail), category: cat.title })
+            }
         }
-        return colors[category as keyof typeof colors] || 'text-gray-600 bg-gray-100'
+        return out
+    })
+
+    const featuredServices = computed<FlattenedService[]>(() => {
+        return allServiceItems.value
+            .filter((service: FlattenedService) => {
+                const s = service as { priceFrom?: string; price?: string }
+                const raw = s.priceFrom ?? s.price
+                const price = parseInt(String(raw ?? '').replace(/[^0-9]/g, ''))
+                return Number.isFinite(price) && price <= 1000
+            })
+            .slice(0, 6)
+    })
+
+    const servicesByCategory = computed<Record<string, FlattenedService[]>>(() => {
+        const map: Record<string, FlattenedService[]> = {}
+        for (const s of allServiceItems.value) {
+            const key = (s as { category?: string }).category || 'Other'
+                ; (map[key] ||= []).push(s)
+        }
+        return map
+    })
+
+    const popularServices = computed<FlattenedService[]>(() => {
+        const popularIds = new Set([1, 7, 10])
+        return allServiceItems.value.filter((s) => popularIds.has((s as ServiceItem).id))
+    })
+
+    // Helper functions (memo-friendly)
+    const getServicePrice = (service: FlattenedService) => {
+        const s = service as { priceFrom?: string; price?: string }
+        const raw = s.priceFrom ?? s.price ?? (service as ServiceDetail).metrics?.cost
+        return parseInt(String(raw ?? '').replace(/[^0-9]/g, ''))
     }
 
-    // Navigation helpers
-    const getServiceUrl = (serviceId: number) => {
-        return `/services/${serviceId}`
-    }
+    const formatPrice = (price: number) => `€${(price || 0).toLocaleString()}`
+    const getServiceIcon = (service: Partial<ServiceItem>) => (('icon' in service && service.icon) ? (service.icon as string) : '🔧')
+    const getServiceCategoryColor = (category: string) => ({
+        Growth: 'text-green-600 bg-green-100',
+        Strategy: 'text-blue-600 bg-blue-100',
+        Development: 'text-purple-600 bg-purple-100'
+    } as const)[category as 'Growth' | 'Strategy' | 'Development'] || 'text-gray-600 bg-gray-100'
 
-    const getCategoryUrl = (category: string) => {
-        return `/services?category=${category.toLowerCase()}`
-    }
+    const getServiceUrl = (serviceId: number) => `/services/${serviceId}`
+    const getCategoryUrl = (category: string) => `/services?category=${category.toLowerCase()}`
 
     return {
-        // Store access
         ...servicesStore,
-
-        // Additional computed properties
+        allServiceItems,
         featuredServices,
         servicesByCategory,
         popularServices,
-
-        // Helper functions
         getServicePrice,
         formatPrice,
         getServiceIcon,
@@ -82,3 +82,4 @@ export function useServices() {
         getCategoryUrl
     }
 }
+

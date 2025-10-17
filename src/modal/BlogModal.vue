@@ -1,20 +1,20 @@
 <script setup lang="ts">
 import { defineProps, defineEmits, defineAsyncComponent } from 'vue'
-import type { BlogPost, RelatedPost } from '@/types/blog'
+import type { BlogPost } from '@/types/blog'
 
 const BlogCard = defineAsyncComponent(() => import('../components/BlogCard.vue'))
 
 const props = defineProps<{
   post: BlogPost
-  relatedPosts: RelatedPost[]
+  relatedPosts: BlogPost[]
 }>()
 
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'relatedClick', post: RelatedPost): void
+  (e: 'relatedClick', post: BlogPost): void
 }>()
 
-const handleRelatedClick = (post: RelatedPost) => {
+const handleRelatedClick = (post: BlogPost) => {
   emit('relatedClick', post)
 }
 </script>
@@ -64,7 +64,7 @@ const handleRelatedClick = (post: RelatedPost) => {
             <!-- Main Image -->
             <div class="lg:w-2/3">
               <img
-                v-lazy="post.image"
+                :src="post.image"
                 :alt="post.title"
                 class="w-full h-64 lg:h-80 object-cover rounded-2xl"
               />

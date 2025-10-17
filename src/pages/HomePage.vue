@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, defineAsyncComponent } from 'vue'
+import { ref, computed, defineAsyncComponent } from 'vue'
 import { useRouter } from 'vue-router'
 import { useIntersectionObserver } from '@vueuse/core'
 import { defineAsyncComponent as defineAsync } from 'vue'
@@ -7,9 +7,21 @@ import { useStackScroll } from '../composables/useStackScroll'
 const WhatWeDoCard = defineAsyncComponent(() => import('../components/WhatWeDoCard.vue'))
 const WhatWeDoCta = defineAsyncComponent(() => import('../components/WhatWeDoCta.vue'))
 const AdvantageCard = defineAsyncComponent(() => import('../components/AdvantageCard.vue'))
+const BlogSection = defineAsyncComponent(() => import('../components/sections/BlogSection.vue'))
 const CasesPage = defineAsync(() => import('./CasesPage.vue'))
 
 const stackRoot = ref<HTMLElement | null>(null)
+
+// Memoized DOM queries
+const whatWeDoSectionEl = computed(
+  () => stackRoot.value?.querySelector('#what-we-do') as HTMLElement | null
+)
+const advantagesSectionEl = computed(
+  () => stackRoot.value?.querySelector('#advantages') as HTMLElement | null
+)
+const blogSectionEl = computed(() => document.querySelector('#blog-section') as HTMLElement | null)
+const contactCardEl = computed(() => document.querySelector('.contact-card') as HTMLElement | null)
+const contactFormEl = computed(() => document.querySelector('.contact-form') as HTMLElement | null)
 
 // Router
 const router = useRouter()
@@ -31,23 +43,28 @@ const handleCardClick = (cardTitle: string) => {
   }
 }
 
+// Handle blog post click
+const handleBlogPostClick = (post: { category: string; slug: string }) => {
+  router.push(`/blog/${post.category}/${post.slug}`)
+}
+
 // Handle service card click (kept for potential future use)
 // const handleServiceClick = (service: any) => {
 //   router.push(`/services/${service.id}`)
 // }
 
-// Stats data for about us section
+// Stats data for about us section (memoized)
 type StatItem = { value: number; label: string; sublabel?: string }
-const stats: StatItem[] = [
+const stats = computed<StatItem[]>(() => [
   { value: 13, label: 'лет', sublabel: 'на рынке' },
   { value: 400, label: 'проектов', sublabel: 'реализованных' },
   { value: 25, label: 'человек', sublabel: 'в команде' },
   { value: 10, label: 'ТОП', sublabel: 'по Tagline' },
-]
+])
 
-// Our Advantages data (from screenshot)
+// Our Advantages data (memoized)
 type Advantage = { title: string; description: string }
-const advantages: Advantage[] = [
+const advantages = computed<Advantage[]>(() => [
   {
     title: 'Комплексный подход',
     description:
@@ -78,7 +95,7 @@ const advantages: Advantage[] = [
     description:
       'Небольшая команда адаптируется под процессы заказчика и оперативно принимает решения.',
   },
-]
+])
 // Services data for "What We Do" section (kept for potential future use)
 // const servicesData = {
 //   strategy: [
@@ -266,8 +283,8 @@ useStackScroll(stackRoot, {
       })
     }
 
-    // Advantages animations (use explicit section id to avoid index mismatches)
-    const advantagesSection = document.getElementById('advantages') as HTMLElement | null
+    // Advantages animations (use memoized section element)
+    const advantagesSection = advantagesSectionEl.value
     if (advantagesSection) {
       const cards = advantagesSection.querySelectorAll('.adv-card')
       const button = advantagesSection.querySelector('button')
@@ -410,6 +427,66 @@ useStackScroll(stackRoot, {
         end: 'bottom 20%',
         onEnter: playCounters,
         onEnterBack: playCounters,
+      })
+    }
+
+    // Blog section animations
+    const blogSection =
+      blogSectionEl.value ||
+      (document.querySelector('.stack-section:nth-last-child(2)') as HTMLElement | null)
+    if (blogSection) {
+      const blogCards = blogSection.querySelectorAll('.bg-white')
+      const blogTabs = blogSection.querySelectorAll('button')
+
+      gsap.set(blogCards, { y: 50, opacity: 0, scale: 0.9 })
+      gsap.set(blogTabs, { y: 30, opacity: 0 })
+
+      ScrollTrigger.create({
+        trigger: blogSection,
+        start: 'top center',
+        onEnter: () => {
+          gsap.to(blogTabs, {
+            y: 0,
+            opacity: 1,
+            duration: 0.6,
+            ease: 'power2.out',
+            stagger: 0.1,
+          })
+          gsap.to(blogCards, {
+            y: 0,
+            opacity: 1,
+            scale: 1,
+            duration: 0.8,
+            ease: 'power3.out',
+            stagger: 0.2,
+            delay: 0.3,
+          })
+        },
+        onLeaveBack: () => {
+          gsap.set(blogCards, { y: 50, opacity: 0, scale: 0.9 })
+          gsap.set(blogTabs, { y: 30, opacity: 0 })
+        },
+      })
+
+      // Add hover animations for blog cards
+      blogCards.forEach((card) => {
+        card.addEventListener('mouseenter', () => {
+          gsap.to(card, {
+            scale: 1.05,
+            y: -10,
+            duration: 0.3,
+            ease: 'power2.out',
+          })
+        })
+
+        card.addEventListener('mouseleave', () => {
+          gsap.to(card, {
+            scale: 1,
+            y: 0,
+            duration: 0.3,
+            ease: 'power2.out',
+          })
+        })
       })
     }
 
@@ -558,7 +635,7 @@ useStackScroll(stackRoot, {
       })
 
       // Card shimmer effect on hover
-      const contactCard = document.querySelector('.contact-card')
+      const contactCard = contactCardEl.value || document.querySelector('.contact-card')
       if (contactCard) {
         contactCard.addEventListener('mouseenter', () => {
           gsap.to(contactCard, {
@@ -578,7 +655,7 @@ useStackScroll(stackRoot, {
       }
 
       // Input focus animations
-      const contactInputs = document.querySelectorAll('.contact-input')
+      const contactInputs = (contactCardEl.value || document).querySelectorAll('.contact-input')
       contactInputs.forEach((input) => {
         input.addEventListener('focus', () => {
           gsap.to(input, {
@@ -600,8 +677,8 @@ useStackScroll(stackRoot, {
       })
 
       // Button hover animations
-      const contactButton = document.querySelector('.contact-button')
-      const buttonIcon = document.querySelector('.button-icon')
+      const contactButton = (contactCardEl.value || document).querySelector('.contact-button')
+      const buttonIcon = (contactCardEl.value || document).querySelector('.button-icon')
 
       if (contactButton) {
         contactButton.addEventListener('mouseenter', () => {
@@ -649,7 +726,9 @@ useStackScroll(stackRoot, {
       }
 
       // Checkbox animations
-      const contactCheckbox = document.querySelector('.contact-checkbox') as HTMLInputElement
+      const contactCheckbox = (contactFormEl.value || document).querySelector(
+        '.contact-checkbox'
+      ) as HTMLInputElement
       if (contactCheckbox) {
         contactCheckbox.addEventListener('change', () => {
           if (contactCheckbox.checked) {
@@ -687,7 +766,7 @@ useStackScroll(stackRoot, {
       }
 
       // Form submission animation
-      const contactForm = document.querySelector('.contact-form')
+      const contactForm = contactFormEl.value || document.querySelector('.contact-form')
       if (contactForm) {
         contactForm.addEventListener('submit', () => {
           // Animate form elements on submit
@@ -866,6 +945,13 @@ const submitForm = () => {
           </div>
         </div>
       </div>
+    </section>
+
+    <!-- blog -->
+    <section
+      class="stack-section no-scrollbar bg-gradient-to-br from-gray-50 to-gray-100 h-screen flex flex-col items-center justify-start rounded-t-3xl py-[5rem] px-[12rem] overflow-y-auto"
+    >
+      <BlogSection @postClick="handleBlogPostClick" />
     </section>
 
     <!-- contact -->

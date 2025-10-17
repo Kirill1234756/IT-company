@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import { ref, defineAsyncComponent } from 'vue'
+import { ref, defineAsyncComponent, onMounted, computed } from 'vue'
 // import { useRouter } from 'vue-router'
 import { useIntersectionObserver } from '@vueuse/core'
 import { useStackScroll } from '../composables/useStackScroll'
+import { usePortfolioStore, type FilterType, type PortfolioProject } from '../stores/portfolio'
 // import { cn } from '@/utils/cn'
 
 const PortfolioCard = defineAsyncComponent(() => import('../components/PortfolioCard.vue'))
 const PortfolioModal = defineAsyncComponent(() => import('../modal/PortfolioModal.vue'))
+
+// Use Pinia store
+const portfolioStore = usePortfolioStore()
 
 // kept for potential future use within animations
 // gsap/scrollTrigger placeholders for potential future use
@@ -18,8 +22,8 @@ const stackRoot = ref<HTMLElement | null>(null)
 
 // Router (not needed here)
 
-// Portfolio data
-const filters = [
+// Portfolio data from store (memoized constants)
+const filters = computed(() => [
   'Все',
   'Интернет-магазины',
   'Корпоративные сайты',
@@ -27,131 +31,58 @@ const filters = [
   'Мобильные приложения',
   'Промо-сайты',
   'Техническая поддержка',
-]
-const activeFilter = ref('Все')
+])
 
-const portfolioItems = [
-  {
-    id: 1,
-    title: 'Интернет-магазин RB Home',
-    category: 'Интернет-магазины',
-    description:
-      'Полнофункциональный интернет-магазин мебели и товаров для дома с системой управления заказами, интеграцией с 1С и мобильной версией.',
-    bgColor: 'from-amber-50 to-amber-100',
-    logoColor: 'bg-gradient-to-br from-amber-600 to-amber-800',
-    logoText: 'RB-HOME',
-    technologies: ['Vue.js', 'Node.js', 'PostgreSQL', 'Stripe'],
-    link: '#',
-    image: '/api/placeholder/400/300',
-    year: '2024',
-    status: 'Завершен',
-  },
-  {
-    id: 2,
-    title: 'Корпоративный сайт БЫТПЛаст',
-    category: 'Корпоративные сайты',
-    description:
-      'Современный корпоративный сайт для производителя пластиковых изделий с каталогом продукции, системой заказов и админ-панелью.',
-    bgColor: 'from-slate-50 to-slate-100',
-    logoColor: 'bg-gradient-to-br from-orange-500 to-red-600',
-    logoText: 'БЫТПЛаст',
-    technologies: ['React', 'Next.js', 'MongoDB', 'AWS'],
-    link: '#',
-    image: '/api/placeholder/400/300',
-    year: '2024',
-    status: 'Завершен',
-  },
-  {
-    id: 3,
-    title: 'Платформа бронирования отелей',
-    category: 'Мобильные приложения',
-    description:
-      'Мобильное приложение для бронирования отелей с геолокацией, системой отзывов, интеграцией с платежными системами и push-уведомлениями.',
-    bgColor: 'from-blue-50 to-blue-100',
-    logoColor: 'bg-gradient-to-br from-blue-600 to-blue-800',
-    logoText: 'BOOKING',
-    technologies: ['React Native', 'Node.js', 'Redis', 'Stripe'],
-    link: '#',
-    image: '/api/placeholder/400/300',
-    year: '2023',
-    status: 'Завершен',
-  },
-  {
-    id: 4,
-    title: 'Лендинг для IT-компании',
-    category: 'Лендинги',
-    description:
-      'Высококонверсионный лендинг для IT-компании с анимациями, формой обратной связи, интеграцией с CRM и системой аналитики.',
-    bgColor: 'from-green-50 to-green-100',
-    logoColor: 'bg-gradient-to-br from-green-600 to-emerald-700',
-    logoText: 'IT-LAND',
-    technologies: ['Vue.js', 'GSAP', 'Tailwind CSS', 'HubSpot'],
-    link: '#',
-    image: '/api/placeholder/400/300',
-    year: '2024',
-    status: 'Завершен',
-  },
-  {
-    id: 5,
-    title: 'Промо-сайт для стартапа',
-    category: 'Промо-сайты',
-    description:
-      'Креативный промо-сайт для финтех-стартапа с интерактивными элементами, презентацией продукта и системой регистрации.',
-    bgColor: 'from-purple-50 to-purple-100',
-    logoColor: 'bg-gradient-to-br from-purple-600 to-indigo-700',
-    logoText: 'FINTECH',
-    technologies: ['Next.js', 'Framer Motion', 'TypeScript', 'Vercel'],
-    link: '#',
-    image: '/api/placeholder/400/300',
-    year: '2023',
-    status: 'Завершен',
-  },
-  {
-    id: 6,
-    title: 'Система технической поддержки',
-    category: 'Техническая поддержка',
-    description:
-      'Веб-приложение для управления технической поддержкой с тикет-системой, чатом, базой знаний и аналитикой.',
-    bgColor: 'from-gray-50 to-gray-100',
-    logoColor: 'bg-gradient-to-br from-gray-700 to-gray-900',
-    logoText: 'SUPPORT',
-    technologies: ['Vue.js', 'Express.js', 'Socket.io', 'MySQL'],
-    link: '#',
-    image: '/api/placeholder/400/300',
-    year: '2024',
-    status: 'В разработке',
-  },
-]
+// Destructure store properties
+const {
+  projects: portfolioItems,
+  activeFilter,
+  selectedProject,
+  filteredProjects: filteredItems,
+  setActiveFilter,
+  setSelectedProject,
+  fetchProjects,
+} = portfolioStore
 
-const filteredItems = ref(portfolioItems)
-const selectedProject = ref<(typeof portfolioItems)[0] | null>(null)
 const showModal = ref(false)
 
 // Filter function
-const filterItems = (filter: string) => {
-  if (filter === 'Все') {
-    filteredItems.value = portfolioItems
-  } else {
-    filteredItems.value = portfolioItems.filter((item) => item.category === filter)
-  }
-}
+const filterMap = {
+  Все: 'all',
+  'Интернет-магазины': 'web',
+  'Корпоративные сайты': 'web',
+  Лендинги: 'web',
+  'Мобильные приложения': 'mobile',
+  'Промо-сайты': 'web',
+  'Техническая поддержка': 'web',
+} as const
 
-// Watch for filter changes
+type StoreFilter = (typeof filterMap)[keyof typeof filterMap]
+
 const handleFilterChange = (filter: string) => {
-  activeFilter.value = filter
-  filterItems(filter)
+  const storeFilter = (filterMap as Record<string, StoreFilter>)[filter] ?? 'all'
+  setActiveFilter(storeFilter as FilterType)
 }
 
 // Modal functions
-const openModal = (project: (typeof portfolioItems)[0]) => {
-  selectedProject.value = project
+const openModal = (project: PortfolioProject) => {
+  setSelectedProject(project)
   showModal.value = true
 }
 
 const closeModal = () => {
   showModal.value = false
-  selectedProject.value = null
+  setSelectedProject(null)
 }
+
+// Load projects on mount
+onMounted(() => {
+  fetchProjects()
+  console.log('CasesPage mounted')
+  console.log('portfolioItems:', portfolioItems)
+  console.log('filteredItems:', filteredItems)
+  console.log('activeFilter:', activeFilter)
+})
 
 // Intersection-based lazy mounting for heavy sections
 const portfolioEl = ref<HTMLElement | null>(null)
@@ -159,6 +90,7 @@ const portfolioVisible = ref(false)
 useIntersectionObserver(
   portfolioEl,
   ([entry]) => {
+    console.log('Intersection observer triggered:', entry?.isIntersecting)
     if (entry.isIntersecting) portfolioVisible.value = true
   },
   { rootMargin: '200px' }
@@ -481,40 +413,61 @@ useStackScroll(stackRoot, {
           @click="handleFilterChange(filter)"
           :class="
             'px-4 py-2 rounded-full transition-all duration-300 text-[0.7rem] relative overflow-hidden group' +
-            (activeFilter === filter
+            ((activeFilter === 'all' && filter === 'Все') ||
+            (activeFilter === 'web' &&
+              [
+                'Интернет-магазины',
+                'Корпоративные сайты',
+                'Лендинги',
+                'Промо-сайты',
+                'Техническая поддержка',
+              ].includes(filter)) ||
+            (activeFilter === 'mobile' && filter === 'Мобильные приложения')
               ? ' bg-blue-500 text-white shadow-lg'
               : ' bg-white text-gray-700 border-2 border-gray-300 hover:border-blue-500 hover:shadow-md hover:shadow-blue-500/10')
           "
         >
           <span class="relative z-10">{{ filter }}</span>
           <div
-            v-if="activeFilter === filter"
+            v-if="
+              (activeFilter === 'all' && filter === 'Все') ||
+              (activeFilter === 'web' &&
+                [
+                  'Интернет-магазины',
+                  'Корпоративные сайты',
+                  'Лендинги',
+                  'Промо-сайты',
+                  'Техническая поддержка',
+                ].includes(filter)) ||
+              (activeFilter === 'mobile' && filter === 'Мобильные приложения')
+            "
             class="absolute inset-0 bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
           ></div>
         </button>
       </div>
 
       <!-- Portfolio Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8 w-full">
-        <template v-if="portfolioVisible">
-          <PortfolioCard
-            v-for="item in filteredItems"
-            :key="item.id"
-            :id="item.id"
-            :title="item.title"
-            :category="item.category"
-            :description="item.description"
-            :bgColor="item.bgColor"
-            :logoColor="item.logoColor"
-            :logoText="item.logoText"
-            :technologies="item.technologies"
-            :link="item.link"
-            :image="item.image"
-            :year="item.year"
-            :status="item.status"
-            @click="openModal"
-          />
-        </template>
+      <div
+        ref="portfolioEl"
+        class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8 w-full"
+      >
+        <PortfolioCard
+          v-for="item in filteredItems"
+          :key="item.id"
+          :id="item.id"
+          :title="item.title"
+          :category="item.category"
+          :description="item.description"
+          :bgColor="item.bgColor"
+          :logoColor="item.logoColor"
+          :logoText="item.logoText"
+          :technologies="item.technologies"
+          :link="item.link"
+          :image="item.image"
+          :year="item.year"
+          :status="item.status"
+          @click="openModal"
+        />
       </div>
 
       <!-- Empty State -->

@@ -10,6 +10,7 @@ export interface BlogPost {
     date: string
     readTime: string
     category: string
+    slug: string
     fullTitle?: string
     summary?: string
     content?: BlogPostContentSection[]
@@ -18,6 +19,12 @@ export interface BlogPost {
 }
 
 export type RelatedPost = Pick<BlogPost, 'id' | 'image' | 'title' | 'date' | 'readTime' | 'category'>
+
+
+
+
+
+
 
 
 

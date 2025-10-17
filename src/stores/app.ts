@@ -80,3 +80,4 @@ export const useAppStore = defineStore('app', () => {
     initializeTheme
   }
 })
+

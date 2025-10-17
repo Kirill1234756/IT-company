@@ -1,8 +1,24 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { onMounted, onUnmounted, type Ref } from 'vue'
 
+type GsapLite = {
+  set: (...args: any[]) => any
+  to: (...args: any[]) => any
+  fromTo: (...args: any[]) => any
+  timeline: (...args: any[]) => any
+  registerPlugin: (...args: any[]) => any
+  utils: { toArray: <T = any>(selector: any) => T[] }
+}
+
+type ScrollTriggerLite = {
+  create: (...args: any[]) => any
+  refresh: () => any
+  getAll: () => Array<{ kill: () => void }>
+}
+
 export type SectionAnimationHook = (opts: {
-  gsap: unknown
-  ScrollTrigger: unknown
+  gsap: GsapLite
+  ScrollTrigger: ScrollTriggerLite
   sections: HTMLElement[]
 }) => void
 
@@ -13,7 +29,7 @@ export function useStackScroll(
     snap?: boolean
   }
 ) {
-  let scrollTriggerRef: { getAll: () => Array<{ kill: () => void }> } | null = null
+  let scrollTriggerRef: ScrollTriggerLite | null = null
 
   onMounted(async () => {
     const { gsap } = await import('gsap')
@@ -72,7 +88,7 @@ export function useStackScroll(
 
   onUnmounted(() => {
     if (scrollTriggerRef) {
-      scrollTriggerRef.getAll().forEach((trigger) => trigger.kill())
+      scrollTriggerRef.getAll().forEach((trigger: { kill: () => void }) => trigger.kill())
     }
   })
 }

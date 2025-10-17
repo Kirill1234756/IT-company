@@ -1,101 +1,104 @@
 import { createRouter, createWebHistory } from 'vue-router'
-const ServicesPage = () => import('@/pages/ServicesPage.vue')
-const GrowComponent = () => import('@/components/services/GrowComponent.vue')
+import type { RouteLocationNormalized } from 'vue-router'
+import { useServicesStore } from '@/stores/services'
 
+const HomePage = () => import('@/pages/HomePage.vue')
+const ServicesPage = () => import('@/pages/ServicesPage.vue')
+const CasesPage = () => import('@/pages/CasesPage.vue')
+const ClientFormPage = () => import('@/pages/ClientFormPage.vue')
+const BlogPage = () => import('@/pages/BlogPage.vue')
+const NotFound = () => import('@/pages/NotFound.vue')
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) return savedPosition
+    if (to.hash) return { el: to.hash, behavior: 'smooth' }
+    return { top: 0 }
+  },
   routes: [
     {
       path: '/',
       name: 'home',
-      component: () => import('@/pages/HomePage.vue'),
+      component: HomePage,
       meta: { title: 'Главная' }
     },
     {
-      path: '/growth',
-      name: 'growth',
-      component: GrowComponent,
-      meta: {
-        title: 'Рост'
-      }
-    },
-    {
       path: '/services',
-      name: 'services',
       component: ServicesPage,
-      meta: {
-        title: 'Наши услуги'
-      }
-    },
-    {
-      path: '/services/growth',
-      name: 'services-growth',
-      component: ServicesPage,
-      meta: {
-        title: 'Услуги роста'
-      }
+      meta: { title: 'Наши услуги' },
+      children: [
+        // default /services → stay on ServicesPage
+        { path: '', name: 'services', component: ServicesPage },
+        // top-level short categories (aliases handled by ServicesPage itself)
+        { path: 'growth', name: 'services-growth', component: ServicesPage, meta: { title: 'Услуги роста' } },
+        { path: 'strategy', name: 'services-strategy', component: ServicesPage, meta: { title: 'Стратегические услуги' } },
+        { path: 'development', name: 'services-development', component: ServicesPage, meta: { title: 'Услуги разработки' } },
+        // dynamic categories and details with validation guards, same component
+        { path: ':category', name: 'service-category', component: ServicesPage, meta: { title: 'Категория услуг' }, beforeEnter: (to) => validateCategory(to) },
+        { path: ':category/:service', name: 'service-detail', component: ServicesPage, meta: { title: 'Детали услуги' }, beforeEnter: (to) => validateServiceDetail(to) },
+      ],
     },
     {
       path: '/cases',
       name: 'cases',
-      component: () => import('@/pages/CasesPage.vue'),
-      meta: {
-        title: 'cases'
-      }
+      component: CasesPage,
+      meta: { title: 'Кейсы' }
     },
     {
       path: '/client-form',
       name: 'client-form',
-      component: () => import('@/pages/ClientFormPage.vue'),
-      meta: {
-        title: 'client-form'
-      }
-    },
-    {
-      path: '/services/strategy',
-      name: 'services-strategy',
-      component: ServicesPage,
-      meta: {
-        title: 'Стратегические услуги'
-      }
-    },
-    {
-      path: '/services/development',
-      name: 'services-development',
-      component: ServicesPage,
-      meta: {
-        title: 'Услуги разработки'
-      }
+      component: ClientFormPage,
+      meta: { title: 'Стать клиентом' }
     },
     {
       path: '/blog',
       name: 'blog',
-      component: () => import('../sections/BlogSection.vue'),
-      meta: {
-        title: 'Блог'
-      }
+      component: BlogPage,
+      meta: { title: 'Блог' }
     },
     {
-      path: '/become-client',
-      name: 'become-client',
-      component: () => import('@/pages/ClientFormPage.vue'),
-      meta: {
-        title: 'Стать клиентом'
-      }
-    }
+      path: '/blog/:category',
+      name: 'blog-category',
+      component: BlogPage,
+      meta: { title: 'Категория блога' }
+    },
+    {
+      path: '/blog/:category/:post',
+      name: 'blog-post',
+      component: BlogPage,
+      meta: { title: 'Статья блога' }
+    },
+    { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFound, meta: { title: 'Страница не найдена' } },
   ],
 })
 
-// Navigation guards
-router.beforeEach((to, from, next) => {
-  // Set page title
-  if (to.meta.title) {
-    document.title = `${to.meta.title} - IT Company`
-  } else {
-    document.title = 'IT Company'
-  }
+// Title + basic security hardening
+router.beforeEach((to, _from, next) => {
+  const title = typeof to.meta.title === 'string' ? to.meta.title : 'IT Company'
+  document.title = `${title} - IT Company`
   next()
 })
+
+// Route param validators
+function validateCategory(to: RouteLocationNormalized) {
+  const store = useServicesStore()
+  const category = String(to.params.category || '')
+  // allow slug or numeric id
+  if (store.getCategoryBySlug(category) || (/^\d+$/.test(category) && store.getCategoryById(Number(category)))) {
+    return true
+  }
+  return { name: 'services' }
+}
+
+function validateServiceDetail(to: RouteLocationNormalized) {
+  const store = useServicesStore()
+  const category = String(to.params.category || '')
+  const service = String(to.params.service || '')
+  const categoryOk = store.getCategoryBySlug(category) || (/^\d+$/.test(category) && store.getCategoryById(Number(category)))
+  const serviceOk = store.getServiceDetailBySlug(service) || (/^\d+$/.test(service) && store.getServiceDetail(Number(service)))
+  if (categoryOk && serviceOk) return true
+  return { name: 'services' }
+}
 
 export default router

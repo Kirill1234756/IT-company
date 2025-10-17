@@ -23,7 +23,7 @@ const handleClick = () => {
     <!-- Image with overlay avatar -->
     <div class="relative h-48 w-full overflow-hidden rounded-t-3xl">
       <img
-        v-lazy="post.image"
+        :src="post.image"
         :alt="post.title"
         class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
       />

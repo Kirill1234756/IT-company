@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { defineProps, defineEmits } from 'vue'
+import { useServicesStore } from '../stores/services'
 
 export interface ServiceCardProps {
   id: number
@@ -18,11 +19,19 @@ const props = withDefaults(defineProps<ServiceCardProps>(), {
   wrapperClass: '',
 })
 
-const emit = defineEmits<{ (e: 'click', service: ServiceCardProps): void }>()
+const emit = defineEmits<{ (e: 'click', service: ServiceCardProps & { category?: any }): void }>()
+
+const servicesStore = useServicesStore()
 
 const handleClick = () => {
   if (props.isClickable) {
-    emit('click', props)
+    // Получаем категорию по ID
+    const category = servicesStore.getCategoryById(props.id)
+    if (category) {
+      emit('click', { ...props, category })
+    } else {
+      emit('click', props)
+    }
   }
 }
 </script>
