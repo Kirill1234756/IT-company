@@ -69,7 +69,7 @@ watch(
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen blog-fonts" style="background-color: var(--color-border)">
     <!-- Blog Section -->
     <BlogSection @post-click="handlePostClick" />
 

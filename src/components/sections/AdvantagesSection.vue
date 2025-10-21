@@ -1,12 +1,41 @@
 <script setup lang="ts">
-import { defineProps } from 'vue'
 import { defineAsyncComponent } from 'vue'
 
 const AdvantageCard = defineAsyncComponent(() => import('../AdvantageCard.vue'))
 
-const props = defineProps<{
-  advantages: { title: string; description: string }[]
-}>()
+// Our Advantages data
+const advantages = [
+  {
+    title: 'Комплексный подход',
+    description:
+      'Мы можем взяться как за отдельные задачи, так и за весь проект целиком: от анализа рынка до разработки решений и продвижения «под ключ».',
+  },
+  {
+    title: 'Бизнес‑задачи',
+    description:
+      'Все решения предлагаем исходя из целей вашего бизнеса — рост продаж, автоматизация, выстраивание коммуникаций с клиентами.',
+  },
+  {
+    title: 'Каждый клиент важен',
+    description:
+      'Строим долгосрочные отношения: после разработки продолжаем работу над продвижением и аналитикой.',
+  },
+  {
+    title: 'Высокая рабочая скорость',
+    description:
+      'Процессы внутри команды отлажены и гибко организованы — быстро включаемся в работу над проектом.',
+  },
+  {
+    title: 'Выгодное предложение',
+    description:
+      'Вы не переплачиваете за бренд — получаете проект высокого уровня с оптимальным бюджетом.',
+  },
+  {
+    title: 'Гибкая команда',
+    description:
+      'Небольшая команда адаптируется под процессы заказчика и оперативно принимает решения.',
+  },
+]
 </script>
 
 <template>
@@ -22,7 +51,7 @@ const props = defineProps<{
 
     <div class="w-full grid grid-cols-1 md:grid-cols-2 items-stretch">
       <AdvantageCard
-        v-for="(a, i) in props.advantages"
+        v-for="(a, i) in advantages"
         :key="a.title + i"
         :title="a.title"
         :description="a.description"
@@ -43,5 +72,9 @@ const props = defineProps<{
 </template>
 
 <style scoped></style>
+
+
+
+
 
 

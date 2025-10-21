@@ -1,13 +1,29 @@
 <script setup lang="ts">
-import { ref, defineAsyncComponent, onMounted, computed } from 'vue'
-// import { useRouter } from 'vue-router'
+import { ref, defineAsyncComponent, onMounted, computed, watch, nextTick } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router'
 import { useIntersectionObserver } from '@vueuse/core'
 import { useStackScroll } from '../composables/useStackScroll'
-import { usePortfolioStore, type FilterType, type PortfolioProject } from '../stores/portfolio'
+import { usePortfolioStore } from '../stores/portfolio'
+import type { FilterType, PortfolioProject } from '../types/portfolio'
 // import { cn } from '@/utils/cn'
 
-const PortfolioCard = defineAsyncComponent(() => import('../components/PortfolioCard.vue'))
-const PortfolioModal = defineAsyncComponent(() => import('../modal/PortfolioModal.vue'))
+// Ленивая загрузка компонентов с оптимизацией
+const PortfolioCard = defineAsyncComponent({
+  loader: () => import('../components/PortfolioCard.vue'),
+  loadingComponent: () => import('../components/Loader.vue'),
+  errorComponent: () => import('../pages/NotFound.vue'),
+  delay: 200,
+  timeout: 3000,
+})
+
+const PortfolioModal = defineAsyncComponent({
+  loader: () => import('../modal/PortfolioModal.vue'),
+  loadingComponent: () => import('../components/Loader.vue'),
+  errorComponent: () => import('../pages/NotFound.vue'),
+  delay: 200,
+  timeout: 3000,
+})
 
 // Use Pinia store
 const portfolioStore = usePortfolioStore()
@@ -22,7 +38,7 @@ const stackRoot = ref<HTMLElement | null>(null)
 
 // Router (not needed here)
 
-// Portfolio data from store (memoized constants)
+// Мемоизированные константы
 const filters = computed(() => [
   'Все',
   'Интернет-магазины',
@@ -33,38 +49,136 @@ const filters = computed(() => [
   'Техническая поддержка',
 ])
 
-// Destructure store properties
+// Мемоизированное маппирование фильтров
+const filterMap = computed(
+  () =>
+    ({
+      Все: 'all',
+      'Интернет-магазины': 'ecommerce',
+      'Корпоративные сайты': 'corporate',
+      Лендинги: 'landing',
+      'Мобильные приложения': 'mobile',
+      'Промо-сайты': 'promo',
+      'Техническая поддержка': 'tech-support',
+    } as const)
+)
+
+// Reactive refs from store (state + computed)
 const {
   projects: portfolioItems,
   activeFilter,
   selectedProject,
   filteredProjects: filteredItems,
-  setActiveFilter,
-  setSelectedProject,
-  fetchProjects,
-} = portfolioStore
+} = storeToRefs(portfolioStore)
+
+// Router
+const router = useRouter()
+
+// Actions (keep methods from store directly)
+const { setActiveFilter, setSelectedProject, fetchProjects } = portfolioStore
+
+// (No local mirrors needed; storeToRefs keeps reactivity intact)
 
 const showModal = ref(false)
 
-// Filter function
-const filterMap = {
-  Все: 'all',
-  'Интернет-магазины': 'web',
-  'Корпоративные сайты': 'web',
-  Лендинги: 'web',
-  'Мобильные приложения': 'mobile',
-  'Промо-сайты': 'web',
-  'Техническая поддержка': 'web',
-} as const
+// Мемоизированное маппирование цветов для фильтров
+const filterColors = computed(() => ({
+  Все: {
+    bg: 'bg-rose-custom',
+    border: 'border-rose-custom',
+    hover: 'hover:bg-[var(--color-purple)] hover:border-[var(--color-purple)]',
+    inner: 'bg-[var(--color-purple)]',
+  },
+  'Интернет-магазины': {
+    bg: 'bg-rose-custom',
+    border: 'border-rose-custom',
+    hover: 'hover:bg-[var(--color-purple)] hover:border-[var(--color-purple)]',
+    inner: 'bg-[var(--color-purple)]',
+  },
+  'Корпоративные сайты': {
+    bg: 'bg-rose-custom',
+    border: 'border-rose-custom',
+    hover: 'hover:bg-[var(--color-purple)] hover:border-[var(--color-purple)]',
+    inner: 'bg-[var(--color-purple)]',
+  },
+  Лендинги: {
+    bg: 'bg-rose-custom',
+    border: 'border-rose-custom',
+    hover: 'hover:bg-[var(--color-purple)] hover:border-[var(--color-purple)]',
+    inner: 'bg-[var(--color-purple)]',
+  },
+  'Мобильные приложения': {
+    bg: 'bg-rose-custom',
+    border: 'border-rose-custom',
+    hover: 'hover:bg-[var(--color-purple)] hover:border-[var(--color-purple)]',
+    inner: 'bg-[var(--color-purple)]',
+  },
+  'Промо-сайты': {
+    bg: 'bg-rose-custom',
+    border: 'border-rose-custom',
+    hover: 'hover:bg-[var(--color-purple)] hover:border-[var(--color-purple)]',
+    inner: 'bg-[var(--color-purple)]',
+  },
+  'Техническая поддержка': {
+    bg: 'bg-rose-custom',
+    border: 'border-rose-custom',
+    hover: 'hover:bg-[var(--color-purple)] hover:border-[var(--color-purple)]',
+    inner: 'bg-[var(--color-purple)]',
+  },
+}))
 
-type StoreFilter = (typeof filterMap)[keyof typeof filterMap]
+// Мемоизированные функции для работы с цветами
+const getFilterColor = (filter: string, isActive: boolean) => {
+  const colors = filterColors.value[filter as keyof typeof filterColors.value]
+  if (!colors) return filterColors.value['Все']
 
-const handleFilterChange = (filter: string) => {
-  const storeFilter = (filterMap as Record<string, StoreFilter>)[filter] ?? 'all'
-  setActiveFilter(storeFilter as FilterType)
+  if (isActive) {
+    return `${colors.bg} ${colors.border} ${colors.hover}`
+  } else {
+    return `bg-[var(--color-border)]/60 border-[var(--color-border)]/80 ${colors.hover}`
+  }
 }
 
-// Modal functions
+// Мемоизированная функция для стилей кнопок
+const getRoseButtonStyle = () => {
+  // Apply rose color to all buttons
+  return {
+    backgroundColor: '#e0bbb9',
+    border: 'none',
+  }
+}
+
+// Мемоизированная функция для внутренних цветов
+const getInnerColor = (filter: string) => {
+  const colors = filterColors.value[filter as keyof typeof filterColors.value]
+  return colors?.inner || 'bg-[var(--color-purple)]'
+}
+
+// Мемоизированная функция обработки фильтров
+const handleFilterChange = (filter: string) => {
+  console.log('=== FILTER CLICK DEBUG ===')
+  console.log('Filter clicked:', filter)
+  const storeFilter = filterMap.value[filter as keyof typeof filterMap.value] ?? 'all'
+  console.log('Store filter mapped to:', storeFilter)
+  console.log('Before setActiveFilter - activeFilter:', activeFilter.value)
+  setActiveFilter(storeFilter as FilterType)
+
+  // Check after a small delay to see if reactivity works
+  setTimeout(() => {
+    console.log('After timeout - activeFilter:', activeFilter.value)
+    console.log('After timeout - filteredItems length:', filteredItems.value.length)
+    console.log(
+      'After timeout - filteredItems:',
+      filteredItems.value.map((item) => item.title)
+    )
+  }, 100)
+
+  console.log('After setActiveFilter - activeFilter:', activeFilter.value)
+  console.log('After setActiveFilter - filteredItems length:', filteredItems.value.length)
+  console.log('=== END FILTER CLICK DEBUG ===')
+}
+
+// Мемоизированные функции модального окна
 const openModal = (project: PortfolioProject) => {
   setSelectedProject(project)
   showModal.value = true
@@ -73,20 +187,48 @@ const openModal = (project: PortfolioProject) => {
 const closeModal = () => {
   showModal.value = false
   setSelectedProject(null)
+  // Убеждаемся, что мы остаемся на странице Cases
+  console.log('Closing modal, current route:', router.currentRoute.value.path)
+  console.log('Current route name:', router.currentRoute.value.name)
+
+  // Используем nextTick для гарантии обновления DOM
+  nextTick(() => {
+    console.log('Navigating to /cases after nextTick')
+    router.push('/cases')
+  })
 }
+
+// Optional debug watchers
+watch(
+  () => activeFilter.value,
+  (newFilter, oldFilter) => {
+    console.log('CasesPage: Filter changed from', oldFilter, 'to', newFilter)
+    console.log('CasesPage: Filtered items updated:', filteredItems.value)
+  },
+  { immediate: true }
+)
+
+watch(
+  () => filteredItems.value,
+  (newItems) => {
+    console.log('CasesPage: Filtered items changed:', newItems.length, 'items')
+  },
+  { deep: true }
+)
 
 // Load projects on mount
 onMounted(() => {
   fetchProjects()
   console.log('CasesPage mounted')
-  console.log('portfolioItems:', portfolioItems)
-  console.log('filteredItems:', filteredItems)
-  console.log('activeFilter:', activeFilter)
+  console.log('portfolioItems:', portfolioItems.value)
+  console.log('filteredItems:', filteredItems.value)
+  console.log('activeFilter:', activeFilter.value)
+  console.log('portfolioVisible:', portfolioVisible.value)
 })
 
 // Intersection-based lazy mounting for heavy sections
 const portfolioEl = ref<HTMLElement | null>(null)
-const portfolioVisible = ref(false)
+const portfolioVisible = ref(true) // Изменили на true для немедленного отображения
 useIntersectionObserver(
   portfolioEl,
   ([entry]) => {
@@ -396,7 +538,7 @@ useStackScroll(stackRoot, {
 
 <template>
   <div id="stack" class="relative" ref="stackRoot">
-    <div class="w-full max-w-7xl">
+    <div class="w-full max-w-7xl px-[15rem]">
       <h2
         class="title no-title-effects text-3xl sm:text-4xl md:text-4xl font-black text-[var(--color-accent)] tracking-tight mb-4 md:mb-6 lg:mb-8 text-center"
       >
@@ -412,62 +554,61 @@ useStackScroll(stackRoot, {
           :key="filter"
           @click="handleFilterChange(filter)"
           :class="
-            'px-4 py-2 rounded-full transition-all duration-300 text-[0.7rem] relative overflow-hidden group' +
-            ((activeFilter === 'all' && filter === 'Все') ||
-            (activeFilter === 'web' &&
-              [
-                'Интернет-магазины',
-                'Корпоративные сайты',
-                'Лендинги',
-                'Промо-сайты',
-                'Техническая поддержка',
-              ].includes(filter)) ||
-            (activeFilter === 'mobile' && filter === 'Мобильные приложения')
-              ? ' bg-blue-500 text-white shadow-lg'
-              : ' bg-white text-gray-700 border-2 border-gray-300 hover:border-blue-500 hover:shadow-md hover:shadow-blue-500/10')
+            'px-6 py-3 rounded-full transition-all duration-300 text-sm font-semibold font-display relative overflow-hidden group shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-white border-2 ' +
+            getFilterColor(
+              filter,
+              (activeFilter === 'all' && filter === 'Все') ||
+                (activeFilter === 'ecommerce' && filter === 'Интернет-магазины') ||
+                (activeFilter === 'corporate' && filter === 'Корпоративные сайты') ||
+                (activeFilter === 'landing' && filter === 'Лендинги') ||
+                (activeFilter === 'promo' && filter === 'Промо-сайты') ||
+                (activeFilter === 'mobile' && filter === 'Мобильные приложения') ||
+                (activeFilter === 'tech-support' && filter === 'Техническая поддержка')
+            )
           "
+          :style="getRoseButtonStyle()"
         >
           <span class="relative z-10">{{ filter }}</span>
           <div
             v-if="
               (activeFilter === 'all' && filter === 'Все') ||
-              (activeFilter === 'web' &&
-                [
-                  'Интернет-магазины',
-                  'Корпоративные сайты',
-                  'Лендинги',
-                  'Промо-сайты',
-                  'Техническая поддержка',
-                ].includes(filter)) ||
-              (activeFilter === 'mobile' && filter === 'Мобильные приложения')
+              (activeFilter === 'ecommerce' && filter === 'Интернет-магазины') ||
+              (activeFilter === 'corporate' && filter === 'Корпоративные сайты') ||
+              (activeFilter === 'landing' && filter === 'Лендинги') ||
+              (activeFilter === 'promo' && filter === 'Промо-сайты') ||
+              (activeFilter === 'mobile' && filter === 'Мобильные приложения') ||
+              (activeFilter === 'tech-support' && filter === 'Техническая поддержка')
             "
-            class="absolute inset-0 bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            :class="
+              'absolute inset-0 ' +
+              getInnerColor(filter) +
+              ' opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-full'
+            "
           ></div>
         </button>
       </div>
 
       <!-- Portfolio Grid -->
-      <div
-        ref="portfolioEl"
-        class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8 w-full"
-      >
-        <PortfolioCard
-          v-for="item in filteredItems"
-          :key="item.id"
-          :id="item.id"
-          :title="item.title"
-          :category="item.category"
-          :description="item.description"
-          :bgColor="item.bgColor"
-          :logoColor="item.logoColor"
-          :logoText="item.logoText"
-          :technologies="item.technologies"
-          :link="item.link"
-          :image="item.image"
-          :year="item.year"
-          :status="item.status"
-          @click="openModal"
-        />
+      <div ref="portfolioEl" class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 w-full">
+        <template v-if="portfolioVisible">
+          <PortfolioCard
+            v-for="item in filteredItems"
+            :key="item.id"
+            :id="item.id"
+            :title="item.title"
+            :category="item.category"
+            :description="item.description"
+            :bgColor="item.bgColor"
+            :logoColor="item.logoColor"
+            :logoText="item.logoText"
+            :technologies="item.technologies"
+            :link="item.link"
+            :image="item.image"
+            :year="item.year"
+            :status="item.status"
+            @click="openModal"
+          />
+        </template>
       </div>
 
       <!-- Empty State -->
@@ -496,7 +637,7 @@ useStackScroll(stackRoot, {
   </div>
 
   <!-- Project Modal -->
-  <PortfolioModal :showModal="showModal" :selectedProject="selectedProject" @close="closeModal" />
+  <PortfolioModal :showModal="showModal" :projectId="selectedProject?.id" @close="closeModal" />
 </template>
 
 <style scoped>
@@ -576,6 +717,26 @@ useStackScroll(stackRoot, {
     margin: 1rem;
     max-height: calc(100vh - 2rem);
   }
+}
+
+/* Custom rose color for filter buttons */
+
+/* Custom rose color for filter buttons */
+.bg-rose-custom {
+  background-color: #e0bbb9 !important;
+}
+
+.border-rose-custom {
+  border-color: #e0bbb9 !important;
+}
+
+/* Force rose color for all filter buttons */
+button.bg-rose-custom {
+  background-color: #e0bbb9 !important;
+}
+
+button.border-rose-custom {
+  border-color: #e0bbb9 !important;
 }
 
 /* Dark mode support - matching what we do style */

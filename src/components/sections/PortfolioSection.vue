@@ -19,12 +19,16 @@ useIntersectionObserver(
 <template>
   <section
     ref="rootEl"
-    class="stack-section no-scrollbar bg-gradient-to-br bg-[var(--color-purple))] h-screen flex flex-col items-center justify-start rounded-t-3xl py-[5rem] px-[12rem] overflow-y-auto"
+    class="stack-section no-scrollbar bg-gradient-to-br from-[var(--color-bg)] to-[var(--color-border)] h-screen flex flex-col items-center justify-start rounded-t-3xl py-[5rem] overflow-y-auto"
   >
     <CasesPage v-if="visible" />
   </section>
 </template>
 
 <style scoped></style>
+
+
+
+
 
 

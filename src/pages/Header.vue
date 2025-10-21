@@ -17,7 +17,7 @@ const closeMobileMenu = () => {
 // navigation model
 const leftNav = [
   { to: '/services', label: 'Services', type: 'route' as const },
-  { href: '#projects', label: 'Контакты', type: 'anchor' as const },
+  { to: '/contacts', label: 'Контакты', type: 'route' as const },
   { href: '#about', label: 'About', type: 'anchor' as const },
 ]
 const rightNav = [

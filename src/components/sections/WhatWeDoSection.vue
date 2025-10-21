@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router'
 import { useIntersectionObserver } from '@vueuse/core'
 
 const WhatWeDoCard = defineAsyncComponent(() => import('../WhatWeDoCard.vue'))
-const WhatWeDoCta = defineAsyncComponent(() => import('../WhatWeDoCta.vue'))
 
 const router = useRouter()
 
@@ -63,10 +62,10 @@ useIntersectionObserver(
 <template>
   <section
     ref="rootEl"
-    class="stack-section no-scrollbar bg-bg h-screen flex flex-col items-center justify-start rounded-t-3xl lg:py-[5rem] py-[2rem] lg:px-[12rem] md:px-[6rem] px-[1rem] overflow-y-auto"
+    class="stack-section no-scrollbar bg-info h-screen flex flex-col items-center justify-start rounded-t-3xl lg:py-[5rem] py-[2rem] lg:px-[17rem] md:px-[6rem] px-[1rem] overflow-y-auto"
   >
     <h2
-      class="title no-title-effects text-3xl md:text-4xl font-black tracking-tight mb-8 text-[var(--color-accent)] opacity-100"
+      class="title no-title-effects text-3xl md:text-4xl font-black tracking-tight mb-8 text-[var(--color-border)] opacity-100"
     >
       Что мы делаем
     </h2>
@@ -82,22 +81,36 @@ useIntersectionObserver(
           :wrapperClass="card.wrapperClass"
           @click="handleCardClick(card.title)"
         />
-        <WhatWeDoCta
-          text="Мы предлагаем полный спектр готовых цифровых решений для вашего бизнеса"
+
+        <div
+          class="wwd-cta group rounded-[3rem] p-6 sm:p-4 flex flex-col justify-center items-center text-center cursor-pointer text-white w-full md:col-span-4 bg-[var(--color-purple)] hover:bg-[var(--color-accent)] transition-colors border border-[color-mix(in_oklab,var(--color-border)_40%,transparent)] hover:border-[var(--color-accent)] hover:ring-2 hover:ring-[var(--color-accent)]"
           @click="router.push('/services')"
-        />
+        >
+          <h3
+            class="text-base text-[0.8rem] md:text-sm px-2 sm:px-2 font-bold transition-transform duration-300 group-hover:translate-y-[-2px] group-hover:text-white"
+          >
+            Мы предлагаем полный спектр готовых цифровых решений для вашего бизнеса
+          </h3>
+        </div>
       </template>
     </div>
 
-    <button
-      class="mt-6 text-[0.8rem] md:text-sm bg-gray-800 text-white py-3 px-[5rem] rounded-[3rem] font-semibold transition-all duration-300 hover:bg-[var(--color-accent)] hover:text-white hover:-translate-y-0.5 hover:shadow-[0_12px_30px_-8px_color-mix(in_oklab,var(--color-accent)_60%,transparent)] hover:ring-2 hover:ring-[var(--color-accent)] active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-      @click="router.push('/services')"
-    >
-      Узнать больше
-    </button>
+    <div class="flex justify-center">
+      <button
+        class="mt-6 text-sm bg-[var(--color-accent)] text-white py-3 px-8 rounded-[3rem] font-semibold font-display transition-all duration-300 hover:bg-[var(--color-purple)] hover:text-white hover:-translate-y-0.5 hover:shadow-[0_12px_30px_-8px_color-mix(in_oklab,var(--color-accent)_60%,transparent)] hover:ring-2 hover:ring-[var(--color-accent)] active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+        style="background-color: #ff8863 !important; color: white !important"
+        @click="router.push('/services')"
+      >
+        Узнать больше
+      </button>
+    </div>
   </section>
 </template>
 
 <style scoped></style>
+
+
+
+
 
 

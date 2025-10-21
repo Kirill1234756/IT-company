@@ -6,6 +6,7 @@ const HomePage = () => import('@/pages/HomePage.vue')
 const ServicesPage = () => import('@/pages/ServicesPage.vue')
 const CasesPage = () => import('@/pages/CasesPage.vue')
 const ClientFormPage = () => import('@/pages/ClientFormPage.vue')
+const ContactPage = () => import('@/pages/ContactPage.vue')
 const BlogPage = () => import('@/pages/BlogPage.vue')
 const NotFound = () => import('@/pages/NotFound.vue')
 
@@ -52,6 +53,12 @@ const router = createRouter({
       meta: { title: 'Стать клиентом' }
     },
     {
+      path: '/contacts',
+      name: 'contacts',
+      component: ContactPage,
+      meta: { title: 'Контакты' }
+    },
+    {
       path: '/blog',
       name: 'blog',
       component: BlogPage,
@@ -67,6 +74,13 @@ const router = createRouter({
       path: '/blog/:category/:post',
       name: 'blog-post',
       component: BlogPage,
+      meta: { title: 'Статья блога' }
+    },
+    // New route for blog posts opened from home page - made more specific
+    {
+      path: '/blog-post/:category/:post',
+      name: 'home-blog-post',
+      component: HomePage,
       meta: { title: 'Статья блога' }
     },
     { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFound, meta: { title: 'Страница не найдена' } },

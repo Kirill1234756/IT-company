@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 import { defineAsyncComponent, onMounted } from 'vue'
+// @ts-expect-error - Loader component uses script setup without explicit default export
 import Loader from './components/Loader.vue'
 import { usePageLoader } from './composables/usePageLoader'
 const Header = defineAsyncComponent(() => import('./pages/Header.vue'))
+const Footer = defineAsyncComponent(() => import('./components/Footer.vue'))
+const ContactSection = defineAsyncComponent(
+  () => import('./components/sections/ContactSection.vue')
+)
 
 const { isLoading, progress, isRouteChange, initLoader, initRouterLoader } = usePageLoader()
 
@@ -36,6 +41,32 @@ onMounted(() => {
     </header>
     <RouterView />
 
+    <!-- Contact Section (lazy loaded) -->
+    <Suspense>
+      <template #default>
+        <ContactSection />
+      </template>
+      <template #fallback>
+        <div class="py-20 text-center">
+          <div
+            class="animate-spin w-8 h-8 border-2 border-[var(--color-accent)] border-t-transparent rounded-full mx-auto"
+          ></div>
+        </div>
+      </template>
+    </Suspense>
+
+    <!-- Footer (lazy loaded) -->
+    <Suspense>
+      <template #default>
+        <Footer />
+      </template>
+      <template #fallback>
+        <div
+          class="h-24 bg-gradient-to-br from-[var(--color-bg)] to-[var(--color-border)] border-t border-[var(--color-accent)]/20"
+        ></div>
+      </template>
+    </Suspense>
+
     <!-- Telegram Icon -->
     <a
       href="https://t.me/your_telegram_username"
@@ -63,15 +94,21 @@ onMounted(() => {
 <style>
 /* Global styles */
 :root {
-  --color-bg: #0a0a0a;
-  --color-border: #1a1a1a;
-  --color-accent: #00df82;
-  --color-purple: #7d53ff;
+  --color-bg: #0f0f23;
+  --color-border: #1e293b;
+  --color-accent: #00e5a0;
+  --color-purple: #6366f1;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+  --color-text: #f8fafc;
+  --color-text-muted: #94a3b8;
 }
 
 * {
-  margin: 0;
-  padding: 0;
+
+
   box-sizing: border-box;
 }
 

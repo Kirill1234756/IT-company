@@ -34,7 +34,7 @@ const setTab = (tabId: string) => {
 <template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
     <!-- Main Title -->
-    <h1 class="text-5xl md:text-6xl font-extrabold text-gray-900 mb-10 text-center">Блог</h1>
+    <h1 class="text-5xl md:text-6xl font-extrabold text-blog-title mb-10 text-center">Блог</h1>
 
     <!-- Tabs -->
     <div class="flex justify-center space-x-4 mb-12">
@@ -45,8 +45,8 @@ const setTab = (tabId: string) => {
         :class="[
           'px-6 py-3 rounded-full text-sm font-semibold transition-all duration-300',
           activeTab === tab.id
-            ? 'bg-[#2455ff] text-white shadow-lg'
-            : 'bg-white text-gray-800 border border-gray-200 hover:bg-gray-100 hover:border-[#2455ff]',
+            ? 'bg-blog-tab-active text-white shadow-lg'
+            : 'bg-blog-tab-inactive text-blog-subtitle border hover:bg-white/90 hover:border-blog-tab-active',
         ]"
       >
         {{ tab.name }}

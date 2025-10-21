@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { defineProps, defineEmits } from 'vue'
-import type { BlogPost } from '@/types/blog'
+import type { BlogPost } from '../types/blog'
 
 const props = defineProps<{
   post: BlogPost
@@ -17,7 +17,7 @@ const handleClick = () => {
 
 <template>
   <div
-    class="bg-white rounded-3xl shadow-lg overflow-hidden flex flex-col group cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+    class="bg-blog-card rounded-3xl shadow-lg overflow-hidden flex flex-col group cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
     @click="handleClick"
   >
     <!-- Image with overlay avatar -->
@@ -29,19 +29,20 @@ const handleClick = () => {
       />
       <!-- Blurred avatar overlay -->
       <div
-        class="absolute bottom-4 right-4 w-12 h-12 bg-gray-300 rounded-full border-2 border-white blur-sm"
+        class="absolute bottom-4 right-4 w-12 h-12 rounded-full border-2 border-white blur-sm"
+        style="background-color: var(--blog-gradient-middle)"
       ></div>
     </div>
 
     <!-- Content -->
     <div class="p-6 text-left flex flex-col flex-grow">
-      <h3 class="text-xl font-bold text-gray-900 mb-2 flex-grow line-clamp-2">
+      <h3 class="text-xl font-bold text-blog-title mb-2 flex-grow line-clamp-2 font-display">
         {{ post.title }}
       </h3>
-      <p class="text-gray-500 text-sm mb-4">{{ post.date }} | {{ post.readTime }}</p>
+      <p class="text-blog-muted text-sm mb-4">{{ post.date }} | {{ post.readTime }}</p>
       <div class="flex justify-end">
         <div
-          class="w-8 h-8 bg-[#2455ff] rounded-full flex items-center justify-center group-hover:bg-[#1e40af] transition-colors duration-300"
+          class="w-8 h-8 bg-blog-button rounded-full flex items-center justify-center hover:bg-blog-button-hover transition-colors duration-300"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
