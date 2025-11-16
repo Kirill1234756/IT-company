@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { defineProps, defineEmits } from 'vue'
 import { useServicesStore } from '../stores/services'
+import type { ServiceCategory } from '../types/services'
 
 export interface ServiceCardProps {
   id: number
@@ -11,6 +12,7 @@ export interface ServiceCardProps {
   iconBg?: string
   isClickable?: boolean
   wrapperClass?: string
+  slug?: string
 }
 
 const props = withDefaults(defineProps<ServiceCardProps>(), {
@@ -19,14 +21,18 @@ const props = withDefaults(defineProps<ServiceCardProps>(), {
   wrapperClass: '',
 })
 
-const emit = defineEmits<{ (e: 'click', service: ServiceCardProps & { category?: any }): void }>()
+const emit = defineEmits<{
+  (e: 'click', service: ServiceCardProps & { category?: ServiceCategory }): void
+}>()
 
 const servicesStore = useServicesStore()
 
 const handleClick = () => {
   if (props.isClickable) {
-    // Получаем категорию по ID
-    const category = servicesStore.getCategoryById(props.id)
+    // Находим категорию, которая содержит эту услугу
+    const category = servicesStore.categories.find((cat) =>
+      cat.items?.some((item) => item.id === props.id)
+    )
     if (category) {
       emit('click', { ...props, category })
     } else {
@@ -39,17 +45,15 @@ const handleClick = () => {
 <template>
   <div
     :class="[
-      'service-card group rounded-[2rem] bg-white border border-gray-200 shadow-sm p-8 md:p-10 flex items-start gap-6 transition-all duration-300',
-      isClickable
-        ? 'cursor-pointer hover:shadow-lg hover:border-[var(--color-accent)] hover:scale-[1.02]'
-        : '',
+      'service-card group rounded-[3rem] services-card shadow-sm p-4 flex gap-4 transition-all duration-300',
+      isClickable ? 'cursor-pointer hover:shadow-lg hover:scale-[1.02]' : '',
       wrapperClass,
     ]"
     @click="handleClick"
   >
     <div
       :class="[
-        'w-20 h-20 shrink-0 rounded-2xl bg-gradient-to-br flex items-center justify-center text-4xl transition-all duration-300',
+        'w-20 h-20 shrink-0 rounded-[3rem] bg-gradient-to-br flex items-center justify-center text-4xl transition-all duration-300',
         iconBg,
         isClickable ? 'group-hover:scale-110 group-hover:rotate-3' : '',
       ]"
@@ -59,16 +63,16 @@ const handleClick = () => {
     <div class="flex-1">
       <h3
         :class="[
-          'text-3xl font-bold text-gray-900 leading-snug transition-colors duration-300',
-          isClickable ? 'group-hover:text-[var(--color-accent)]' : '',
+          'text-xl font-bold services-card-title leading-snug transition-colors duration-300',
+          isClickable ? 'group-hover:text-accent' : '',
         ]"
       >
         {{ title }}
       </h3>
       <p
         :class="[
-          'text-gray-700 mt-4 leading-relaxed max-w-3xl transition-colors duration-300',
-          isClickable ? 'group-hover:text-gray-800' : '',
+          'services-card-description mt-4 text-[0.7rem] leading-relaxed max-w-3xl transition-colors duration-300',
+          isClickable ? 'group-hover:text-text' : '',
         ]"
       >
         {{ description }}
@@ -76,13 +80,11 @@ const handleClick = () => {
       <div class="mt-6">
         <span
           :class="[
-            'text-2xl font-semibold transition-colors duration-300',
-            isClickable
-              ? 'text-[#2455ff] group-hover:text-[var(--color-accent)]'
-              : 'text-[#2455ff]',
+            'text-xl font-semibold services-card-price transition-colors duration-300',
+            isClickable ? 'group-hover:text-purple' : '',
           ]"
         >
-          from {{ priceFrom }}
+          {{ priceFrom }}
         </span>
       </div>
     </div>

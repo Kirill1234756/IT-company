@@ -6,208 +6,218 @@ export const useServicesStore = defineStore('services', {
     categories: [
       {
         id: 1,
-        title: 'Разработка сайта',
+        title: 'Рост',
         type: 'list' as const,
-        slug: 'site-development',
+        slug: 'growth',
         items: [
           {
             id: 1,
-            title: 'SaaS solutions',
-            price: 'from €12900',
-            description: 'If you offer innovative solutions to problems, we can help you develop a technological base (SaaS platform / service) for implementing your project. We create flexible, scalable, and secure systems tailored to the needs of your request.',
+            title: 'Продвижение',
+            price: 'от 8 000 ₽',
+            description: 'Неотъемлемый элемент развития любой компании в цифровой среде, позволяющий привлекать клиентов/покупателей для любого продукта/услуги на рынке. Качественное продвижение в интернете — ключ к успешному бизнесу для любой отрасли в современных условиях.',
             type: 'detail' as const,
-            slug: 'saas-solutions'
+            slug: 'promotion'
           },
           {
             id: 2,
-            title: 'Online Store',
-            price: 'from €5900',
-            description: 'Developing a unique e-commerce solution for creating full-fledged online sales over the Internet. We offer professional design, convenient navigation, reliable security system, and integration with various systems.',
-            type: 'detail' as const
+            title: 'Разработка маркетинговой стратегии',
+            price: 'от 10 000 ₽',
+            description: 'Разработка пути развития бизнеса на рынке и повышение его конкурентоспособности. Определение целевой аудитории, анализ рынка, конкурентов и трендов, каналов продвижения и метрик эффективности.',
+            type: 'detail' as const,
+            slug: 'marketing-strategy'
           },
           {
             id: 3,
-            title: 'Site Catalog',
-            price: 'from €5200',
-            description: 'A website where users can view and learn about a company\'s products. Suitable for B2B and when you just want to showcase your product range without the need for online sales.',
-            type: 'detail' as const
+            title: 'Аудит маркетинговых кампаний',
+            price: 'от 10 000 ₽',
+            description: 'Повышение эффективности маркетинговой деятельности. Услуга включает анализ результатов настроенных кампаний, оценку эффективности маркетинговых каналов и метрик, выявление сильных и слабых сторон, корректировку маркетинговой стратегии.',
+            type: 'detail' as const,
+            slug: 'marketing-audit'
           },
           {
             id: 4,
-            title: 'Corporate website',
-            price: 'from €4600',
-            description: 'Basic resource that represents a company on the Internet and allows clients to get comprehensive information about your company and its products / services, as well as leave an application / request.',
-            type: 'detail' as const
+            title: 'Исследования для развития бизнеса',
+            price: 'от 15 000 ₽',
+            description: 'Определяем потребности и предпочтения клиентов, выявляем особенности рынка, анализируем конкурентов. Проводим маркетинговые исследования, анализируем статистические данные и другие источники.',
+            type: 'detail' as const,
+            slug: 'business-research'
           },
           {
             id: 5,
-            title: 'Landing page',
-            price: 'from €2500',
-            description: 'Landing page website that presents a specific product (type of products) or service. Great for conducting demand research in a specific field / test running a new direction.',
-            type: 'detail' as const
+            title: 'Анализ рынка',
+            price: 'от 15 000 ₽',
+            description: 'Важный инструмент, позволяющий получить полную информацию о конкурентах, ценах, спросе и трендах рынка. На основе этой информации можем разработать эффективную стратегию продвижения бизнеса и увеличить доходы.',
+            type: 'detail' as const,
+            slug: 'market-analysis'
           },
           {
             id: 6,
-            title: 'Business card site',
-            price: 'from €3900',
-            description: 'Small website with 3-4 pages that allows creating the first impression of a company, briefly introducing its services / products, and submitting an application.',
-            type: 'detail' as const
+            title: 'Анализ конкурентов',
+            price: 'от 10 000 ₽',
+            description: 'Анализ конкурентов позволяет получить исчерпывающую информацию о конкурентах, их стратегиях и сильных сторонах. Это незаменимый инструмент для разработки эффективной стратегии продвижения продукта и повышения конкурентоспособности компании.',
+            type: 'detail' as const,
+            slug: 'competitor-analysis'
           }
         ]
       },
       {
         id: 2,
-        title: 'Интеграция сайта с внешними сервисами',
-        type: 'detail' as const,
-        slug: 'site-integration',
-        detail: {
-          id: 2,
-          title: 'Site integration with external services',
-          breadcrumbs: ['Home', 'Services', 'Development'],
-          about: {
-            title: 'About',
-            description: [
-              'We offer a service of integration with various systems that help our clients simplify and automate workflows, improve data management and increase business efficiency.',
-              'We have experience with various systems such as: CRM, ERP, social networks, as well as with external APIs and databases. We are also ready to develop an individual solution that will meet the needs of your business.',
-              'When integrating, we use advanced technologies and tools that help us speed up the process, reduce risks and deliver high-quality results. Our team of development, testing and integration experts are ready to take on all the integration tasks so you can focus on what matters and grow your business.'
-            ]
+        title: 'Стратегия',
+        type: 'list' as const,
+        slug: 'strategy',
+        items: [
+          {
+            id: 7,
+            title: 'Разработка бизнес-плана',
+            price: 'от 20 000 ₽',
+            description: 'Создание бизнес-плана — важный процесс, позволяющий определить стратегию развития бизнеса, его цели и задачи, разработать модель, а также измерить достижение этих целей.',
+            type: 'detail' as const,
+            slug: 'business-plan'
           },
-          metrics: {
-            cost: '€700',
-            workingDays: 10
+          {
+            id: 8,
+            title: 'Разработка предварительной маркетинговой стратегии',
+            price: 'от 10 000 ₽',
+            description: 'План продвижения продукта/услуги на рынке.',
+            type: 'detail' as const,
+            slug: 'preliminary-marketing-strategy'
           },
-          features: [
-            {
-              id: 1,
-              title: 'Can provide users with quick access to relevant information, speed up purchase processes, improve service quality',
-              description: ''
-            },
-            {
-              id: 2,
-              title: 'Integration with CRM, ERP or other systems allows you to optimize business processes and save time and resources',
-              description: ''
-            },
-            {
-              id: 3,
-              title: 'Integration with analytics systems allows you to get detailed information about user behavior on the site, their preferences and conversion rates',
-              description: ''
-            },
-            {
-              id: 4,
-              title: 'Integration with various marketing services, can help the site create effective and personalized marketing campaigns',
-              description: ''
-            }
-          ],
-          stages: [
-            {
-              id: 1,
-              number: '01',
-              title: 'Requirements Analysis',
-              description: 'Определение необходимых функций и возможностей, типов данных и автоматизируемых процессов.'
-            },
-            {
-              id: 2,
-              number: '02',
-              title: 'Selection of suitable tools and technologies',
-              description: 'Выбор инструментов и технологий (API, протоколы, плагины, фреймворки).'
-            },
-            {
-              id: 3,
-              number: '03',
-              title: 'Development and customization',
-              description: 'Разработка и настройка (написание кода, создание конфигурационных файлов, использование конструктора).'
-            },
-            {
-              id: 4,
-              number: '04',
-              title: 'Testing',
-              description: 'Тестирование для проверки работоспособности, корректности передачи данных, стабильности.'
-            },
-            {
-              id: 5,
-              number: '05',
-              title: 'Deployment',
-              description: 'Развертывание (установка и настройка на сервере, внедрение в существующую систему).'
-            },
-            {
-              id: 6,
-              number: '06',
-              title: 'Support and update',
-              description: 'Поддержка и обновление (мониторинг производительности, исправление ошибок, обновление систем, отслеживание изменений требований).'
-            }
-          ],
-          faq: [
-            {
-              id: 1,
-              question: 'How long does integration with different systems take?',
-              answer: 'The integration time depends on the complexity of the systems and the required functionality. On average, it takes from 5 to 20 working days.'
-            },
-            {
-              id: 2,
-              question: 'What kind of support will be provided after the integration?',
-              answer: 'We provide comprehensive support including monitoring, troubleshooting, updates and consultations for 6 months after project completion.'
-            },
-            {
-              id: 3,
-              question: 'Which systems can be integrated with the website?',
-              answer: 'We can integrate with CRM, ERP, payment systems, analytics, social networks, email services and many other external systems.'
-            },
-            {
-              id: 4,
-              question: 'How do you integrate with external systems?',
-              answer: 'We use APIs, webhooks, database connections and other modern integration methods depending on the system requirements.'
-            },
-            {
-              id: 5,
-              question: 'What data can be integrated with external systems?',
-              answer: 'We can integrate user data, orders, products, analytics, payments and any other data that your business needs.'
-            },
-            {
-              id: 6,
-              question: 'Do I need to actively participate in the integration process?',
-              answer: 'We handle most of the technical work, but we may need your input for requirements clarification and testing.'
-            }
-          ]
-        }
+          {
+            id: 9,
+            title: 'Брендинг',
+            price: 'от 25 000 ₽',
+            description: 'Создание и поддержание имиджа бренда, разработка уникальной концепции и позиционирования, которые привлекут и удержат клиентов, а также увеличат прибыль компании.',
+            type: 'detail' as const,
+            slug: 'branding'
+          }
+        ]
+      },
+      {
+        id: 3,
+        title: 'Разработка сайта',
+        type: 'list' as const,
+        slug: 'site-development',
+        items: [
+          {
+            id: 10,
+            title: 'Корпоративный сайт',
+            price: 'от 60 000 ₽',
+            description: 'Базовый ресурс, который представляет компанию в интернете и позволяет клиентам получить полную информацию о вашей компании и ее продуктах / услугах, а также оставить заявку / запрос.',
+            type: 'detail' as const,
+            slug: 'corporate-website'
+          },
+          {
+            id: 11,
+            title: 'Интернет-магазин',
+            price: 'от 80 000 ₽',
+            description: 'Разработка уникального e-commerce решения для создания полноценных онлайн-продаж через интернет. Мы предлагаем профессиональный дизайн, удобную навигацию, надежную систему безопасности и интеграцию с различными системами.',
+            type: 'detail' as const,
+            slug: 'online-store'
+          },
+          {
+            id: 12,
+            title: 'Каталог сайта',
+            price: 'от 60 000 ₽',
+            description: 'Веб-сайт, где пользователи могут просматривать и изучать продукты компании. Подходит для B2B и когда вы просто хотите продемонстрировать свой ассортимент продукции без необходимости онлайн-продаж.',
+            type: 'detail' as const,
+            slug: 'site-catalog'
+          },
+          {
+            id: 13,
+            title: 'Лендинг страница',
+            price: 'от 25 000 ₽',
+            description: 'Лендинг страница, которая представляет конкретный продукт (тип продуктов) или услугу. Отлично подходит для проведения исследования спроса в конкретной области / тестирования нового направления.',
+            type: 'detail' as const,
+            slug: 'landing-page'
+          },
+          {
+            id: 14,
+            title: 'Сайт-визитка',
+            price: 'от 40 000 ₽',
+            description: 'Небольшой сайт с 3-4 страницами, который позволяет создать первое впечатление о компании, кратко представить ее услуги / продукты и подать заявку.',
+            type: 'detail' as const,
+            slug: 'business-card-site'
+          },
+          {
+            id: 15,
+            title: 'SaaS решения',
+            price: 'от 130 000 ₽',
+            description: 'Если вы предлагаете инновационные решения проблем, мы можем помочь вам разработать технологическую базу (SaaS платформу / сервис) для реализации вашего проекта. Мы создаем гибкие, масштабируемые и безопасные системы, адаптированные под потребности вашего запроса.',
+            type: 'detail' as const,
+            slug: 'saas-solutions'
+          }
+        ]
+      },
+      {
+        id: 4,
+        title: 'Разработка',
+        type: 'list' as const,
+        slug: 'development',
+        items: [
+          {
+            id: 16,
+            title: 'Интеграция сайта с внешними сервисами',
+            price: 'от 10 000 ₽',
+            description: 'Автоматизация и упрощение обработки заказов в компании. Интеграция значительно ускорит обработку заказов и повысит удобство покупки для клиентов.',
+            type: 'detail' as const,
+            slug: 'site-integration'
+          },
+          {
+            id: 17,
+            title: 'Автоматизация бизнес-процессов',
+            price: 'от 35 000 ₽',
+            description: 'Услуги, направленные на улучшение общей работы компании. Создание эффективной системы управления и контроля бизнес-процессов, автоматизация работы с документами, оптимизация управления командой.',
+            type: 'detail' as const,
+            slug: 'business-automation'
+          },
+          {
+            id: 18,
+            title: 'Интеграция с CRM',
+            price: 'от 15 000 ₽',
+            description: 'Интеграция с CRM упрощает взаимодействие с клиентами и повышает эффективность продаж. Автоматизация процессов обработки заказов, контроль уровня сервиса, управление маркетинговыми кампаниями.',
+            type: 'detail' as const,
+            slug: 'crm-integration'
+          }
+        ]
       }
     ] as ServiceCategory[],
 
-    // Детальная информация для SaaS solutions
-    saasDetail: {
+    // Детальная информация для Продвижение
+    promotionDetail: {
       id: 1,
-      title: 'SaaS solutions',
-      breadcrumbs: ['Home', 'Services', 'Development', 'SaaS solutions'],
+      title: 'Продвижение',
+      breadcrumbs: ['Главная', 'Услуги', 'Рост', 'Продвижение'],
       about: {
-        title: 'About',
+        title: 'О нас',
         description: [
-          'If you offer innovative solutions to problems, we can help you develop a technological base (SaaS platform / service) for implementing your project. We create flexible, scalable, and secure systems tailored to the needs of your request.',
-          'SaaS solutions simplify business processes, improve customer interaction, increase efficiency, and reduce costs. They offer scalability, data security, privacy, and regulatory compliance.',
-          'Our team specializes in developing custom SaaS platforms that meet the specific needs of your business and help you achieve your goals.'
+          'Неотъемлемый элемент развития любой компании в цифровой среде, позволяющий привлекать клиентов/покупателей для любого продукта/услуги на рынке. Качественное продвижение в интернете — ключ к успешному бизнесу для любой отрасли в современных условиях.',
+          'Мы специализируемся на комплексном продвижении бизнеса в цифровой среде, используя современные инструменты и стратегии. Наша команда экспертов поможет вам увеличить видимость вашего бренда, привлечь целевую аудиторию и повысить конверсию.',
+          'Наш подход включает анализ вашего бизнеса, разработку индивидуальной стратегии продвижения и реализацию комплексных решений для достижения максимальных результатов.'
         ]
       },
       metrics: {
-        cost: '€12900',
-        workingDays: 50
+        cost: '8 000 ₽',
+        workingDays: 15
       },
       features: [
         {
           id: 1,
-          title: 'Development of a SaaS platform for startups aiming to offer the market innovative solutions.',
+          title: 'SEO-оптимизация: Повышение позиций сайта в поисковых системах для увеличения органического трафика.',
           description: ''
         },
         {
           id: 2,
-          title: 'For automating business processes, structuring department workflows, and organizing operational procedures.',
+          title: 'Контекстная реклама: Эффективное размещение рекламы в поисковых системах и социальных сетях.',
           description: ''
         },
         {
           id: 3,
-          title: 'To enhance communication and collaboration within the company and with clients.',
+          title: 'SMM-продвижение: Развитие присутствия бренда в социальных сетях и взаимодействие с аудиторией.',
           description: ''
         },
         {
           id: 4,
-          title: 'To increase the efficiency of company operations and achieve target performance indicators.',
+          title: 'Контент-маркетинг: Создание качественного контента для привлечения и удержания клиентов.',
           description: ''
         }
       ],
@@ -215,85 +225,1670 @@ export const useServicesStore = defineStore('services', {
         {
           id: 1,
           number: '01',
-          title: 'Interview and analytics',
+          title: 'Анализ и аудит',
+          description: 'Исследование текущего состояния продвижения, анализ конкурентов и определение возможностей для роста.'
+        },
+        {
+          id: 2,
+          number: '02',
+          title: 'Стратегия продвижения',
+          description: 'Разработка комплексной стратегии продвижения с учетом специфики вашего бизнеса и целевой аудитории.'
+        },
+        {
+          id: 3,
+          number: '03',
+          title: 'Реализация кампаний',
+          description: 'Запуск и настройка рекламных кампаний, оптимизация сайта и создание контента.'
+        },
+        {
+          id: 4,
+          number: '04',
+          title: 'Мониторинг и оптимизация',
+          description: 'Отслеживание результатов, анализ эффективности и корректировка стратегии для улучшения показателей.'
+        }
+      ],
+      faq: [
+        {
+          id: 1,
+          question: 'Сколько времени нужно для получения первых результатов продвижения?',
+          answer: 'Первые результаты контекстной рекламы видны уже через несколько дней, а SEO-результаты обычно проявляются через 1-3 месяца после начала работ.'
+        },
+        {
+          id: 2,
+          question: 'Какие каналы продвижения наиболее эффективны?',
+          answer: 'Эффективность каналов зависит от специфики бизнеса. Мы анализируем вашу отрасль и целевую аудиторию, чтобы выбрать наиболее подходящие каналы.'
+        },
+        {
+          id: 3,
+          question: 'Предоставляете ли вы отчеты о результатах продвижения?',
+          answer: 'Да, мы ежемесячно предоставляем детальные отчеты с анализом всех ключевых показателей и рекомендациями по улучшению.'
+        },
+        {
+          id: 4,
+          question: 'Можно ли изменить стратегию продвижения в процессе работы?',
+          answer: 'Конечно. Мы постоянно анализируем результаты и корректируем стратегию для достижения максимальной эффективности.'
+        }
+      ]
+    } as ServiceDetail,
+
+    // Детальная информация для Разработка маркетинговой стратегии
+    marketingStrategyDetail: {
+      id: 2,
+      title: 'Разработка маркетинговой стратегии',
+      breadcrumbs: ['Главная', 'Услуги', 'Рост', 'Разработка маркетинговой стратегии'],
+      about: {
+        title: 'О нас',
+        description: [
+          'Разработка пути развития бизнеса на рынке и повышение его конкурентоспособности. Определение целевой аудитории, анализ рынка, конкурентов и трендов, каналов продвижения и метрик эффективности.',
+          'Мы создаем индивидуальные маркетинговые стратегии, основанные на глубоком понимании вашего бизнеса, рынка и конкурентной среды. Наш подход включает комплексный анализ и разработку детального плана действий.',
+          'Наша стратегия поможет вам четко определить цели, выбрать оптимальные каналы продвижения и создать эффективную систему измерения результатов.'
+        ]
+      },
+      metrics: {
+        cost: '10 000 ₽',
+        workingDays: 20
+      },
+      features: [
+        {
+          id: 1,
+          title: 'Анализ целевой аудитории: Детальное исследование потребностей, предпочтений и поведения ваших клиентов.',
+          description: ''
+        },
+        {
+          id: 2,
+          title: 'Конкурентный анализ: Изучение стратегий конкурентов и определение ваших конкурентных преимуществ.',
+          description: ''
+        },
+        {
+          id: 3,
+          title: 'Планирование каналов: Выбор наиболее эффективных каналов продвижения для вашего бизнеса.',
+          description: ''
+        },
+        {
+          id: 4,
+          title: 'Система метрик: Разработка KPI и системы измерения эффективности маркетинговых активностей.',
+          description: ''
+        }
+      ],
+      stages: [
+        {
+          id: 1,
+          number: '01',
+          title: 'Исследование рынка',
+          description: 'Анализ рынка, изучение трендов, определение возможностей и угроз для вашего бизнеса.'
+        },
+        {
+          id: 2,
+          number: '02',
+          title: 'Анализ аудитории',
+          description: 'Сегментация целевой аудитории, создание портретов клиентов и анализ их потребностей.'
+        },
+        {
+          id: 3,
+          number: '03',
+          title: 'Разработка стратегии',
+          description: 'Создание комплексной маркетинговой стратегии с определением целей, тактик и ресурсов.'
+        },
+        {
+          id: 4,
+          number: '04',
+          title: 'План реализации',
+          description: 'Детальный план действий с временными рамками, бюджетом и ответственными лицами.'
+        }
+      ],
+      faq: [
+        {
+          id: 1,
+          question: 'Как долго действует разработанная маркетинговая стратегия?',
+          answer: 'Стратегия обычно рассчитана на 6-12 месяцев, но мы рекомендуем пересматривать ее каждые 3-6 месяцев в зависимости от изменений на рынке.'
+        },
+        {
+          id: 2,
+          question: 'Включает ли стратегия конкретные рекомендации по бюджету?',
+          answer: 'Да, мы предоставляем детальные рекомендации по распределению бюджета между различными каналами продвижения.'
+        },
+        {
+          id: 3,
+          question: 'Можете ли вы помочь с реализацией разработанной стратегии?',
+          answer: 'Конечно, мы можем взять на себя реализацию стратегии или консультировать вашу команду в процессе внедрения.'
+        },
+        {
+          id: 4,
+          question: 'Как измеряется эффективность маркетинговой стратегии?',
+          answer: 'Мы разрабатываем систему KPI и метрик, которые позволят отслеживать прогресс и корректировать стратегию при необходимости.'
+        }
+      ]
+    } as ServiceDetail,
+
+    // Детальная информация для Аудит маркетинговых кампаний
+    marketingAuditDetail: {
+      id: 3,
+      title: 'Аудит маркетинговых кампаний',
+      breadcrumbs: ['Главная', 'Услуги', 'Рост', 'Аудит маркетинговых кампаний'],
+      about: {
+        title: 'О нас',
+        description: [
+          'Повышение эффективности маркетинговой деятельности. Услуга включает анализ результатов настроенных кампаний, оценку эффективности маркетинговых каналов и метрик, выявление сильных и слабых сторон, корректировку маркетинговой стратегии.',
+          'Мы проводим комплексный аудит ваших маркетинговых кампаний, выявляя точки роста и возможности для оптимизации. Наш анализ охватывает все аспекты: от настройки рекламных кампаний до анализа конверсии и ROI.',
+          'После аудита вы получите конкретные рекомендации по улучшению каждой кампании, увеличению конверсии и снижению стоимости привлечения клиента.'
+        ]
+      },
+      metrics: {
+        cost: '50 000 ₽',
+        workingDays: 14
+      },
+      features: [
+        {
+          id: 1,
+          title: 'Анализ рекламных кампаний: Оценка эффективности настроенных кампаний в различных каналах и системах.',
+          description: ''
+        },
+        {
+          id: 2,
+          title: 'Анализ целевой аудитории: Проверка правильности настройки таргетинга и сегментации.',
+          description: ''
+        },
+        {
+          id: 3,
+          title: 'Оптимизация бюджетов: Рекомендации по перераспределению бюджета между каналами для максимальной эффективности.',
+          description: ''
+        },
+        {
+          id: 4,
+          title: 'Анализ метрик: Изучение ключевых показателей эффективности и выявление проблемных мест.',
+          description: ''
+        }
+      ],
+      stages: [
+        {
+          id: 1,
+          number: '01',
+          title: 'Сбор данных',
+          description: 'Получение доступа к рекламным кабинетам, аналитическим системам и сбор всей необходимой информации.'
+        },
+        {
+          id: 2,
+          number: '02',
+          title: 'Анализ эффективности',
+          description: 'Детальный анализ всех кампаний, каналов и метрик для выявления сильных и слабых сторон.'
+        },
+        {
+          id: 3,
+          number: '03',
+          title: 'Выявление проблем',
+          description: 'Определение ключевых проблем и узких мест, которые снижают эффективность маркетинга.'
+        },
+        {
+          id: 4,
+          number: '04',
+          title: 'Рекомендации',
+          description: 'Подготовка детального отчета с конкретными рекомендациями по улучшению каждой кампании.'
+        }
+      ],
+      faq: [
+        {
+          id: 1,
+          question: 'Как часто нужно проводить аудит маркетинговых кампаний?',
+          answer: 'Рекомендуется проводить аудит каждые 3-6 месяцев или при изменении бизнес-стратегии, появлении новых конкурентов или снижении эффективности.'
+        },
+        {
+          id: 2,
+          question: 'Какие данные нужны для проведения аудита?',
+          answer: 'Нам потребуется доступ к рекламным кабинетам, аналитическим системам и любая информация о ваших маркетинговых активностях.'
+        },
+        {
+          id: 3,
+          question: 'Получу ли я рекомендации по улучшению кампаний?',
+          answer: 'Да, по результатам аудита вы получите детальный отчет с конкретными рекомендациями по оптимизации каждой кампании.'
+        },
+        {
+          id: 4,
+          question: 'Можете ли вы помочь с внедрением рекомендаций?',
+          answer: 'Конечно, мы можем не только провести аудит, но и помочь с реализацией рекомендаций для повышения эффективности.'
+        }
+      ]
+    } as ServiceDetail,
+
+    // Детальная информация для Исследования для развития бизнеса
+    businessResearchDetail: {
+      id: 4,
+      title: 'Исследования для развития бизнеса',
+      breadcrumbs: ['Главная', 'Услуги', 'Рост', 'Исследования для развития бизнеса'],
+      about: {
+        title: 'О нас',
+        description: [
+          'Определяем потребности и предпочтения клиентов, выявляем особенности рынка, анализируем конкурентов. Проводим маркетинговые исследования, анализируем статистические данные и другие источники.',
+          'Мы проводим комплексные исследования рынка и потребителей, которые помогут вам принимать обоснованные бизнес-решения. Наши исследования основаны на анализе больших данных, опросах клиентов и изучении трендов.',
+          'Результаты исследований дадут вам четкое понимание вашей целевой аудитории, конкурентной среды и возможностей для роста бизнеса.'
+        ]
+      },
+      metrics: {
+        cost: '15 000 ₽',
+        workingDays: 25
+      },
+      features: [
+        {
+          id: 1,
+          title: 'Исследование целевой аудитории: Глубокий анализ потребностей, предпочтений и поведения ваших клиентов.',
+          description: ''
+        },
+        {
+          id: 2,
+          title: 'Анализ рынка: Изучение размеров рынка, трендов, возможностей и угроз для вашего бизнеса.',
+          description: ''
+        },
+        {
+          id: 3,
+          title: 'Конкурентный анализ: Исследование стратегий конкурентов, их сильных и слабых сторон.',
+          description: ''
+        },
+        {
+          id: 4,
+          title: 'Проведение опросов: Организация и проведение опросов клиентов для получения обратной связи.',
+          description: ''
+        }
+      ],
+      stages: [
+        {
+          id: 1,
+          number: '01',
+          title: 'Постановка задач',
+          description: 'Определение целей исследования, формулировка ключевых вопросов и выбор методологии.'
+        },
+        {
+          id: 2,
+          number: '02',
+          title: 'Сбор данных',
+          description: 'Сбор информации из различных источников: опросы, интервью, аналитика, статистика.'
+        },
+        {
+          id: 3,
+          number: '03',
+          title: 'Анализ данных',
+          description: 'Обработка и анализ собранных данных для выявления паттернов и трендов.'
+        },
+        {
+          id: 4,
+          number: '04',
+          title: 'Интерпретация результатов',
+          description: 'Формулирование выводов и рекомендаций на основе проведенного анализа.'
+        },
+        {
+          id: 5,
+          number: '05',
+          title: 'Отчет и презентация',
+          description: 'Подготовка детального отчета с визуализацией данных и презентация результатов.'
+        }
+      ],
+      faq: [
+        {
+          id: 1,
+          question: 'Какие методы исследования вы используете?',
+          answer: 'Мы используем различные методы: онлайн и офлайн опросы, глубинные интервью, фокус-группы, анализ данных и статистики.'
+        },
+        {
+          id: 2,
+          question: 'Сколько времени занимает исследование?',
+          answer: 'Сроки зависят от масштаба исследования, обычно от 2 до 4 недель.'
+        },
+        {
+          id: 3,
+          question: 'Какую информацию я получу в результате исследования?',
+          answer: 'Вы получите детальный отчет с результатами, выводами и конкретными рекомендациями для развития бизнеса.'
+        },
+        {
+          id: 4,
+          question: 'Можете ли вы провести исследование по конкретной нише или вопросу?',
+          answer: 'Да, мы проводим исследования по любым вопросам, связанным с развитием вашего бизнеса.'
+        }
+      ]
+    } as ServiceDetail,
+
+    // Детальная информация для Анализ рынка
+    marketAnalysisDetail: {
+      id: 5,
+      title: 'Анализ рынка',
+      breadcrumbs: ['Главная', 'Услуги', 'Рост', 'Анализ рынка'],
+      about: {
+        title: 'О нас',
+        description: [
+          'Важный инструмент, позволяющий получить полную информацию о конкурентах, ценах, спросе и трендах рынка. На основе этой информации можем разработать эффективную стратегию продвижения бизнеса и увеличить доходы.',
+          'Мы проводим комплексный анализ рынка, который поможет вам понять текущую ситуацию, выявить возможности и угрозы, а также определить оптимальную стратегию развития бизнеса.',
+          'Наш анализ включает изучение размеров рынка, динамики роста, ценовых стратегий конкурентов и потребительских трендов.'
+        ]
+      },
+      metrics: {
+        cost: '70 000 ₽',
+        workingDays: 20
+      },
+      features: [
+        {
+          id: 1,
+          title: 'Размер и динамика рынка: Анализ объема рынка, темпов роста и прогнозов развития.',
+          description: ''
+        },
+        {
+          id: 2,
+          title: 'Ценовой анализ: Изучение ценовых стратегий конкурентов и определение оптимального ценового сегмента.',
+          description: ''
+        },
+        {
+          id: 3,
+          title: 'Анализ спроса: Исследование потребностей клиентов и факторов, влияющих на спрос.',
+          description: ''
+        },
+        {
+          id: 4,
+          title: 'Изучение трендов: Выявление актуальных трендов и прогнозирование их развития.',
+          description: ''
+        }
+      ],
+      stages: [
+        {
+          id: 1,
+          number: '01',
+          title: 'Определение цели',
+          description: 'Формулирование целей анализа рынка и ключевых вопросов для исследования.'
+        },
+        {
+          id: 2,
+          number: '02',
+          title: 'Сбор информации',
+          description: 'Сбор данных о конкурентах, ценах, потребителях и тенденциях рынка.'
+        },
+        {
+          id: 3,
+          number: '03',
+          title: 'Анализ данных',
+          description: 'Обработка и анализ собранной информации для выявления закономерностей.'
+        },
+        {
+          id: 4,
+          number: '04',
+          title: 'Формулирование выводов',
+          description: 'Подготовка выводов и рекомендаций на основе проведенного анализа.'
+        }
+      ],
+      faq: [
+        {
+          id: 1,
+          question: 'Какую информацию я получу после анализа рынка?',
+          answer: 'Вы получите детальный отчет с анализом размера рынка, конкурентов, цен и трендов, а также рекомендации по стратегии.'
+        },
+        {
+          id: 2,
+          question: 'Сколько времени занимает анализ рынка?',
+          answer: 'Сроки зависят от специфики рынка, обычно от 2 до 3 недель.'
+        },
+        {
+          id: 3,
+          question: 'Какие источники данных вы используете?',
+          answer: 'Мы используем открытые источники, специализированные базы данных, опросы экспертов и собственные исследования.'
+        },
+        {
+          id: 4,
+          question: 'Поможет ли анализ рынка принять решение о выходе на новый рынок?',
+          answer: 'Да, анализ рынка — ключевой инструмент для принятия решения о выходе на новый рынок и разработки стратегии.'
+        }
+      ]
+    } as ServiceDetail,
+
+    // Детальная информация для Анализ конкурентов
+    competitorAnalysisDetail: {
+      id: 6,
+      title: 'Анализ конкурентов',
+      breadcrumbs: ['Главная', 'Услуги', 'Рост', 'Анализ конкурентов'],
+      about: {
+        title: 'О нас',
+        description: [
+          'Анализ конкурентов позволяет получить исчерпывающую информацию о конкурентах, их стратегиях и сильных сторонах. Это незаменимый инструмент для разработки эффективной стратегии продвижения продукта и повышения конкурентоспособности компании.',
+          'Мы проводим глубокий анализ ваших конкурентов, изучая их стратегии, продукты, цены, маркетинговые подходы и сильные стороны. Это поможет вам понять конкурентную среду и найти способы выделиться.',
+          'Наш анализ дает вам четкое понимание позиционирования конкурентов и позволяет разработать уникальное торговое предложение.'
+        ]
+      },
+      metrics: {
+        cost: '50 000 ₽',
+        workingDays: 18
+      },
+      features: [
+        {
+          id: 1,
+          title: 'Идентификация конкурентов: Определение прямых и косвенных конкурентов на рынке.',
+          description: ''
+        },
+        {
+          id: 2,
+          title: 'Анализ продуктов: Изучение продуктов конкурентов, их характеристик и преимуществ.',
+          description: ''
+        },
+        {
+          id: 3,
+          title: 'Анализ цен: Исследование ценовых стратегий конкурентов и позиционирования.',
+          description: ''
+        },
+        {
+          id: 4,
+          title: 'Маркетинговый анализ: Изучение маркетинговых стратегий и каналов продвижения конкурентов.',
+          description: ''
+        }
+      ],
+      stages: [
+        {
+          id: 1,
+          number: '01',
+          title: 'Идентификация конкурентов',
+          description: 'Определение основных конкурентов и их категоризация по уровню конкурентности.'
+        },
+        {
+          id: 2,
+          number: '02',
+          title: 'Сбор информации',
+          description: 'Сбор данных о конкурентах: продукты, цены, маркетинг, клиенты и репутация.'
+        },
+        {
+          id: 3,
+          number: '03',
+          title: 'Сравнительный анализ',
+          description: 'Сравнение вашего предложения с предложениями конкурентов по ключевым параметрам.'
+        },
+        {
+          id: 4,
+          number: '04',
+          title: 'Выявление возможностей',
+          description: 'Определение конкурентных преимуществ и возможностей для улучшения позиций.'
+        }
+      ],
+      faq: [
+        {
+          id: 1,
+          question: 'Сколько конкурентов вы анализируете?',
+          answer: 'Мы анализируем от 3 до 10 ключевых конкурентов в зависимости от специфики рынка и ваших потребностей.'
+        },
+        {
+          id: 2,
+          question: 'Какую информацию я получу о конкурентах?',
+          answer: 'Вы получите подробный анализ продуктов, цен, маркетинговых стратегий и сильных сторон каждого конкурента.'
+        },
+        {
+          id: 3,
+          question: 'Поможет ли анализ конкурентов улучшить мой продукт?',
+          answer: 'Да, анализ конкурентов поможет выявить пробелы на рынке и возможности для улучшения вашего продукта.'
+        },
+        {
+          id: 4,
+          question: 'Как часто нужно проводить анализ конкурентов?',
+          answer: 'Рекомендуется проводить анализ каждые 6-12 месяцев или при выходе нового продукта или изменении стратегии.'
+        }
+      ]
+    } as ServiceDetail,
+
+    // Детальная информация для SaaS решений
+    saasDetail: {
+      id: 15,
+      title: 'SaaS решения',
+      breadcrumbs: ['Главная', 'Услуги', 'Разработка сайта', 'SaaS решения'],
+      about: {
+        title: 'О нас',
+        description: [
+          'Если вы предлагаете инновационные решения проблем, мы можем помочь вам разработать технологическую базу (SaaS платформу / сервис) для реализации вашего проекта. Мы создаем гибкие, масштабируемые и безопасные системы, адаптированные под потребности вашего запроса.',
+          'SaaS решения упрощают бизнес-процессы, улучшают взаимодействие с клиентами, повышают эффективность и снижают затраты. Они предлагают масштабируемость, безопасность данных, конфиденциальность и соответствие нормативным требованиям.',
+          'Наша команда специализируется на разработке индивидуальных SaaS платформ, которые соответствуют конкретным потребностям вашего бизнеса и помогают достичь ваших целей.'
+        ]
+      },
+      metrics: {
+        cost: '130 000 ₽',
+        workingDays: 50
+      },
+      features: [
+        {
+          id: 1,
+          title: 'Разработка SaaS платформы для стартапов, стремящихся предложить рынку инновационные решения.',
+          description: ''
+        },
+        {
+          id: 2,
+          title: 'Для автоматизации бизнес-процессов, структурирования рабочих процессов отделов и организации операционных процедур.',
+          description: ''
+        },
+        {
+          id: 3,
+          title: 'Для улучшения коммуникации и сотрудничества внутри компании и с клиентами.',
+          description: ''
+        },
+        {
+          id: 4,
+          title: 'Для повышения эффективности операций компании и достижения целевых показателей производительности.',
+          description: ''
+        }
+      ],
+      stages: [
+        {
+          id: 1,
+          number: '01',
+          title: 'Интервью и аналитика',
           description: 'Определение бизнес-целей, задач, анализ информационной среды клиента и текущих бизнес-процессов.'
         },
         {
           id: 2,
           number: '02',
-          title: 'Compilation of terms of reference',
+          title: 'Составление технического задания',
           description: 'Составление технического задания на основе собранной информации, детализация технических требований, функциональных модулей и процедур согласования.'
         },
         {
           id: 3,
           number: '03',
-          title: 'Prototyping',
+          title: 'Прототипирование',
           description: 'Визуализация будущего продукта, построение структуры страниц, создание интерактивных прототипов.'
         },
         {
           id: 4,
           number: '04',
-          title: 'Design development',
+          title: 'Разработка дизайна',
           description: 'Определение визуальной концепции, стиля, подготовка демонстраций элементов интерфейса и анимаций.'
         },
         {
           id: 5,
           number: '05',
-          title: 'Frontend and Backend development',
+          title: 'Frontend и Backend разработка',
           description: 'Подбор разработчиков и реализация всего задуманного на предыдущих этапах в виде кода.'
         },
         {
           id: 6,
           number: '06',
-          title: 'Testing',
+          title: 'Тестирование',
           description: 'Тщательная проверка сайта на производительность и устранение ошибок.'
         },
         {
           id: 7,
           number: '07',
-          title: 'Project Transfer',
+          title: 'Передача проекта',
           description: 'Передача готового продукта заказчику, демонстрация функционала, обучение.'
         },
         {
           id: 8,
           number: '08',
-          title: 'Support',
+          title: 'Поддержка',
           description: 'Формирование категории для запросов клиентов, организация мониторинга серверов, поддержка ПО, резервное копирование.'
         }
       ],
       faq: [
         {
           id: 1,
-          question: 'How do you know if your business needs a SaaS solution?',
-          answer: 'If you need to automate processes, scale your business, or provide services to multiple clients through a web platform, a SaaS solution might be right for you.'
+          question: 'Как понять, нужны ли вашему бизнесу SaaS решения?',
+          answer: 'Если вам нужно автоматизировать процессы, масштабировать бизнес или предоставлять услуги нескольким клиентам через веб-платформу, SaaS решение может подойти вам.'
         },
         {
           id: 2,
-          question: 'How long does it take to develop a SaaS solution?',
-          answer: 'Development time varies from 2 to 6 months depending on complexity, features, and requirements. We provide detailed timelines during consultation.'
+          question: 'Сколько времени занимает разработка SaaS решения?',
+          answer: 'Время разработки варьируется от 2 до 6 месяцев в зависимости от сложности, функций и требований. Мы предоставляем подробные временные рамки во время консультации.'
         },
         {
           id: 3,
-          question: 'Can the SaaS solution be integrated with other systems?',
-          answer: 'Yes, we can integrate with CRM, ERP, payment systems, and other third-party services through APIs and webhooks.'
+          question: 'Можно ли интегрировать SaaS решение с другими системами?',
+          answer: 'Да, мы можем интегрировать с CRM, ERP, платежными системами и другими сторонними сервисами через API и webhooks.'
         },
         {
           id: 4,
-          question: 'How is the SaaS solution implemented and staff trained?',
-          answer: 'We provide comprehensive training, documentation, and support during implementation to ensure smooth adoption by your team.'
+          question: 'Как внедряется SaaS решение и обучается персонал?',
+          answer: 'Мы предоставляем комплексное обучение, документацию и поддержку во время внедрения, чтобы обеспечить плавное внедрение вашей командой.'
         },
         {
           id: 5,
-          question: 'How is my data secure when using a SaaS solution?',
-          answer: 'We implement enterprise-grade security measures including encryption, secure authentication, regular backups, and compliance with data protection regulations.'
+          question: 'Как защищены мои данные при использовании SaaS решения?',
+          answer: 'Мы внедряем корпоративные меры безопасности, включая шифрование, безопасную аутентификацию, регулярные резервные копии и соответствие нормам защиты данных.'
         },
         {
           id: 6,
-          question: 'Are there any limits on the number of users who can use SaaS solutions?',
-          answer: 'SaaS solutions are designed to scale with your business. We can accommodate from a few users to thousands depending on your needs.'
+          question: 'Есть ли ограничения на количество пользователей SaaS решений?',
+          answer: 'SaaS решения разработаны для масштабирования вместе с вашим бизнесом. Мы можем обслуживать от нескольких пользователей до тысяч в зависимости от ваших потребностей.'
         }
       ]
     } as ServiceDetail,
+
+    // Детальная информация для Разработка бизнес-плана
+    businessPlanDetail: {
+      id: 7,
+      title: 'Разработка бизнес-плана',
+      breadcrumbs: ['Главная', 'Услуги', 'Стратегия', 'Разработка бизнес-плана'],
+      about: {
+        title: 'О нас',
+        description: [
+          'Создание бизнес-плана — важный процесс, позволяющий определить стратегию развития бизнеса, его цели и задачи, разработать модель, а также измерить достижение этих целей.',
+          'Мы создаем детальные бизнес-планы, которые помогут вам привлечь инвестиции, получить финансирование или четко определить стратегию развития. Наш бизнес-план включает анализ рынка, финансовые прогнозы и детальный план реализации.',
+          'Профессионально составленный бизнес-план не только убеждает инвесторов, но и служит подробной дорожной картой для успешного развития вашего бизнеса.'
+        ]
+      },
+      metrics: {
+        cost: '20 000 ₽',
+        workingDays: 30
+      },
+      features: [
+        {
+          id: 1,
+          title: 'Анализ рынка: Детальное исследование целевого рынка, трендов и возможностей.',
+          description: ''
+        },
+        {
+          id: 2,
+          title: 'Финансовые прогнозы: Разработка финансовой модели с прогнозами на 3-5 лет.',
+          description: ''
+        },
+        {
+          id: 3,
+          title: 'Описание продукта: Детальное описание вашего продукта или услуги и их преимуществ.',
+          description: ''
+        },
+        {
+          id: 4,
+          title: 'План маркетинга: Разработка стратегии продвижения и привлечения клиентов.',
+          description: ''
+        }
+      ],
+      stages: [
+        {
+          id: 1,
+          number: '01',
+          title: 'Сбор информации',
+          description: 'Сбор всех необходимых данных о вашем бизнесе, продукте и рынке.'
+        },
+        {
+          id: 2,
+          number: '02',
+          title: 'Анализ рынка',
+          description: 'Проведение глубокого анализа рынка, конкурентов и целевой аудитории.'
+        },
+        {
+          id: 3,
+          number: '03',
+          title: 'Финансовое моделирование',
+          description: 'Разработка финансовой модели с прогнозами доходов, расходов и прибыли.'
+        },
+        {
+          id: 4,
+          number: '04',
+          title: 'Написание бизнес-плана',
+          description: 'Создание структурированного документа со всеми разделами.'
+        },
+        {
+          id: 5,
+          number: '05',
+          title: 'Презентация',
+          description: 'Подготовка презентации для инвесторов или руководства.'
+        }
+      ],
+      faq: [
+        {
+          id: 1,
+          question: 'Для чего нужен бизнес-план?',
+          answer: 'Бизнес-план необходим для привлечения инвестиций, получения кредита, планирования развития бизнеса и управления рисками.'
+        },
+        {
+          id: 2,
+          question: 'Какой срок действия у бизнес-плана?',
+          answer: 'Бизнес-план обычно актуален на 1-3 года. Мы рекомендуем обновлять его ежегодно или при значительных изменениях в бизнесе.'
+        },
+        {
+          id: 3,
+          question: 'Включает ли бизнес-план финансовые прогнозы?',
+          answer: 'Да, мы включаем детальные финансовые прогнозы на 3-5 лет с анализом рентабельности и окупаемости.'
+        },
+        {
+          id: 4,
+          question: 'Можете ли вы помочь с презентацией бизнес-плана?',
+          answer: 'Конечно, мы поможем подготовить презентацию и дадим рекомендации по защите бизнес-плана перед инвесторами.'
+        }
+      ]
+    } as ServiceDetail,
+
+    // Детальная информация для Разработка предварительной маркетинговой стратегии
+    preliminaryMarketingStrategyDetail: {
+      id: 8,
+      title: 'Разработка предварительной маркетинговой стратегии',
+      breadcrumbs: ['Главная', 'Услуги', 'Стратегия', 'Разработка предварительной маркетинговой стратегии'],
+      about: {
+        title: 'О нас',
+        description: [
+          'План продвижения продукта/услуги на рынке. Разработка предварительной маркетинговой стратегии поможет вам определить основные направления продвижения до начала масштабных инвестиций в маркетинг.',
+          'Мы создаем предварительные маркетинговые стратегии, которые позволят вам оценить потенциал продукта на рынке и определить наиболее эффективные каналы продвижения. Наша стратегия основана на анализе рынка и целевой аудитории.',
+          'Эта услуга идеально подходит для стартапов и компаний, запускающих новые продукты, так как позволяет минимизировать риски и максимально эффективно использовать маркетинговый бюджет.'
+        ]
+      },
+      metrics: {
+        cost: '50 000 ₽',
+        workingDays: 15
+      },
+      features: [
+        {
+          id: 1,
+          title: 'Анализ целевой аудитории: Определение основных сегментов целевой аудитории и их характеристик.',
+          description: ''
+        },
+        {
+          id: 2,
+          title: 'Выбор каналов: Определение наиболее эффективных каналов продвижения для вашего продукта.',
+          description: ''
+        },
+        {
+          id: 3,
+          title: 'Бюджетное планирование: Оценка необходимого бюджета для реализации стратегии.',
+          description: ''
+        },
+        {
+          id: 4,
+          title: 'План запуска: Разработка поэтапного плана запуска маркетинговых активностей.',
+          description: ''
+        }
+      ],
+      stages: [
+        {
+          id: 1,
+          number: '01',
+          title: 'Исследование',
+          description: 'Анализ рынка, конкурентов и целевой аудитории для вашего продукта.'
+        },
+        {
+          id: 2,
+          number: '02',
+          title: 'Разработка стратегии',
+          description: 'Создание предварительной маркетинговой стратегии с учетом специфики продукта.'
+        },
+        {
+          id: 3,
+          number: '03',
+          title: 'Оценка бюджета',
+          description: 'Определение необходимого бюджета и ресурсов для реализации стратегии.'
+        },
+        {
+          id: 4,
+          number: '04',
+          title: 'План действий',
+          description: 'Разработка детального плана действий для запуска маркетинговых активностей.'
+        }
+      ],
+      faq: [
+        {
+          id: 1,
+          question: 'Чем предварительная стратегия отличается от полной?',
+          answer: 'Предварительная стратегия — это упрощенная версия, которая помогает оценить потенциал и определить основные направления. Полная стратегия более детальная и включает конкретные тактики.'
+        },
+        {
+          id: 2,
+          question: 'Когда нужна предварительная маркетинговая стратегия?',
+          answer: 'Она нужна при запуске нового продукта, выходе на новый рынок или перед крупными инвестициями в маркетинг.'
+        },
+        {
+          id: 3,
+          question: 'Можно ли потом доработать стратегию до полной?',
+          answer: 'Да, конечно. Предварительная стратегия может стать основой для разработки полной маркетинговой стратегии.'
+        },
+        {
+          id: 4,
+          question: 'Включает ли стратегия оценку конкурентов?',
+          answer: 'Да, мы проводим анализ конкурентов и определяем ваши конкурентные преимущества.'
+        }
+      ]
+    } as ServiceDetail,
+
+    // Детальная информация для Брендинг
+    brandingDetail: {
+      id: 9,
+      title: 'Брендинг',
+      breadcrumbs: ['Главная', 'Услуги', 'Стратегия', 'Брендинг'],
+      about: {
+        title: 'О нас',
+        description: [
+          'Создание и поддержание имиджа бренда, разработка уникальной концепции и позиционирования, которые привлекут и удержат клиентов, а также увеличат прибыль компании.',
+          'Мы создаем сильные бренды, которые выделяются на рынке и эмоционально связаны с вашей аудиторией. Наш подход включает разработку визуальной идентичности, определение позиционирования и создание концепции бренда.',
+          'Сильный бренд — это не просто логотип, это вся совокупность впечатлений, которые клиенты получают от взаимодействия с вашей компанией. Мы помогаем создать уникальный и запоминающийся бренд.'
+        ]
+      },
+      metrics: {
+        cost: '25 000 ₽',
+        workingDays: 35
+      },
+      features: [
+        {
+          id: 1,
+          title: 'Разработка концепции бренда: Создание уникальной концепции и ценностей бренда.',
+          description: ''
+        },
+        {
+          id: 2,
+          title: 'Визуальная идентичность: Разработка логотипа, цветовой палитры и фирменного стиля.',
+          description: ''
+        },
+        {
+          id: 3,
+          title: 'Позиционирование: Определение уникального позиционирования бренда на рынке.',
+          description: ''
+        },
+        {
+          id: 4,
+          title: 'Гайдлайны: Создание руководства по использованию элементов бренда.',
+          description: ''
+        }
+      ],
+      stages: [
+        {
+          id: 1,
+          number: '01',
+          title: 'Исследование',
+          description: 'Анализ рынка, конкурентов и целевой аудитории для понимания контекста.'
+        },
+        {
+          id: 2,
+          number: '02',
+          title: 'Концепция бренда',
+          description: 'Разработка концепции, ценностей и позиционирования бренда.'
+        },
+        {
+          id: 3,
+          number: '03',
+          title: 'Визуальная идентичность',
+          description: 'Создание логотипа, цветовой палитры, типографики и других визуальных элементов.'
+        },
+        {
+          id: 4,
+          number: '04',
+          title: 'Гайдлайны',
+          description: 'Разработка руководства по использованию всех элементов бренда.'
+        },
+        {
+          id: 5,
+          number: '05',
+          title: 'Применение',
+          description: 'Применение элементов бренда на различных носителях.'
+        }
+      ],
+      faq: [
+        {
+          id: 1,
+          question: 'Что входит в услугу брендинга?',
+          answer: 'Мы разрабатываем концепцию бренда, визуальную идентичность (логотип, цвета, шрифты), позиционирование и гайдлайны по использованию.'
+        },
+        {
+          id: 2,
+          question: 'Сколько времени занимает разработка бренда?',
+          answer: 'Обычно разработка бренда занимает от 3 до 5 недель в зависимости от сложности проекта.'
+        },
+        {
+          id: 3,
+          question: 'Получу ли я файлы логотипа и брендбука?',
+          answer: 'Да, вы получите все необходимые файлы в различных форматах для использования на всех носителях.'
+        },
+        {
+          id: 4,
+          question: 'Можете ли вы помочь с внедрением бренда?',
+          answer: 'Конечно, мы можем помочь с применением элементов бренда на сайте, в социальных сетях и на других носителях.'
+        }
+      ]
+    } as ServiceDetail,
+
+    // Детальная информация для Интернет-магазин
+    onlineStoreDetail: {
+      id: 11,
+      title: 'Интернет-магазин',
+      breadcrumbs: ['Главная', 'Услуги', 'Разработка сайта', 'Интернет-магазин'],
+      about: {
+        title: 'О нас',
+        description: [
+          'Разработка уникального e-commerce решения для создания полноценных онлайн-продаж через интернет. Мы предлагаем профессиональный дизайн, удобную навигацию, надежную систему безопасности и интеграцию с различными системами.',
+          'Создание интернет-магазина — это инвестиция в будущее вашего бизнеса. Он позволяет расширить географию продаж, работать 24/7, автоматизировать процессы и собирать ценные данные о клиентах. Мы разрабатываем магазины, которые не только выглядят привлекательно, но и эффективно конвертируют посетителей в покупателей.',
+          'Наша команда специализируется на создании высокопроизводительных и безопасных интернет-магазинов, которые легко интегрируются с существующими системами и масштабируются вместе с вашим бизнесом.'
+        ]
+      },
+      metrics: {
+        cost: '80 000 ₽',
+        workingDays: 30
+      },
+      features: [
+        {
+          id: 1,
+          title: 'Профессиональный дизайн, адаптированный под ваш бренд и целевую аудиторию.',
+          description: ''
+        },
+        {
+          id: 2,
+          title: 'Удобная и интуитивно понятная навигация для максимального комфорта пользователей.',
+          description: ''
+        },
+        {
+          id: 3,
+          title: 'Надежная система безопасности для защиты данных клиентов и транзакций.',
+          description: ''
+        },
+        {
+          id: 4,
+          title: 'Интеграция с платежными системами, CRM, складским учетом и другими сервисами.',
+          description: ''
+        }
+      ],
+      stages: [
+        {
+          id: 1,
+          number: '01',
+          title: 'Анализ и планирование',
+          description: 'Изучение рынка, конкурентов, целевой аудитории и формирование технического задания.'
+        },
+        {
+          id: 2,
+          number: '02',
+          title: 'Дизайн и прототипирование',
+          description: 'Разработка уникального дизайна, создание макетов и интерактивных прототипов.'
+        },
+        {
+          id: 3,
+          number: '03',
+          title: 'Разработка и интеграция',
+          description: 'Программирование функционала, интеграция с внешними системами и базами данных.'
+        },
+        {
+          id: 4,
+          number: '04',
+          title: 'Тестирование и запуск',
+          description: 'Тщательное тестирование всех функций, исправление ошибок и финальный запуск проекта.'
+        }
+      ],
+      faq: [
+        {
+          id: 1,
+          question: 'Сколько времени занимает разработка интернет-магазина?',
+          answer: 'Сроки зависят от сложности проекта и функционала, в среднем от 1 до 3 месяцев.'
+        },
+        {
+          id: 2,
+          question: 'Какие платежные системы можно интегрировать?',
+          answer: 'Мы интегрируем популярные платежные системы, такие как ЮKassa, Сбербанк, Тинькофф и другие, по вашему выбору.'
+        },
+        {
+          id: 3,
+          question: 'Будет ли мой интернет-магазин адаптирован под мобильные устройства?',
+          answer: 'Да, все наши проекты разрабатываются с учетом адаптивного дизайна для корректного отображения на любых устройствах.'
+        },
+        {
+          id: 4,
+          question: 'Предоставляете ли вы поддержку после запуска?',
+          answer: 'Мы предлагаем различные пакеты поддержки и обслуживания после запуска, чтобы ваш магазин работал бесперебойно.'
+        }
+      ]
+    } as ServiceDetail,
+
+    // Детальная информация для Каталог сайта
+    siteCatalogDetail: {
+      id: 12,
+      title: 'Каталог сайта',
+      breadcrumbs: ['Главная', 'Услуги', 'Разработка сайта', 'Каталог сайта'],
+      about: {
+        title: 'О нас',
+        description: [
+          'Веб-сайт, где пользователи могут просматривать и изучать продукты компании. Подходит для B2B и когда вы просто хотите продемонстрировать свой ассортимент продукции без необходимости онлайн-продаж.',
+          'Каталог сайта — это эффективный инструмент для демонстрации вашего ассортимента. Он позволяет потенциальным клиентам ознакомиться с вашими товарами или услугами в удобном формате, без необходимости совершать покупку прямо на сайте. Это идеальное решение для компаний, работающих в B2B сегменте, или для тех, кто хочет представить свою продукцию без сложной системы онлайн-продаж.',
+          'Мы создаем каталоги с интуитивно понятной навигацией, качественными изображениями и подробными описаниями, чтобы максимально эффективно представить вашу продукцию.'
+        ]
+      },
+      metrics: {
+        cost: '60 000 ₽',
+        workingDays: 25
+      },
+      features: [
+        {
+          id: 1,
+          title: 'Удобная система управления контентом для легкого добавления и редактирования товаров.',
+          description: ''
+        },
+        {
+          id: 2,
+          title: 'Профессиональный дизайн, подчеркивающий уникальность вашей продукции.',
+          description: ''
+        },
+        {
+          id: 3,
+          title: 'Фильтры и сортировка для быстрого поиска нужных товаров.',
+          description: ''
+        },
+        {
+          id: 4,
+          title: 'Адаптивный дизайн для корректного отображения на всех устройствах.',
+          description: ''
+        }
+      ],
+      stages: [
+        {
+          id: 1,
+          number: '01',
+          title: 'Сбор требований',
+          description: 'Определение структуры каталога, функционала и дизайна.'
+        },
+        {
+          id: 2,
+          number: '02',
+          title: 'Проектирование и дизайн',
+          description: 'Разработка макетов страниц и визуальной концепции.'
+        },
+        {
+          id: 3,
+          number: '03',
+          title: 'Разработка функционала',
+          description: 'Создание базы данных, системы управления товарами и фильтров.'
+        },
+        {
+          id: 4,
+          number: '04',
+          title: 'Наполнение и тестирование',
+          description: 'Загрузка контента, проверка работоспособности и запуск.'
+        }
+      ],
+      faq: [
+        {
+          id: 1,
+          question: 'Можно ли добавить функцию онлайн-заказа позже?',
+          answer: 'Да, каталог сайта может быть масштабирован до полноценного интернет-магазина с функцией онлайн-заказа в будущем.'
+        },
+        {
+          id: 2,
+          question: 'Как часто можно обновлять информацию в каталоге?',
+          answer: 'Вы сможете обновлять информацию о продуктах неограниченное количество раз через удобную систему управления контентом.'
+        },
+        {
+          id: 3,
+          question: 'Подходит ли каталог для большого количества товаров?',
+          answer: 'Да, мы разрабатываем каталоги, способные обрабатывать тысячи товаров с высокой производительностью.'
+        },
+        {
+          id: 4,
+          question: 'Предоставляете ли вы обучение по работе с каталогом?',
+          answer: 'Да, после завершения проекта мы проводим обучение для вашей команды по управлению сайтом и контентом.'
+        }
+      ]
+    } as ServiceDetail,
+
+    // Детальная информация для Корпоративный сайт
+    corporateWebsiteDetail: {
+      id: 10,
+      title: 'Корпоративный сайт',
+      breadcrumbs: ['Главная', 'Услуги', 'Разработка сайта', 'Корпоративный сайт'],
+      about: {
+        title: 'О нас',
+        description: [
+          'Разработка корпоративного сайта — это создание базового ресурса, который представляет компанию в интернете и позволяет клиентам получить полную информацию о вашей компании и ее продуктах / услугах, а также оставить заявку / запрос.',
+          'Корпоративный сайт под ключ — это визитная карточка вашей компании в цифровом мире. Разработка корпоративного сайта включает не только информирование о вашей деятельности, но и формирование имиджа, повышение доверия и привлечение новых клиентов. Мы создаем корпоративные сайты, которые отражают уникальность вашего бренда и эффективно коммуницируют с вашей аудиторией.',
+          'Создание корпоративного сайта — это комплексный процесс. Наши корпоративные сайты отличаются современным дизайном, удобной структурой и функционалом, необходимым для эффективного взаимодействия с клиентами и партнерами. Разработка сайта под ключ включает все этапы от проектирования до запуска.'
+        ]
+      },
+      metrics: {
+        cost: '60 000 ₽',
+        workingDays: 20
+      },
+      features: [
+        {
+          id: 1,
+          title: 'Разработка корпоративного сайта с уникальным дизайном, соответствующим корпоративному стилю вашей компании. Создание корпоративного сайта включает проработку визуальной концепции и пользовательского опыта.',
+          description: ''
+        },
+        {
+          id: 2,
+          title: 'Разработка сайта включает информационные разделы: о компании, услуги, продукты, новости, контакты. Корпоративный сайт под ключ обеспечивает полное представление вашего бизнеса.',
+          description: ''
+        },
+        {
+          id: 3,
+          title: 'Разработка корпоративного сайта включает формы обратной связи и заявки для удобного взаимодействия с клиентами. Создание сайта с функционалом для конверсии посетителей в клиентов.',
+          description: ''
+        },
+        {
+          id: 4,
+          title: 'Разработка корпоративного сайта под ключ включает интеграцию с CRM-системами для эффективной обработки заявок. Создание корпоративного сайта с автоматизацией бизнес-процессов.',
+          description: ''
+        }
+      ],
+      stages: [
+        {
+          id: 1,
+          number: '01',
+          title: 'Концепция и структура',
+          description: 'Определение целей сайта, целевой аудитории и разработка структуры.'
+        },
+        {
+          id: 2,
+          number: '02',
+          title: 'Дизайн и контент',
+          description: 'Создание визуального дизайна и подготовка текстового и графического контента.'
+        },
+        {
+          id: 3,
+          number: '03',
+          title: 'Разработка и функционал',
+          description: 'Программирование сайта, внедрение форм и других интерактивных элементов.'
+        },
+        {
+          id: 4,
+          number: '04',
+          title: 'Тестирование и запуск',
+          description: 'Проверка работоспособности, оптимизация и публикация сайта.'
+        }
+      ],
+      faq: [
+        {
+          id: 1,
+          question: 'Сколько страниц может быть на корпоративном сайте?',
+          answer: 'Количество страниц не ограничено и зависит от объема информации, которую вы хотите представить.'
+        },
+        {
+          id: 2,
+          question: 'Будет ли сайт оптимизирован для поисковых систем?',
+          answer: 'Да, мы проводим базовую SEO-оптимизацию для лучшей индексации сайта поисковыми системами.'
+        },
+        {
+          id: 3,
+          question: 'Могу ли я самостоятельно обновлять информацию на сайте?',
+          answer: 'Да, мы предоставляем удобную систему управления контентом (CMS), которая позволяет легко обновлять информацию.'
+        },
+        {
+          id: 4,
+          question: 'Какие сроки разработки корпоративного сайта?',
+          answer: 'Обычно разработка занимает от 3 до 6 недель, в зависимости от сложности и объема функционала.'
+        }
+      ]
+    } as ServiceDetail,
+
+    // Детальная информация для Лендинг страница
+    landingPageDetail: {
+      id: 13,
+      title: 'Лендинг страница',
+      breadcrumbs: ['Главная', 'Услуги', 'Разработка сайта', 'Лендинг страница'],
+      about: {
+        title: 'О нас',
+        description: [
+          'Лендинг страница, которая представляет конкретный продукт (тип продуктов) или услугу. Отлично подходит для проведения исследования спроса в конкретной области / тестирования нового направления.',
+          'Лендинг — это мощный инструмент для привлечения внимания к конкретному предложению и сбора лидов. Он идеально подходит для запуска новых продуктов, проведения акций, тестирования гипотез или сбора контактных данных потенциальных клиентов. Мы создаем высококонверсионные лендинги, которые мотивируют посетителей к целевому действию.',
+          'Наши лендинги отличаются ярким дизайном, четкой структурой и убедительным контентом, направленным на достижение ваших маркетинговых целей.'
+        ]
+      },
+      metrics: {
+        cost: '25 000 ₽',
+        workingDays: 10
+      },
+      features: [
+        {
+          id: 1,
+          title: 'Разработка уникального дизайна, ориентированного на высокую конверсию.',
+          description: ''
+        },
+        {
+          id: 2,
+          title: 'Четкая структура с призывом к действию (CTA) и формами захвата лидов.',
+          description: ''
+        },
+        {
+          id: 3,
+          title: 'Адаптивный дизайн для идеального отображения на всех устройствах.',
+          description: ''
+        },
+        {
+          id: 4,
+          title: 'Интеграция с аналитическими системами для отслеживания эффективности.',
+          description: ''
+        }
+      ],
+      stages: [
+        {
+          id: 1,
+          number: '01',
+          title: 'Определение цели',
+          description: 'Формулировка основной цели лендинга и целевой аудитории.'
+        },
+        {
+          id: 2,
+          number: '02',
+          title: 'Проектирование и копирайтинг',
+          description: 'Разработка структуры, написание продающих текстов и создание прототипов.'
+        },
+        {
+          id: 3,
+          number: '03',
+          title: 'Дизайн и верстка',
+          description: 'Создание визуального дизайна и адаптивная верстка страницы.'
+        },
+        {
+          id: 4,
+          number: '04',
+          title: 'Тестирование и запуск',
+          description: 'Проверка работоспособности, оптимизация и публикация лендинга.'
+        }
+      ],
+      faq: [
+        {
+          id: 1,
+          question: 'Для каких целей подходит лендинг?',
+          answer: 'Лендинг идеально подходит для запуска новых продуктов, проведения акций, сбора лидов, регистрации на мероприятия и тестирования маркетинговых гипотез.'
+        },
+        {
+          id: 2,
+          question: 'Можно ли создать несколько лендингов для разных продуктов?',
+          answer: 'Да, вы можете заказать разработку нескольких лендингов, каждый из которых будет ориентирован на конкретное предложение.'
+        },
+        {
+          id: 3,
+          question: 'Как отслеживать эффективность лендинга?',
+          answer: 'Мы интегрируем системы аналитики (Яндекс.Метрика, Google Analytics), которые позволят вам отслеживать посещаемость, конверсию и другие метрики.'
+        },
+        {
+          id: 4,
+          question: 'Какие сроки разработки лендинга?',
+          answer: 'Разработка лендинга обычно занимает от 1 до 3 недель, в зависимости от сложности дизайна и функционала.'
+        }
+      ]
+    } as ServiceDetail,
+
+    // Детальная информация для Сайт-визитка
+    businessCardSiteDetail: {
+      id: 14,
+      title: 'Сайт-визитка',
+      breadcrumbs: ['Главная', 'Услуги', 'Разработка сайта', 'Сайт-визитка'],
+      about: {
+        title: 'О нас',
+        description: [
+          'Небольшой сайт с 3-4 страницами, который позволяет создать первое впечатление о компании, кратко представить ее услуги / продукты и подать заявку.',
+          'Сайт-визитка — это идеальное решение для малого бизнеса, стартапов или частных специалистов, которым необходимо быстро и эффективно заявить о себе в интернете. Он предоставляет основную информацию о вашей компании, услугах, контактах и позволяет потенциальным клиентам легко связаться с вами.',
+          'Мы создаем стильные и функциональные сайты-визитки, которые формируют положительное первое впечатление и помогают вам привлекать новых клиентов.'
+        ]
+      },
+      metrics: {
+        cost: '40 000 ₽',
+        workingDays: 7
+      },
+      features: [
+        {
+          id: 1,
+          title: 'Компактный и информативный дизайн, представляющий ключевые аспекты вашего бизнеса.',
+          description: ''
+        },
+        {
+          id: 2,
+          title: 'Основные разделы: о нас, услуги, портфолио (по желанию), контакты.',
+          description: ''
+        },
+        {
+          id: 3,
+          title: 'Форма обратной связи для удобного взаимодействия с посетителями.',
+          description: ''
+        },
+        {
+          id: 4,
+          title: 'Адаптивный дизайн для корректного отображения на любых устройствах.',
+          description: ''
+        }
+      ],
+      stages: [
+        {
+          id: 1,
+          number: '01',
+          title: 'Определение содержания',
+          description: 'Выбор ключевой информации и разделов для сайта-визитки.'
+        },
+        {
+          id: 2,
+          number: '02',
+          title: 'Дизайн и макет',
+          description: 'Разработка простого, но эффективного дизайна и структуры страниц.'
+        },
+        {
+          id: 3,
+          number: '03',
+          title: 'Разработка и наполнение',
+          description: 'Создание сайта, добавление текстового и графического контента.'
+        },
+        {
+          id: 4,
+          number: '04',
+          title: 'Тестирование и публикация',
+          description: 'Проверка функционала и запуск сайта в сеть.'
+        }
+      ],
+      faq: [
+        {
+          id: 1,
+          question: 'Сколько страниц обычно включает сайт-визитка?',
+          answer: 'Обычно сайт-визитка состоит из 3-5 ключевых страниц, таких как "О нас", "Услуги", "Контакты".'
+        },
+        {
+          id: 2,
+          question: 'Можно ли добавить галерею или портфолио на сайт-визитку?',
+          answer: 'Да, по вашему желанию мы можем добавить раздел с галереей или портфолио для демонстрации ваших работ.'
+        },
+        {
+          id: 3,
+          question: 'Нужен ли сайт-визитка для SEO-продвижения?',
+          answer: 'Сайт-визитка может быть базово оптимизирован для поисковых систем, но для полноценного SEO-продвижения лучше подходят более крупные сайты.'
+        },
+        {
+          id: 4,
+          question: 'Какие сроки создания сайта-визитки?',
+          answer: 'Создание сайта-визитки — это самый быстрый вариант, обычно занимает от 1 до 2 недель.'
+        }
+      ]
+    } as ServiceDetail,
+
+    // Детальная информация для Интеграция сайта с внешними сервисами
+    siteIntegrationDetail: {
+      id: 16,
+      title: 'Интеграция сайта с внешними сервисами',
+      breadcrumbs: ['Главная', 'Услуги', 'Разработка', 'Интеграция сайта с внешними сервисами'],
+      about: {
+        title: 'О нас',
+        description: [
+          'Автоматизация и упрощение обработки заказов в компании. Интеграция значительно ускорит обработку заказов и повысит удобство покупки для клиентов.',
+          'Мы предлагаем услугу интеграции с различными системами, которые помогают нашим клиентам упростить и автоматизировать рабочие процессы, улучшить управление данными и повысить эффективность бизнеса.',
+          'Наша команда экспертов по разработке, тестированию и интеграции готова взять на себя все задачи интеграции, чтобы вы могли сосредоточиться на том, что важно, и развивать свой бизнес.'
+        ]
+      },
+      metrics: {
+        cost: '10 000 ₽',
+        workingDays: 10
+      },
+      features: [
+        {
+          id: 1,
+          title: 'Быстрый доступ к информации: Предоставление пользователям быстрого доступа к релевантной информации, ускорение процессов покупки, улучшение качества обслуживания.',
+          description: ''
+        },
+        {
+          id: 2,
+          title: 'Оптимизация процессов: Интеграция с CRM, ERP или другими системами позволяет оптимизировать бизнес-процессы и экономить время и ресурсы.',
+          description: ''
+        },
+        {
+          id: 3,
+          title: 'Аналитика и данные: Интеграция с аналитическими системами позволяет получить подробную информацию о поведении пользователей на сайте, их предпочтениях и коэффициентах конверсии.',
+          description: ''
+        },
+        {
+          id: 4,
+          title: 'Маркетинговые сервисы: Интеграция с различными маркетинговыми сервисами может помочь сайту создавать эффективные и персонализированные маркетинговые кампании.',
+          description: ''
+        }
+      ],
+      stages: [
+        {
+          id: 1,
+          number: '01',
+          title: 'Анализ требований',
+          description: 'Определение необходимых функций и возможностей, типов данных и автоматизируемых процессов.'
+        },
+        {
+          id: 2,
+          number: '02',
+          title: 'Выбор инструментов',
+          description: 'Выбор инструментов и технологий (API, протоколы, плагины, фреймворки).'
+        },
+        {
+          id: 3,
+          number: '03',
+          title: 'Разработка и настройка',
+          description: 'Разработка и настройка: написание кода, создание конфигурационных файлов, использование конструктора.'
+        },
+        {
+          id: 4,
+          number: '04',
+          title: 'Тестирование',
+          description: 'Тестирование для проверки работоспособности, корректности передачи данных, стабильности.'
+        },
+        {
+          id: 5,
+          number: '05',
+          title: 'Развертывание',
+          description: 'Развертывание: установка и настройка на сервере, внедрение в существующую систему.'
+        },
+        {
+          id: 6,
+          number: '06',
+          title: 'Поддержка и обновление',
+          description: 'Поддержка и обновление: мониторинг производительности, исправление ошибок, обновление систем, отслеживание изменений требований.'
+        }
+      ],
+      faq: [
+        {
+          id: 1,
+          question: 'Сколько времени занимает интеграция с различными системами?',
+          answer: 'Время интеграции зависит от сложности систем и требуемого функционала. В среднем это занимает от 5 до 20 рабочих дней.'
+        },
+        {
+          id: 2,
+          question: 'Какая поддержка будет предоставлена после интеграции?',
+          answer: 'Мы предоставляем комплексную поддержку, включая мониторинг, устранение неполадок, обновления и консультации в течение 6 месяцев после завершения проекта.'
+        },
+        {
+          id: 3,
+          question: 'С какими системами можно интегрировать сайт?',
+          answer: 'Мы можем интегрировать с CRM, ERP, платежными системами, аналитикой, социальными сетями, email-сервисами и многими другими внешними системами.'
+        },
+        {
+          id: 4,
+          question: 'Как вы интегрируете с внешними системами?',
+          answer: 'Мы используем API, webhooks, подключения к базам данных и другие современные методы интеграции в зависимости от требований системы.'
+        }
+      ]
+    } as ServiceDetail,
+
+    // Детальная информация для Автоматизация бизнес-процессов
+    businessAutomationDetail: {
+      id: 17,
+      title: 'Автоматизация бизнес-процессов',
+      breadcrumbs: ['Главная', 'Услуги', 'Разработка', 'Автоматизация бизнес-процессов'],
+      about: {
+        title: 'О нас',
+        description: [
+          'Услуги, направленные на улучшение общей работы компании. Создание эффективной системы управления и контроля бизнес-процессов, автоматизация работы с документами, оптимизация управления командой.',
+          'Мы помогаем компаниям автоматизировать рутинные процессы, сократить затраты времени и ресурсов, а также повысить качество работы. Наши решения настраиваются под специфику вашего бизнеса и могут масштабироваться вместе с ним.',
+          'Автоматизация бизнес-процессов — это инвестиция в эффективность вашей компании, которая окупается за счет снижения затрат и повышения производительности.'
+        ]
+      },
+      metrics: {
+        cost: '35 000 ₽',
+        workingDays: 40
+      },
+      features: [
+        {
+          id: 1,
+          title: 'Автоматизация документооборота: Создание системы автоматического создания, обработки и хранения документов.',
+          description: ''
+        },
+        {
+          id: 2,
+          title: 'Автоматизация отчетности: Автоматическая генерация отчетов и аналитики для принятия решений.',
+          description: ''
+        },
+        {
+          id: 3,
+          title: 'Автоматизация задач: Создание системы автоматического распределения и выполнения задач.',
+          description: ''
+        },
+        {
+          id: 4,
+          title: 'Интеграция систем: Объединение различных систем компании для единой работы.',
+          description: ''
+        }
+      ],
+      stages: [
+        {
+          id: 1,
+          number: '01',
+          title: 'Анализ процессов',
+          description: 'Изучение текущих бизнес-процессов и выявление возможностей для автоматизации.'
+        },
+        {
+          id: 2,
+          number: '02',
+          title: 'Проектирование решения',
+          description: 'Разработка архитектуры автоматизированной системы и выбор технологий.'
+        },
+        {
+          id: 3,
+          number: '03',
+          title: 'Разработка',
+          description: 'Создание и настройка автоматизированной системы.'
+        },
+        {
+          id: 4,
+          number: '04',
+          title: 'Тестирование',
+          description: 'Проверка работоспособности системы и устранение ошибок.'
+        },
+        {
+          id: 5,
+          number: '05',
+          title: 'Внедрение',
+          description: 'Постепенное внедрение системы в работу компании и обучение сотрудников.'
+        },
+        {
+          id: 6,
+          number: '06',
+          title: 'Поддержка',
+          description: 'Техническая поддержка и оптимизация системы после внедрения.'
+        }
+      ],
+      faq: [
+        {
+          id: 1,
+          question: 'Какие процессы можно автоматизировать?',
+          answer: 'Можно автоматизировать практически любые рутинные процессы: документооборот, отчетность, коммуникации, обработку заявок и многое другое.'
+        },
+        {
+          id: 2,
+          question: 'Сколько времени занимает внедрение автоматизации?',
+          answer: 'Сроки зависят от сложности процессов, обычно от 1 до 2 месяцев.'
+        },
+        {
+          id: 3,
+          question: 'Нужно ли обучать сотрудников работе с новой системой?',
+          answer: 'Да, мы проводим обучение ваших сотрудников работе с автоматизированной системой и предоставляем документацию.'
+        },
+        {
+          id: 4,
+          question: 'Какова рентабельность автоматизации?',
+          answer: 'Автоматизация обычно окупается за 6-12 месяцев за счет снижения затрат времени и снижения количества ошибок.'
+        }
+      ]
+    } as ServiceDetail,
+
+    // Детальная информация для Интеграция с CRM
+    crmIntegrationDetail: {
+      id: 18,
+      title: 'Интеграция с CRM',
+      breadcrumbs: ['Главная', 'Услуги', 'Разработка', 'Интеграция с CRM'],
+      about: {
+        title: 'О нас',
+        description: [
+          'Мы предлагаем услугу интеграции CRM, которая поможет вашей компании упростить и автоматизировать процессы управления данными клиентов, повысить эффективность продаж и улучшить качество обслуживания клиентов.',
+          'Мы имеем большой опыт работы с различными CRM-системами, такими как Bitrix24, amoCRM, Salesforce, Zoho CRM, SugarCRM и другими. Мы также готовы предложить комплексные решения для вашего бизнеса, основанные на лучших практиках.',
+          'При интеграции мы используем передовые технологии и инструменты, обеспечивающие максимальную производительность и функциональность. Мы интегрируем CRM с различными системами, такими как социальные сети, email маркетинг, телефония и многие другие. Это позволяет нам создать комплексное решение, которое поможет вам оптимизировать бизнес и улучшить качество обслуживания клиентов.',
+          'Наши специалисты помогут вам внедрить CRM-систему и настроить ее под ваши нужды, а также обучат ваших сотрудников работе с системой. Кроме того, мы оказываем техническую поддержку и консультации по поддержанию работоспособности системы.'
+        ]
+      },
+      metrics: {
+        cost: '15 000 ₽',
+        workingDays: 15
+      },
+      features: [
+        {
+          id: 1,
+          title: 'Централизованное хранение и управление данными клиентов упрощает доступ к информации о клиентах и обеспечивает ее актуальность.',
+          description: ''
+        },
+        {
+          id: 2,
+          title: 'Позволяет автоматизировать процессы маркетинга и продаж.',
+          description: ''
+        },
+        {
+          id: 3,
+          title: 'Позволяет собирать и анализировать данные о клиентах, продажах, маркетинговых мероприятиях и других аспектах вашего бизнеса.',
+          description: ''
+        },
+        {
+          id: 4,
+          title: 'Позволяет автоматизировать и упростить процесс обработки и обслуживания продаж, а также формировать отчеты, необходимые для успешных продаж.',
+          description: ''
+        }
+      ],
+      stages: [
+        {
+          id: 1,
+          number: '01',
+          title: 'Определение целей и требований',
+          description: 'В первую очередь необходимо определить, какие функции и данные необходимо интегрировать с CRM. Требования могут включать синхронизацию контактной информации, заказов, платежей, аналитики и других данных.'
+        },
+        {
+          id: 2,
+          number: '02',
+          title: 'Выбор правильной CRM-системы',
+          description: 'Сравните различные CRM-решения и выберите то, которое наилучшим образом соответствует вашим потребностям и бюджету. Убедитесь, что CRM поддерживает необходимые функции и интегрируется с вашим сайтом.'
+        },
+        {
+          id: 3,
+          number: '03',
+          title: 'Подготовка данных',
+          description: 'Перед началом интеграции необходимо подготовить данные, чтобы они были согласованными и актуальными. Это может включать в себя очистку и структурирование контактной информации, настройку категорий и сегментов клиентов и другие подготовительные действия.'
+        },
+        {
+          id: 4,
+          number: '04',
+          title: 'Развитие интеграции',
+          description: 'Следующий шаг – установление связи между вашим сайтом и CRM-системой. Это включает в себя создание и настройку необходимых программных интерфейсов для обмена данными между системами.'
+        },
+        {
+          id: 5,
+          number: '05',
+          title: 'Тестирование и отладка',
+          description: 'После завершения разработки интеграции необходимо провести тестирование на соответствие требованиям и корректность обмена данными. Обнаруженные ошибки и проблемы должны быть устранены и исправлены.'
+        },
+        {
+          id: 6,
+          number: '06',
+          title: 'Введение и запуск',
+          description: 'После успешного тестирования интеграции ее можно развернуть и запустить на рабочем сайте. Убедитесь, что все процессы работают должным образом, а данные успешно обновляются и синхронизируются между системами.'
+        },
+        {
+          id: 7,
+          number: '07',
+          title: 'Обучение и поддержка',
+          description: 'После завершения интеграции организуйте обучение сотрудников, которые будут работать с CRM, чтобы они могли эффективно использовать новые функции и возможности. Также разработчики предоставляют поддержку и обслуживание, чтобы иметь возможность решать возникающие проблемы и вносить необходимые изменения при необходимости.'
+        }
+      ],
+      faq: [
+        {
+          id: 1,
+          question: 'Какие CRM-системы можно интегрировать?',
+          answer: 'В зависимости от ваших бизнес-моделей и требований к управлению клиентами, вы можете интегрировать различные CRM-системы, такие как Bitrix24, Salesforce, Hubspot, Zoho CRM, SugarCRM, amoCRM и др.'
+        },
+        {
+          id: 2,
+          question: 'Какие возможности интеграции с CRM?',
+          answer: 'Интеграция с CRM позволяет автоматизировать процессы и сократить трудозатраты сотрудников, упростить управление, контролировать каналы продаж и повышать конверсию, анализировать данные о клиентах и корректировать маркетинг и продажи под их потребности.'
+        },
+        {
+          id: 3,
+          question: 'На каком этапе вашего бизнеса следует интегрироваться с CRM?',
+          answer: 'Интеграцию с CRM следует проводить, когда ваш бизнес растет и вы начинаете испытывать трудности в управлении продажами и обслуживанием клиентов. Например, когда у вас есть постоянный клиент или вы выходите на новый рынок.'
+        },
+        {
+          id: 4,
+          question: 'Какие данные можно интегрировать с CRM?',
+          answer: 'В зависимости от ваших требований вы можете интегрировать различные типы данных, включая контактную информацию клиентов, лиды, продажи, историю взаимодействия с клиентами, данные о сотрудниках и другую информацию, необходимую для эффективного управления вашей клиентской базой.'
+        },
+        {
+          id: 5,
+          question: 'Сколько времени занимает процесс интеграции CRM?',
+          answer: 'Время интеграции с CRM зависит от сложности требований и объема проекта. Обычно это занимает от нескольких недель до нескольких месяцев. При этом обязательно учитывайте время, затраченное на планирование, разработку, тестирование и внедрение.'
+        },
+        {
+          id: 6,
+          question: 'Могу ли я интегрировать несколько CRM-систем одновременно?',
+          answer: 'Да, вы можете интегрировать несколько CRM-систем одновременно и передавать в них данные параллельно.'
+        }
+      ]
+    } as ServiceDetail,
+
     // Cached services data (lazy-loaded on first use)
     growthServices: [] as Array<{ id: number; title: string; description: string; priceFrom: string; icon: string; iconBg: string }>,
     strategyServices: [] as Array<{ id: number; title: string; description: string; priceFrom: string; icon: string; iconBg: string }>,
@@ -318,7 +1913,28 @@ export const useServicesStore = defineStore('services', {
     serviceDetailsBySlug: (state) => {
       // Expand as more details are added
       const map: Record<string, ServiceDetail> = {}
+      // Growth services
+      map['promotion'] = state.promotionDetail
+      map['marketing-strategy'] = state.marketingStrategyDetail
+      map['marketing-audit'] = state.marketingAuditDetail
+      map['business-research'] = state.businessResearchDetail
+      map['market-analysis'] = state.marketAnalysisDetail
+      map['competitor-analysis'] = state.competitorAnalysisDetail
+      // Strategy services
+      map['business-plan'] = state.businessPlanDetail
+      map['preliminary-marketing-strategy'] = state.preliminaryMarketingStrategyDetail
+      map['branding'] = state.brandingDetail
+      // Development website services
+      map['corporate-website'] = state.corporateWebsiteDetail
+      map['online-store'] = state.onlineStoreDetail
+      map['site-catalog'] = state.siteCatalogDetail
+      map['landing-page'] = state.landingPageDetail
+      map['business-card-site'] = state.businessCardSiteDetail
       map['saas-solutions'] = state.saasDetail
+      // Development services
+      map['site-integration'] = state.siteIntegrationDetail
+      map['business-automation'] = state.businessAutomationDetail
+      map['crm-integration'] = state.crmIntegrationDetail
       return map
     },
 
@@ -331,7 +1947,28 @@ export const useServicesStore = defineStore('services', {
     },
     getServiceDetail(this: { serviceDetailsBySlug: Record<string, ServiceDetail> }) {
       return (serviceId: number): ServiceDetail | null => {
-        if (serviceId === 1) return this.serviceDetailsBySlug['saas-solutions'] ?? null
+        // Growth services
+        if (serviceId === 1) return this.serviceDetailsBySlug['promotion'] ?? null
+        if (serviceId === 2) return this.serviceDetailsBySlug['marketing-strategy'] ?? null
+        if (serviceId === 3) return this.serviceDetailsBySlug['marketing-audit'] ?? null
+        if (serviceId === 4) return this.serviceDetailsBySlug['business-research'] ?? null
+        if (serviceId === 5) return this.serviceDetailsBySlug['market-analysis'] ?? null
+        if (serviceId === 6) return this.serviceDetailsBySlug['competitor-analysis'] ?? null
+        // Strategy services
+        if (serviceId === 7) return this.serviceDetailsBySlug['business-plan'] ?? null
+        if (serviceId === 8) return this.serviceDetailsBySlug['preliminary-marketing-strategy'] ?? null
+        if (serviceId === 9) return this.serviceDetailsBySlug['branding'] ?? null
+        // Development website services
+        if (serviceId === 10) return this.serviceDetailsBySlug['corporate-website'] ?? null
+        if (serviceId === 11) return this.serviceDetailsBySlug['online-store'] ?? null
+        if (serviceId === 12) return this.serviceDetailsBySlug['site-catalog'] ?? null
+        if (serviceId === 13) return this.serviceDetailsBySlug['landing-page'] ?? null
+        if (serviceId === 14) return this.serviceDetailsBySlug['business-card-site'] ?? null
+        if (serviceId === 15) return this.serviceDetailsBySlug['saas-solutions'] ?? null
+        // Development services
+        if (serviceId === 16) return this.serviceDetailsBySlug['site-integration'] ?? null
+        if (serviceId === 17) return this.serviceDetailsBySlug['business-automation'] ?? null
+        if (serviceId === 18) return this.serviceDetailsBySlug['crm-integration'] ?? null
         return null
       }
     },

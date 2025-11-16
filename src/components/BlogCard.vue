@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { defineProps, defineEmits } from 'vue'
 import type { BlogPost } from '../types/blog'
+import OptimizedImage from './OptimizedImage.vue'
 
 const props = defineProps<{
   post: BlogPost
@@ -21,11 +22,20 @@ const handleClick = () => {
     @click="handleClick"
   >
     <!-- Image with overlay avatar -->
-    <div class="relative h-48 w-full overflow-hidden rounded-t-3xl">
-      <img
+    <div class="relative h-48 w-full overflow-hidden rounded-t-3xl" style="aspect-ratio: 16/9">
+      <OptimizedImage
         :src="post.image"
         :alt="post.title"
+        :width="400"
+        :height="225"
+        :widths="[400, 800, 1200]"
+        format="webp"
+        loading="lazy"
+        decoding="async"
+        fetchpriority="low"
         class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
+        style="box-sizing: border-box; display: block; transform: translateZ(0)"
+        :sizes="{ mobile: '100vw', tablet: '50vw', desktop: '33vw' }"
       />
       <!-- Blurred avatar overlay -->
       <div

@@ -1,173 +1,87 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { defineAsyncComponent } from 'vue'
+import { ref, watchEffect } from 'vue'
+import { useRoute } from 'vue-router'
+import { useHead } from '@unhead/vue'
+import { useBreadcrumbSchema } from '../composables/useBreadcrumbSchema'
 
-// Lazy load ContactSection for better performance
-const ContactSection = defineAsyncComponent(
-  () => import('../components/sections/ContactSection.vue')
-)
+const route = useRoute()
 
-// Memoized contact information
-const contactInfo = {
-  email: 'info@nextcode.com',
-  phone: '+1 (555) 123-4567',
-  address: '123 Tech Street, Digital City, DC 12345',
-  social: {
-    telegram: 'https://t.me/nextcode',
-    linkedin: 'https://linkedin.com/company/nextcode',
-    github: 'https://github.com/nextcode',
-  },
-}
+// Breadcrumb schema
+const { schema: breadcrumbSchema } = useBreadcrumbSchema(route)
 
-// Memoized animation elements
-const titleEl = ref<HTMLElement | null>(null)
-const containerEl = ref<HTMLElement | null>(null)
-
-// Memoized animation setup
-onMounted(() => {
-  // Simple fade-in animation for performance
-  if (titleEl.value) {
-    titleEl.value.style.opacity = '1'
-    titleEl.value.style.transform = 'translateY(0)'
-  }
-
-  if (containerEl.value) {
-    containerEl.value.style.opacity = '1'
-    containerEl.value.style.transform = 'translateY(0)'
+// Inject breadcrumb schema
+watchEffect(() => {
+  if (breadcrumbSchema.value) {
+    useHead({
+      script: [
+        {
+          type: 'application/ld+json',
+          children: JSON.stringify(breadcrumbSchema.value),
+          key: 'breadcrumb-schema',
+        },
+      ],
+    })
   }
 })
+
+// Copy phone number functionality
+const phoneNumber = '+7 904 296 40 72'
+const copied = ref(false)
+
+const copyPhoneNumber = async () => {
+  try {
+    await navigator.clipboard.writeText(phoneNumber)
+    copied.value = true
+    setTimeout(() => {
+      copied.value = false
+    }, 2000)
+  } catch (err) {
+    console.error('Failed to copy:', err)
+  }
+}
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-[var(--color-bg)] to-[var(--color-border)]">
-    <!-- Hero Section -->
-    <section class="relative py-20 px-4 md:px-8 lg:px-16">
-      <div class="container mx-auto max-w-6xl">
-        <h1
-          ref="titleEl"
-          class="text-4xl md:text-6xl lg:text-7xl font-black text-center mb-8 text-white opacity-0 transform translate-y-8 transition-all duration-1000"
-        >
-          <span class="text-[var(--color-accent)]">Contact</span> Us
-        </h1>
-
-        <p
-          class="text-xl md:text-2xl text-white/80 text-center max-w-3xl mx-auto mb-16 opacity-0 transform translate-y-8 transition-all duration-1000 delay-200"
-        >
-          Ready to start your next project? Let's discuss how we can help bring your ideas to life.
-        </p>
-      </div>
-    </section>
-
-    <!-- Contact Form Section -->
-    <section
-      ref="containerEl"
-      class="relative py-16 px-4 md:px-8 lg:px-16 opacity-0 transform translate-y-8 transition-all duration-1000 delay-400"
+  <section
+    class="py-8 sm:py-12 md:py-[5rem] px-4 sm:px-6 md:px-8 lg:px-16 bg-text flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8"
+  >
+    <!-- Contact Information Card - 2/5 width -->
+    <div
+      class="flex flex-col p-6 sm:p-9 w-full md:!w-2/5 border border-accent rounded-[3rem] bg-bg"
     >
-      <div class="container mx-auto max-w-4xl">
-        <div
-          class="bg-gradient-to-br from-[var(--color-bg)]/90 to-[var(--color-border)]/90 backdrop-blur-xl rounded-3xl p-8 md:p-12 border border-[var(--color-accent)]/30 shadow-2xl"
+      <h3 class="text-2xl sm:text-3xl md:text-3xl text-accent font-bold mb-6 sm:mb-8">
+        Наши контакты
+      </h3>
+      <div class="space-y-3">
+        <button
+          @click="copyPhoneNumber"
+          class="flex items-center space-x-3 w-full text-left hover:opacity-80 transition-opacity cursor-pointer relative"
         >
-          <!-- Contact Information -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-            <div>
-              <h3 class="text-2xl font-bold text-white mb-6">Get in Touch</h3>
-              <div class="space-y-4">
-                <div class="flex items-center space-x-3">
-                  <div
-                    class="w-8 h-8 bg-[var(--color-accent)]/20 rounded-full flex items-center justify-center"
-                  >
-                    <span class="text-[var(--color-accent)]">📧</span>
-                  </div>
-                  <span class="text-white/80">{{ contactInfo.email }}</span>
-                </div>
-                <div class="flex items-center space-x-3">
-                  <div
-                    class="w-8 h-8 bg-[var(--color-accent)]/20 rounded-full flex items-center justify-center"
-                  >
-                    <span class="text-[var(--color-accent)]">📱</span>
-                  </div>
-                  <span class="text-white/80">{{ contactInfo.phone }}</span>
-                </div>
-                <div class="flex items-center space-x-3">
-                  <div
-                    class="w-8 h-8 bg-[var(--color-accent)]/20 rounded-full flex items-center justify-center"
-                  >
-                    <span class="text-[var(--color-accent)]">📍</span>
-                  </div>
-                  <span class="text-white/80">{{ contactInfo.address }}</span>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 class="text-2xl font-bold text-white mb-6">Follow Us</h3>
-              <div class="space-y-4">
-                <a
-                  :href="contactInfo.social.telegram"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="flex items-center space-x-3 text-white/80 hover:text-[var(--color-accent)] transition-colors"
-                >
-                  <div
-                    class="w-8 h-8 bg-[var(--color-accent)]/20 rounded-full flex items-center justify-center"
-                  >
-                    <span class="text-[var(--color-accent)]">📱</span>
-                  </div>
-                  <span>Telegram</span>
-                </a>
-                <a
-                  :href="contactInfo.social.linkedin"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="flex items-center space-x-3 text-white/80 hover:text-[var(--color-accent)] transition-colors"
-                >
-                  <div
-                    class="w-8 h-8 bg-[var(--color-accent)]/20 rounded-full flex items-center justify-center"
-                  >
-                    <span class="text-[var(--color-accent)]">💼</span>
-                  </div>
-                  <span>LinkedIn</span>
-                </a>
-                <a
-                  :href="contactInfo.social.github"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="flex items-center space-x-3 text-white/80 hover:text-[var(--color-accent)] transition-colors"
-                >
-                  <div
-                    class="w-8 h-8 bg-[var(--color-accent)]/20 rounded-full flex items-center justify-center"
-                  >
-                    <span class="text-[var(--color-accent)]">💻</span>
-                  </div>
-                  <span>GitHub</span>
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <!-- Contact Form - handled by ContactSection -->
-          <div class="opacity-0 transform translate-y-8 transition-all duration-1000 delay-600">
-            <h3 class="text-2xl font-bold text-white mb-6">Send us a Message</h3>
-            <p class="text-white/60 mb-8">
-              Use the contact form below to get in touch with us directly.
-            </p>
-          </div>
-        </div>
+          <span class="text-accent text-xl sm:text-2xl">📱</span>
+          <p class="text-text text-sm sm:text-base md:text-lg">{{ phoneNumber }}</p>
+          <span v-if="copied" class="ml-auto text-xs text-accent font-medium animate-pulse">
+            Скопировано!
+          </span>
+        </button>
+        <a
+          href="mailto:kodify@gmail.com"
+          class="flex items-center space-x-3 hover:opacity-80 transition-opacity"
+        >
+          <span class="text-accent text-xl sm:text-2xl">📧</span>
+          <p class="text-text text-sm sm:text-base md:text-lg">kodify@gmail.com</p>
+        </a>
+        <a
+          href="https://t.me/kodify_tg"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="flex items-center space-x-3 hover:opacity-80 transition-opacity"
+        >
+          <span class="text-accent text-xl sm:text-2xl">💬</span>
+          <p class="text-text text-sm sm:text-base md:text-lg">kodify_tg</p>
+        </a>
       </div>
-    </section>
-
-    <!-- Contact Form Section (lazy loaded) -->
-    <Suspense>
-      <ContactSection />
-      <template #fallback>
-        <div class="py-20 text-center">
-          <div
-            class="animate-spin w-8 h-8 border-2 border-[var(--color-accent)] border-t-transparent rounded-full mx-auto"
-          ></div>
-        </div>
-      </template>
-    </Suspense>
-  </div>
+    </div>
+  </section>
 </template>
 
 <style scoped>
@@ -182,27 +96,7 @@ onMounted(() => {
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Focus styles for accessibility */
-input:focus,
-button:focus {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-}
-
 /* Hover effects */
-a:hover {
-  transform: translateY(-1px);
-}
-
-/* Form validation styles */
-input:invalid:not(:focus) {
-  border-color: rgb(239 68 68);
-}
-
-/* Loading state */
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
 
 @keyframes spin {
   from {

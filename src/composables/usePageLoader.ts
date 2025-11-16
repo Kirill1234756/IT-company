@@ -6,17 +6,17 @@ const progress = ref(0)
 const isRouteChange = ref(false)
 
 export const usePageLoader = () => {
-  // Minimum loading time to avoid flash
-  const MIN_LOADING_TIME = 1000 // 1 second
-  const MIN_ROUTE_TIME = 500 // 0.5 second for route changes
+  // Minimum loading time only for route changes (to avoid flash)
+  const MIN_ROUTE_TIME = 300 // 0.3 second for route changes
   let startTime = Date.now()
+  let loadingPromises: Promise<void>[] = []
 
   // Simulate loading progress with more realistic behavior
   const simulateProgress = () => {
     const interval = setInterval(() => {
       // More realistic progress simulation
       const timeElapsed = Date.now() - startTime
-      const maxTime = isRouteChange.value ? MIN_ROUTE_TIME : MIN_LOADING_TIME * 2
+      const maxTime = isRouteChange.value ? MIN_ROUTE_TIME * 2 : 3000 // 3 seconds max for initial load
       const baseProgress = Math.min(timeElapsed / maxTime, 0.7) // Max 70%
 
       // Add some randomness but keep it smooth
@@ -27,11 +27,35 @@ export const usePageLoader = () => {
     return interval
   }
 
-  // Complete loading with minimum time check
-  const completeLoading = () => {
+  // Complete loading - wait for all promises or minimum time for route changes
+  const completeLoading = async () => {
+    const MAX_WAIT_TIME = 5000 // Максимум 5 секунд ожидания
+    const startWaitTime = Date.now()
+
+    // Wait for all loading promises to resolve with timeout
+    if (loadingPromises.length > 0) {
+      try {
+        await Promise.race([
+          Promise.all(loadingPromises),
+          new Promise<void>((resolve) => {
+            setTimeout(() => {
+              // Таймаут - принудительно завершаем ожидание
+              resolve()
+            }, MAX_WAIT_TIME)
+          })
+        ])
+      } catch (error) {
+        // Игнорируем ошибки промисов, чтобы лоадер не зависал
+      }
+      loadingPromises = []
+    }
+
     const timeElapsed = Date.now() - startTime
-    const minTime = isRouteChange.value ? MIN_ROUTE_TIME : MIN_LOADING_TIME
+    const minTime = isRouteChange.value ? MIN_ROUTE_TIME : 0
     const remainingTime = Math.max(0, minTime - timeElapsed)
+
+    // Максимальное время ожидания - 5 секунд
+    const maxWaitTime = Math.min(remainingTime, MAX_WAIT_TIME - (Date.now() - startWaitTime))
 
     setTimeout(() => {
       progress.value = 100
@@ -39,7 +63,12 @@ export const usePageLoader = () => {
         isLoading.value = false
         isRouteChange.value = false
       }, 300) // Smooth fade out
-    }, remainingTime)
+    }, Math.max(0, maxWaitTime))
+  }
+
+  // Add a promise to wait for before hiding loader
+  const addLoadingPromise = (promise: Promise<void>) => {
+    loadingPromises.push(promise)
   }
 
   // Start loading for route changes
@@ -60,10 +89,25 @@ export const usePageLoader = () => {
     return simulateProgress()
   }
 
-  // Handle page load events
-  const handlePageLoad = () => {
+  // Handle page load events - wait for window.load and Vue components
+  const handlePageLoad = async () => {
+    // Wait for window.load event
     if (document.readyState === 'complete') {
-      completeLoading()
+      // Wait a bit for Vue to mount and components to start loading
+      await new Promise(resolve => setTimeout(resolve, 100))
+      // Добавляем таймаут для completeLoading
+      const timeout = setTimeout(() => {
+        // Принудительно завершаем загрузку через 5 секунд
+        isLoading.value = false
+        isRouteChange.value = false
+        progress.value = 100
+      }, 5000)
+
+      try {
+        await completeLoading()
+      } finally {
+        clearTimeout(timeout)
+      }
     }
   }
 
@@ -76,8 +120,23 @@ export const usePageLoader = () => {
 
     // Check if already loaded
     if (document.readyState === 'complete') {
-      clearInterval(interval)
-      completeLoading()
+      // Wait a bit for Vue to mount
+      const timeout = setTimeout(() => {
+        // Принудительно завершаем загрузку через 5 секунд
+        clearInterval(interval)
+        isLoading.value = false
+        isRouteChange.value = false
+        progress.value = 100
+      }, 5000)
+
+      setTimeout(async () => {
+        clearInterval(interval)
+        try {
+          await completeLoading()
+        } finally {
+          clearTimeout(timeout)
+        }
+      }, 100)
     }
 
     return () => {
@@ -100,7 +159,7 @@ export const usePageLoader = () => {
       }
 
       // Start route loading
-      routeInterval = startRouteLoading()
+      routeInterval = Number(startRouteLoading())
       next()
     })
 
@@ -110,7 +169,17 @@ export const usePageLoader = () => {
         clearInterval(routeInterval)
         routeInterval = null
       }
-      completeLoading()
+      // Добавляем таймаут для route changes
+      const timeout = setTimeout(() => {
+        // Принудительно завершаем загрузку через 3 секунды для route changes
+        isLoading.value = false
+        isRouteChange.value = false
+        progress.value = 100
+      }, 3000)
+
+      completeLoading().finally(() => {
+        clearTimeout(timeout)
+      })
     })
 
     return () => {
@@ -128,6 +197,7 @@ export const usePageLoader = () => {
     initRouterLoader,
     completeLoading,
     startLoading,
-    startRouteLoading
+    startRouteLoading,
+    addLoadingPromise
   }
 }

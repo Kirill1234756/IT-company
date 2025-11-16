@@ -1,25 +1,36 @@
 <script setup lang="ts">
-import { ref, defineAsyncComponent, onMounted, computed, watch, nextTick } from 'vue'
+import {
+  ref,
+  defineAsyncComponent,
+  onMounted,
+  onUnmounted,
+  computed,
+  watch,
+  nextTick,
+  watchEffect,
+} from 'vue'
 import { storeToRefs } from 'pinia'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useIntersectionObserver } from '@vueuse/core'
-import { useStackScroll } from '../composables/useStackScroll'
+// import { useStackScroll } from '../composables/useStackScroll'
 import { usePortfolioStore } from '../stores/portfolio'
 import type { FilterType, PortfolioProject } from '../types/portfolio'
+import { useHead } from '@unhead/vue'
+import { useBreadcrumbSchema } from '../composables/useBreadcrumbSchema'
 // import { cn } from '@/utils/cn'
 
 // Ленивая загрузка компонентов с оптимизацией
 const PortfolioCard = defineAsyncComponent({
   loader: () => import('../components/PortfolioCard.vue'),
-  loadingComponent: () => import('../components/Loader.vue'),
+  loadingComponent: () => import('../components/ui/Loader.vue'),
   errorComponent: () => import('../pages/NotFound.vue'),
   delay: 200,
   timeout: 3000,
 })
 
 const PortfolioModal = defineAsyncComponent({
-  loader: () => import('../modal/PortfolioModal.vue'),
-  loadingComponent: () => import('../components/Loader.vue'),
+  loader: () => import('../components/modals/PortfolioModal.vue'),
+  loadingComponent: () => import('../components/ui/Loader.vue'),
   errorComponent: () => import('../pages/NotFound.vue'),
   delay: 200,
   timeout: 3000,
@@ -28,13 +39,39 @@ const PortfolioModal = defineAsyncComponent({
 // Use Pinia store
 const portfolioStore = usePortfolioStore()
 
-// kept for potential future use within animations
-// gsap/scrollTrigger placeholders for potential future use
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const gsapRef: { utils: unknown } | null = null
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const scrollTriggerRef: { getAll: () => Array<{ kill: () => void }> } | null = null
-const stackRoot = ref<HTMLElement | null>(null)
+// GSAP refs for animations
+const portfolioContainer = ref<HTMLElement | null>(null)
+
+// Intersection-based lazy mounting for heavy sections
+const portfolioEl = ref<HTMLElement | null>(null)
+const portfolioVisible = ref(true) // Изменили на true для немедленного отображения
+
+// Optimized intersection observer with debouncing
+let lastIntersectionState = true
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
+useIntersectionObserver(
+  portfolioEl,
+  ([entry]) => {
+    const isIntersecting = entry?.isIntersecting ?? false
+
+    // Debounce updates to prevent excessive re-renders
+    if (debounceTimer) {
+      clearTimeout(debounceTimer)
+    }
+
+    debounceTimer = setTimeout(() => {
+      if (isIntersecting !== lastIntersectionState) {
+        lastIntersectionState = isIntersecting
+        portfolioVisible.value = isIntersecting
+      }
+    }, 100) // 100ms debounce
+  },
+  {
+    rootMargin: '200px',
+    threshold: 0.1, // Only trigger when 10% of element is visible
+  }
+)
 
 // Router (not needed here)
 
@@ -65,7 +102,6 @@ const filterMap = computed(
 
 // Reactive refs from store (state + computed)
 const {
-  projects: portfolioItems,
   activeFilter,
   selectedProject,
   filteredProjects: filteredItems,
@@ -73,477 +109,475 @@ const {
 
 // Router
 const router = useRouter()
+const route = useRoute()
+
+// Breadcrumb schema
+const { schema: breadcrumbSchema } = useBreadcrumbSchema(route)
 
 // Actions (keep methods from store directly)
-const { setActiveFilter, setSelectedProject, fetchProjects } = portfolioStore
+const { setActiveFilter, setSelectedProject, fetchProjects, getProjectSlug, findProjectBySlug } =
+  portfolioStore
 
 // (No local mirrors needed; storeToRefs keeps reactivity intact)
 
 const showModal = ref(false)
 
-// Мемоизированное маппирование цветов для фильтров
-const filterColors = computed(() => ({
-  Все: {
-    bg: 'bg-rose-custom',
-    border: 'border-rose-custom',
-    hover: 'hover:bg-[var(--color-purple)] hover:border-[var(--color-purple)]',
-    inner: 'bg-[var(--color-purple)]',
-  },
-  'Интернет-магазины': {
-    bg: 'bg-rose-custom',
-    border: 'border-rose-custom',
-    hover: 'hover:bg-[var(--color-purple)] hover:border-[var(--color-purple)]',
-    inner: 'bg-[var(--color-purple)]',
-  },
-  'Корпоративные сайты': {
-    bg: 'bg-rose-custom',
-    border: 'border-rose-custom',
-    hover: 'hover:bg-[var(--color-purple)] hover:border-[var(--color-purple)]',
-    inner: 'bg-[var(--color-purple)]',
-  },
-  Лендинги: {
-    bg: 'bg-rose-custom',
-    border: 'border-rose-custom',
-    hover: 'hover:bg-[var(--color-purple)] hover:border-[var(--color-purple)]',
-    inner: 'bg-[var(--color-purple)]',
-  },
-  'Мобильные приложения': {
-    bg: 'bg-rose-custom',
-    border: 'border-rose-custom',
-    hover: 'hover:bg-[var(--color-purple)] hover:border-[var(--color-purple)]',
-    inner: 'bg-[var(--color-purple)]',
-  },
-  'Промо-сайты': {
-    bg: 'bg-rose-custom',
-    border: 'border-rose-custom',
-    hover: 'hover:bg-[var(--color-purple)] hover:border-[var(--color-purple)]',
-    inner: 'bg-[var(--color-purple)]',
-  },
-  'Техническая поддержка': {
-    bg: 'bg-rose-custom',
-    border: 'border-rose-custom',
-    hover: 'hover:bg-[var(--color-purple)] hover:border-[var(--color-purple)]',
-    inner: 'bg-[var(--color-purple)]',
-  },
-}))
+// Общие стили для всех кнопок фильтров
+const filterButtonStyles = {
+  bg: '!bg-accent',
+  border: 'border-rose-custom',
+  hover: 'hover:bg-[#ae70ac] hover:border-[#ae70ac]',
+  inner: 'bg-[#ae70ac]',
+}
 
 // Мемоизированные функции для работы с цветами
-const getFilterColor = (filter: string, isActive: boolean) => {
-  const colors = filterColors.value[filter as keyof typeof filterColors.value]
-  if (!colors) return filterColors.value['Все']
-
-  if (isActive) {
-    return `${colors.bg} ${colors.border} ${colors.hover}`
-  } else {
-    return `bg-[var(--color-border)]/60 border-[var(--color-border)]/80 ${colors.hover}`
-  }
+const getFilterColor = () => {
+  // Все кнопки имеют одинаковые стили
+  return `${filterButtonStyles.bg} ${filterButtonStyles.border} ${filterButtonStyles.hover}`
 }
 
-// Мемоизированная функция для стилей кнопок
-const getRoseButtonStyle = () => {
-  // Apply rose color to all buttons
-  return {
-    backgroundColor: '#e0bbb9',
-    border: 'none',
-  }
-}
+// Функция больше не нужна, так как все стили в CSS классах
 
 // Мемоизированная функция для внутренних цветов
-const getInnerColor = (filter: string) => {
-  const colors = filterColors.value[filter as keyof typeof filterColors.value]
-  return colors?.inner || 'bg-[var(--color-purple)]'
+const getInnerColor = () => {
+  return filterButtonStyles.inner
 }
 
 // Мемоизированная функция обработки фильтров
 const handleFilterChange = (filter: string) => {
-  console.log('=== FILTER CLICK DEBUG ===')
-  console.log('Filter clicked:', filter)
   const storeFilter = filterMap.value[filter as keyof typeof filterMap.value] ?? 'all'
-  console.log('Store filter mapped to:', storeFilter)
-  console.log('Before setActiveFilter - activeFilter:', activeFilter.value)
   setActiveFilter(storeFilter as FilterType)
-
-  // Check after a small delay to see if reactivity works
-  setTimeout(() => {
-    console.log('After timeout - activeFilter:', activeFilter.value)
-    console.log('After timeout - filteredItems length:', filteredItems.value.length)
-    console.log(
-      'After timeout - filteredItems:',
-      filteredItems.value.map((item) => item.title)
-    )
-  }, 100)
-
-  console.log('After setActiveFilter - activeFilter:', activeFilter.value)
-  console.log('After setActiveFilter - filteredItems length:', filteredItems.value.length)
-  console.log('=== END FILTER CLICK DEBUG ===')
 }
+
+// Функции для работы с URL теперь импортируются из store
 
 // Мемоизированные функции модального окна
 const openModal = (project: PortfolioProject) => {
   setSelectedProject(project)
   showModal.value = true
+
+  // Обновляем URL для прямых ссылок
+  const slug = getProjectSlug(project.title)
+  router.push(`/cases/${slug}`)
 }
 
 const closeModal = () => {
   showModal.value = false
   setSelectedProject(null)
   // Убеждаемся, что мы остаемся на странице Cases
-  console.log('Closing modal, current route:', router.currentRoute.value.path)
-  console.log('Current route name:', router.currentRoute.value.name)
-
-  // Используем nextTick для гарантии обновления DOM
   nextTick(() => {
-    console.log('Navigating to /cases after nextTick')
     router.push('/cases')
   })
 }
 
-// Optional debug watchers
+// Watcher для отслеживания изменений маршрута
 watch(
-  () => activeFilter.value,
-  (newFilter, oldFilter) => {
-    console.log('CasesPage: Filter changed from', oldFilter, 'to', newFilter)
-    console.log('CasesPage: Filtered items updated:', filteredItems.value)
-  },
-  { immediate: true }
+  () => route.params.projectTitle,
+  (newProjectTitle) => {
+    if (newProjectTitle) {
+      const project = findProjectBySlug(newProjectTitle as string)
+      if (project) {
+        setSelectedProject(project)
+        showModal.value = true
+      }
+    } else {
+      // Если убрали projectTitle из URL, закрываем модальное окно
+      if (showModal.value) {
+        showModal.value = false
+        setSelectedProject(null)
+      }
+    }
+  }
 )
 
-watch(
-  () => filteredItems.value,
-  (newItems) => {
-    console.log('CasesPage: Filtered items changed:', newItems.length, 'items')
-  },
-  { deep: true }
-)
+// Типы для scheduler API
+interface SchedulerPostTaskOptions {
+  priority?: 'user-blocking' | 'user-visible' | 'background'
+  delay?: number
+  signal?: AbortSignal
+}
 
-// Load projects on mount
-onMounted(() => {
+interface Scheduler {
+  postTask(callback: () => void, options?: SchedulerPostTaskOptions): Promise<void>
+}
+
+declare global {
+  interface Window {
+    scheduler?: Scheduler
+  }
+}
+
+// Флаг для предотвращения повторного запуска анимаций
+const isAnimationInitialized = ref(false)
+// Счетчик попыток инициализации для предотвращения бесконечных рекурсий
+let initAttempts = 0
+const MAX_INIT_ATTEMPTS = 5
+
+// Load projects and initialize GSAP animations on mount
+onMounted(async () => {
   fetchProjects()
-  console.log('CasesPage mounted')
-  console.log('portfolioItems:', portfolioItems.value)
-  console.log('filteredItems:', filteredItems.value)
-  console.log('activeFilter:', activeFilter.value)
-  console.log('portfolioVisible:', portfolioVisible.value)
-})
 
-// Intersection-based lazy mounting for heavy sections
-const portfolioEl = ref<HTMLElement | null>(null)
-const portfolioVisible = ref(true) // Изменили на true для немедленного отображения
-useIntersectionObserver(
-  portfolioEl,
-  ([entry]) => {
-    console.log('Intersection observer triggered:', entry?.isIntersecting)
-    if (entry.isIntersecting) portfolioVisible.value = true
-  },
-  { rootMargin: '200px' }
-)
+  // Обработка URL параметров для прямых ссылок на проекты
+  const projectTitle = route.params.projectTitle as string
+  if (projectTitle) {
+    const project = findProjectBySlug(projectTitle)
+    if (project) {
+      openModal(project)
+    } else {
+      router.replace('/cases')
+    }
+  }
 
-useStackScroll(stackRoot, {
-  snap: true,
-  onAfterGsapReady: ({ gsap, ScrollTrigger, sections }) => {
-    // Portfolio animations
-    const portfolioSection = sections[0] // First section (Portfolio)
-    if (portfolioSection) {
-      const portfolioCards = portfolioSection.querySelectorAll('.portfolio-card')
-      const filterButtons = portfolioSection.querySelectorAll('button')
-      const title = portfolioSection.querySelector('.title')
-      const subtitle = portfolioSection.querySelector('p')
+  // Проверяем prefers-reduced-motion
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (prefersReducedMotion) {
+    return
+  }
+
+  // Defer GSAP loading until after LCP для оптимизации производительности
+  const initGSAP = async () => {
+    try {
+      // Этап 1: Дождаться idle времени или LCP
+      const isMobile = window.innerWidth < 768
+      const delay = isMobile ? 2000 : 1500
+
+      if (window.scheduler?.postTask) {
+        await window.scheduler.postTask(() => {}, { priority: 'background', delay })
+      } else if ('requestIdleCallback' in window) {
+        await new Promise<void>((resolve) =>
+          (
+            window as Window & { requestIdleCallback: (callback: () => void) => void }
+          ).requestIdleCallback(() => resolve(), { timeout: delay })
+        )
+      } else {
+        await new Promise((r) => setTimeout(r, delay))
+      }
+
+      // Этап 2: Загрузить GSAP
+      const { gsap } = await import('gsap')
+      const { ScrollTrigger } = await import('gsap/ScrollTrigger')
+      gsap.registerPlugin(ScrollTrigger)
+
+      // Yield для разбиения длинной задачи
+      await new Promise((r) => setTimeout(r, 0))
+
+      // Этап 3: Поиск элементов в секции
+      const container = portfolioContainer.value
+      if (!container) return
+
+      // Ждем загрузки асинхронных компонентов
+      await new Promise((r) => setTimeout(r, 200))
+      await nextTick()
+
+      const portfolioCards = Array.from(
+        container.querySelectorAll('.portfolio-card')
+      ) as HTMLElement[]
+      const filterButtons = Array.from(container.querySelectorAll('button')) as HTMLElement[]
+      const title = container.querySelector('.title') as HTMLElement
+      const subtitle = container.querySelector('p') as HTMLElement
+
+      // Проверяем наличие элементов - если их нет, ждем еще
+      if (portfolioCards.length === 0 && filterButtons.length === 0) {
+        initAttempts++
+        if (initAttempts < MAX_INIT_ATTEMPTS) {
+          setTimeout(() => initGSAP(), 500)
+        }
+        return
+      }
+
+      // Сбрасываем счетчик при успешной инициализации
+      initAttempts = 0
 
       // Initial state for elements
-      gsap.set(portfolioCards, { y: 60, opacity: 0, scale: 0.95, rotationX: 15 })
-      gsap.set(filterButtons, { y: 30, opacity: 0, scale: 0.9 })
-      gsap.set(subtitle, { y: 20, opacity: 0 })
-
-      // Animate when section becomes active
-      ScrollTrigger.create({
-        trigger: portfolioSection,
-        start: 'top center',
-        onEnter: () => {
-          // Animate title (if not already animated)
-          if (title && !(title as HTMLElement).dataset.portfolioAnimated) {
-            gsap.fromTo(
-              title,
-              { y: 30, opacity: 0, scale: 0.95 },
-              { y: 0, opacity: 1, scale: 1, duration: 0.8, ease: 'power3.out' }
-            )
-            ;(title as HTMLElement).dataset.portfolioAnimated = 'true'
-          }
-
-          // Animate subtitle
-          gsap.to(subtitle, {
-            y: 0,
-            opacity: 1,
-            duration: 0.6,
-            ease: 'power2.out',
-            delay: 0.2,
-          })
-
-          // Animate filter buttons
-          gsap.to(filterButtons, {
-            y: 0,
-            opacity: 1,
-            scale: 1,
-            duration: 0.6,
-            ease: 'back.out(1.7)',
-            stagger: 0.1,
-            delay: 0.4,
-          })
-
-          // Animate portfolio cards
-          gsap.to(portfolioCards, {
-            y: 0,
-            opacity: 1,
-            scale: 1,
-            rotationX: 0,
-            duration: 0.8,
-            ease: 'power3.out',
-            stagger: {
-              each: 0.15,
-              from: 'start',
-            },
-            delay: 0.6,
-          })
-        },
-        onLeaveBack: () => {
-          gsap.set(portfolioCards, { y: 60, opacity: 0, scale: 0.95, rotationX: 15 })
-          gsap.set(filterButtons, { y: 30, opacity: 0, scale: 0.9 })
-          gsap.set(subtitle, { y: 20, opacity: 0 })
-        },
-      })
-
-      // Enhanced hover animations for portfolio cards (matching what we do style)
-      portfolioCards.forEach((card) => {
-        const icon = card.querySelector('.icon-container')
-        const title = card.querySelector('h3')
-        const description = card.querySelector('p')
-        const techTags = card.querySelectorAll('.tech-tag')
-        const viewButton = card.querySelector('.flex.items-center.justify-between')
-
-        card.addEventListener('mouseenter', () => {
-          gsap.to(card, {
-            scale: 1.02,
-            y: -5,
-            duration: 0.3,
-            ease: 'power2.out',
-          })
-
-          // Animate icon (matching what we do style)
-          if (icon) {
-            gsap.to(icon, {
-              scale: 1.1,
-              rotation: 360,
-              duration: 0.6,
-              ease: 'back.out(1.7)',
-            })
-          }
-
-          // Animate title color change
-          if (title) {
-            gsap.to(title, {
-              color: 'var(--color-accent)',
-              duration: 0.3,
-              ease: 'power2.out',
-            })
-          }
-
-          // Animate description
-          if (description) {
-            gsap.to(description, {
-              color: '#ffffff',
-              duration: 0.3,
-              ease: 'power2.out',
-            })
-          }
-
-          // Stagger animate tech tags
-          gsap.to(techTags, {
-            scale: 1.05,
-            y: -2,
-            duration: 0.2,
-            ease: 'power2.out',
-            stagger: 0.05,
-          })
-
-          // Animate view button
-          if (viewButton) {
-            gsap.to(viewButton, {
-              x: 5,
-              duration: 0.3,
-              ease: 'power2.out',
-            })
-          }
-        })
-
-        card.addEventListener('mouseleave', () => {
-          gsap.to(card, {
-            scale: 1,
-            y: 0,
-            duration: 0.3,
-            ease: 'power2.out',
-          })
-
-          // Reset icon
-          if (icon) {
-            gsap.to(icon, {
-              scale: 1,
-              rotation: 0,
-              duration: 0.4,
-              ease: 'power2.out',
-            })
-          }
-
-          // Reset title
-          if (title) {
-            gsap.to(title, {
-              color: '#ffffff',
-              duration: 0.3,
-              ease: 'power2.out',
-            })
-          }
-
-          // Reset description
-          if (description) {
-            gsap.to(description, {
-              color: 'rgba(255, 255, 255, 0.7)',
-              duration: 0.3,
-              ease: 'power2.out',
-            })
-          }
-
-          // Reset tech tags
-          gsap.to(techTags, {
-            scale: 1,
-            y: 0,
-            duration: 0.2,
-            ease: 'power2.out',
-          })
-
-          // Reset view button
-          if (viewButton) {
-            gsap.to(viewButton, {
-              x: 0,
-              duration: 0.3,
-              ease: 'power2.out',
-            })
-          }
-        })
-      })
-
-      // Add click animation for filter buttons
-      filterButtons.forEach((button) => {
-        button.addEventListener('click', () => {
-          gsap.to(button, {
-            scale: 0.95,
-            duration: 0.1,
-            ease: 'power2.out',
-            yoyo: true,
-            repeat: 1,
-          })
-        })
-      })
-    }
-
-    // Creative title animation: wave-in + shimmer (robust to pinning)
-    const titles = gsap.utils.toArray('.title:not(.no-title-effects)') as unknown[] as HTMLElement[]
-    titles.forEach((title) => {
-      // Skip if already processed
-      if (title.dataset.animated === 'true') return
-      const originalText = title.textContent || ''
-      title.innerHTML = ''
-      const wrapper = document.createElement('span')
-      wrapper.className = 'inline-block relative'
-      // Build gradient shimmer underline
-      const shimmer = document.createElement('span')
-      shimmer.className = 'absolute left-0 -bottom-1 h-[2px] w-full'
-      shimmer.setAttribute(
-        'style',
-        'background: linear-gradient(90deg, color-mix(in oklab, var(--color-purple, #7D53FF) 20%, transparent) 0%, var(--color-purple, #7D53FF) 50%, color-mix(in oklab, var(--color-purple, #7D53FF) 20%, transparent) 100%); background-size: 200% 100%;'
-      )
-
-      // Wrap each character
-      const letterNodes: HTMLElement[] = []
-      for (const ch of originalText) {
-        const span = document.createElement('span')
-        span.textContent = ch
-        span.className = 'inline-block will-change-transform'
-        wrapper.appendChild(span)
-        letterNodes.push(span)
+      if (portfolioCards.length > 0) {
+        gsap.set(portfolioCards, { y: 60, opacity: 0, scale: 0.85, rotationY: 20 })
       }
-      title.appendChild(wrapper)
-      title.appendChild(shimmer)
-      title.dataset.animated = 'true'
+      if (filterButtons.length > 0) {
+        gsap.set(filterButtons, { y: 30, opacity: 0, scale: 0.9 })
+      }
+      if (title) {
+        gsap.set(title, { opacity: 0, y: 40, scale: 0.95 })
+      }
+      if (subtitle) {
+        gsap.set(subtitle, { y: 20, opacity: 0 })
+      }
 
-      // Initial state
-      gsap.set(letterNodes, { yPercent: 30, opacity: 0, rotateX: -60, transformPerspective: 600 })
-      gsap.set(shimmer, { backgroundPositionX: '0%' })
-
-      // Trigger when title approaches viewport (works with pinned sections)
+      // Этап 4: Создание timeline и анимаций через ScrollTrigger
       ScrollTrigger.create({
-        trigger: title,
-        start: 'top 80%',
+        trigger: container,
+        start: 'top 75%',
         once: true,
         onEnter: () => {
-          gsap.to(letterNodes, {
-            yPercent: 0,
-            opacity: 1,
-            rotateX: 0,
-            duration: 0.7,
-            ease: 'power3.out',
-            stagger: { each: 0.035, from: 'start' },
-          })
-          gsap.to(shimmer, {
-            backgroundPositionX: '200%',
-            duration: 2.4,
-            ease: 'none',
-            repeat: 1,
-            yoyo: true,
-          })
+          if (isAnimationInitialized.value) return
+          isAnimationInitialized.value = true
+
+          const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+
+          // Анимация заголовка - плавное появление сверху
+          if (title && !title.dataset.portfolioAnimated) {
+            tl.to(
+              title,
+              {
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                duration: 1,
+                ease: 'power3.out',
+              },
+              0
+            )
+            title.dataset.portfolioAnimated = 'true'
+          }
+
+          // Анимация подзаголовка
+          if (subtitle) {
+            tl.to(
+              subtitle,
+              {
+                y: 0,
+                opacity: 1,
+                duration: 0.6,
+                ease: 'power2.out',
+              },
+              '-=0.5'
+            )
+          }
+
+          // Анимация кнопок фильтров - каскадное появление
+          if (filterButtons.length > 0) {
+            tl.to(
+              filterButtons,
+              {
+                y: 0,
+                opacity: 1,
+                scale: 1,
+                duration: 0.6,
+                ease: 'back.out(1.7)',
+                stagger: {
+                  each: 0.08,
+                  from: 'start',
+                },
+              },
+              '-=0.4'
+            )
+          }
+
+          // Анимация карточек портфолио - каскадное появление с 3D эффектом
+          if (portfolioCards.length > 0) {
+            tl.to(
+              portfolioCards,
+              {
+                y: 0,
+                opacity: 1,
+                scale: 1,
+                rotationY: 0,
+                duration: 0.8,
+                ease: 'back.out(1.2)',
+                stagger: {
+                  each: 0.12,
+                  from: 'start',
+                },
+              },
+              '-=0.3'
+            )
+          }
         },
       })
 
-      // If already in view on load, animate immediately
-      const rect = (title as HTMLElement).getBoundingClientRect()
-      if (rect.top < window.innerHeight * 0.8) {
-        gsap.to(letterNodes, {
-          yPercent: 0,
-          opacity: 1,
-          rotateX: 0,
-          duration: 0.7,
-          ease: 'power3.out',
-          stagger: { each: 0.035, from: 'start' },
-        })
-        gsap.to(shimmer, {
-          backgroundPositionX: '200%',
-          duration: 2.4,
-          ease: 'none',
-          repeat: 1,
-          yoyo: true,
+      // Enhanced hover animations for portfolio cards
+      if (portfolioCards.length > 0) {
+        portfolioCards.forEach((card) => {
+          if (!card) return
+
+          const cardTitle = card.querySelector('h3')
+          const description = card.querySelector('p')
+
+          card.addEventListener('mouseenter', () => {
+            if (!card) return
+            gsap.to(card, {
+              scale: 1.02,
+              y: -5,
+              duration: 0.3,
+              ease: 'power2.out',
+            })
+
+            // Animate title color change
+            if (cardTitle) {
+              gsap.to(cardTitle, {
+                color: 'var(--color-accent)',
+                duration: 0.3,
+                ease: 'power2.out',
+              })
+            }
+
+            // Animate description
+            if (description) {
+              gsap.to(description, {
+                color: '#ffffff',
+                duration: 0.3,
+                ease: 'power2.out',
+              })
+            }
+          })
+
+          card.addEventListener('mouseleave', () => {
+            gsap.to(card, {
+              scale: 1,
+              y: 0,
+              duration: 0.3,
+              ease: 'power2.out',
+            })
+
+            // Reset title
+            if (cardTitle) {
+              gsap.to(cardTitle, {
+                color: '#ffffff',
+                duration: 0.3,
+                ease: 'power2.out',
+              })
+            }
+
+            // Reset description
+            if (description) {
+              gsap.to(description, {
+                color: 'rgba(255, 255, 255, 0.7)',
+                duration: 0.3,
+                ease: 'power2.out',
+              })
+            }
+          })
         })
       }
-    })
 
-    // Forcefully ensure titles opted-out from effects are fully opaque and clean
-    const fixedTitles = gsap.utils.toArray('.title.no-title-effects') as unknown[] as HTMLElement[]
-    fixedTitles.forEach((t: HTMLElement) => {
-      gsap.set(t, { opacity: 1, clearProps: 'opacity,transform' })
-    })
+      // Add click animation for filter buttons
+      if (filterButtons.length > 0) {
+        filterButtons.forEach((button) => {
+          button.addEventListener('click', () => {
+            gsap.to(button, {
+              scale: 0.95,
+              duration: 0.1,
+              ease: 'power2.out',
+              yoyo: true,
+              repeat: 1,
+            })
+          })
+        })
+      }
+    } catch {
+      // Fallback: если GSAP не загрузился, просто показываем элементы
+      isAnimationInitialized.value = true
+    }
+  }
 
-    // ensure ScrollTrigger positions are recalculated after stack TL is built
-    ScrollTrigger.refresh()
-  },
+  // Запускаем инициализацию GSAP
+  const isMobile = window.innerWidth < 768
+  const delay = isMobile ? 2000 : 1500
+
+  if (window.scheduler?.postTask) {
+    window.scheduler.postTask(
+      () => {
+        initGSAP()
+      },
+      { priority: 'background', delay }
+    )
+  } else if ('requestIdleCallback' in window) {
+    requestIdleCallback(
+      () => {
+        initGSAP()
+      },
+      { timeout: delay }
+    )
+  } else {
+    setTimeout(() => {
+      initGSAP()
+    }, delay)
+  }
 })
 
-// cleanup handled in useStackScroll
+// Cleanup ScrollTrigger on unmount
+onUnmounted(() => {
+  // Сбрасываем флаг и счетчик
+  isAnimationInitialized.value = false
+  initAttempts = 0
+
+  import('gsap/ScrollTrigger').then(({ ScrollTrigger }) => {
+    ScrollTrigger.getAll().forEach((trigger) => trigger.kill())
+  })
+})
+
+// JSON-LD for portfolio list or selected project
+const listJsonLd = computed(() => {
+  const items = filteredItems.value.map((p, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    url:
+      typeof window !== 'undefined'
+        ? `${window.location.origin}/cases/${getProjectSlug(p.title)}`
+        : `/cases/${getProjectSlug(p.title)}`,
+    item: {
+      '@type': 'CreativeWork',
+      name: p.title,
+      about: p.description,
+    },
+  }))
+  return { '@context': 'https://schema.org', '@type': 'ItemList', itemListElement: items }
+})
+
+const projectJsonLd = computed(() => {
+  const p = selectedProject.value
+  if (!p) return null
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Project',
+    name: p.title,
+    description: p.description,
+    url:
+      typeof window !== 'undefined'
+        ? `${window.location.origin}/cases/${getProjectSlug(p.title)}`
+        : `/cases/${getProjectSlug(p.title)}`,
+  }
+})
+
+watchEffect(() => {
+  const scripts: Array<{
+    type: string
+    children: string
+    key: string
+  }> = []
+
+  // Breadcrumb schema (всегда добавляем)
+  if (breadcrumbSchema.value) {
+    scripts.push({
+      type: 'application/ld+json',
+      children: JSON.stringify(breadcrumbSchema.value),
+      key: 'breadcrumb-schema',
+    })
+  }
+
+  // Portfolio schema
+  const payload = projectJsonLd.value || listJsonLd.value
+  if (payload) {
+    scripts.push({
+      type: 'application/ld+json',
+      children: JSON.stringify(payload),
+      key: 'portfolio-schema',
+    })
+  }
+
+  if (scripts.length > 0) {
+    useHead({ script: scripts })
+  }
+})
 </script>
 
 <template>
-  <div id="stack" class="relative" ref="stackRoot">
-    <div class="w-full max-w-7xl px-[15rem]">
-      <h2
+  <div class="relative w-full" ref="portfolioContainer">
+    <div class="w-full max-w-7xl px-10 py-[5rem] md:[5rem] lg:px-[15rem]">
+      <h1
         class="title no-title-effects text-3xl sm:text-4xl md:text-4xl font-black text-[var(--color-accent)] tracking-tight mb-4 md:mb-6 lg:mb-8 text-center"
       >
-        Портфолио
-      </h2>
+        Портфолио — кейсы
+      </h1>
 
       <!-- Filter Buttons -->
       <div
@@ -554,19 +588,9 @@ useStackScroll(stackRoot, {
           :key="filter"
           @click="handleFilterChange(filter)"
           :class="
-            'px-6 py-3 rounded-full transition-all duration-300 text-sm font-semibold font-display relative overflow-hidden group shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-white border-2 ' +
-            getFilterColor(
-              filter,
-              (activeFilter === 'all' && filter === 'Все') ||
-                (activeFilter === 'ecommerce' && filter === 'Интернет-магазины') ||
-                (activeFilter === 'corporate' && filter === 'Корпоративные сайты') ||
-                (activeFilter === 'landing' && filter === 'Лендинги') ||
-                (activeFilter === 'promo' && filter === 'Промо-сайты') ||
-                (activeFilter === 'mobile' && filter === 'Мобильные приложения') ||
-                (activeFilter === 'tech-support' && filter === 'Техническая поддержка')
-            )
+            'px-3 py-1.5 sm:px-4 sm:py-2 md:px-5 md:py-2.5 lg:px-6 lg:py-3 rounded-full transition-all duration-300 text-xs sm:text-sm font-semibold font-display relative overflow-hidden group shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-white border-2 ' +
+            getFilterColor()
           "
-          :style="getRoseButtonStyle()"
         >
           <span class="relative z-10">{{ filter }}</span>
           <div
@@ -581,7 +605,7 @@ useStackScroll(stackRoot, {
             "
             :class="
               'absolute inset-0 ' +
-              getInnerColor(filter) +
+              getInnerColor() +
               ' opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-full'
             "
           ></div>
@@ -633,6 +657,68 @@ useStackScroll(stackRoot, {
         <h3 class="text-xl font-semibold text-gray-900 mb-2">Проекты не найдены</h3>
         <p class="text-gray-600">Попробуйте выбрать другую категорию</p>
       </div>
+
+      <!-- Popular Services Block -->
+      <div class="mt-12 mb-12 p-8 rounded-3xl border border-border">
+        <h2 class="text-2xl font-bold mb-6 text-center">Популярные услуги</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <a
+            href="/services/development/corporate-website"
+            class="p-4 rounded-[3rem] text-center border border-border hover:border-accent transition-colors"
+          >
+            <h3 class="font-semibold mb-2">Корпоративный сайт</h3>
+            <p class="text-sm text-text-muted">Создание корпоративных сайтов под ключ</p>
+          </a>
+          <a
+            href="/services/development/online-store"
+            class="p-4 rounded-[3rem] text-center border border-border hover:border-accent transition-colors"
+          >
+            <h3 class="font-semibold mb-2">Интернет-магазин</h3>
+            <p class="text-sm text-text-muted">Полнофункциональные интернет-магазины</p>
+          </a>
+          <a
+            href="/services/development/landing-page"
+            class="p-4 rounded-[3rem] text-center border border-border hover:border-accent transition-colors"
+          >
+            <h3 class="font-semibold mb-2">Лендинг</h3>
+            <p class="text-sm text-text-muted">Конверсионные одностраничные сайты</p>
+          </a>
+        </div>
+      </div>
+
+      <!-- CTA Section -->
+      <div class="mt-12 text-center p-12 rounded-3xl border border-border bg-bg">
+        <h3 class="text-2xl text-accent font-bold mb-4">Готовы начать свой проект?</h3>
+        <p class="text-text-muted mb-6">
+          Посмотрите похожие проекты и свяжитесь с нами для обсуждения вашей задачи
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a
+            href="/calculator"
+            class="px-8 py-4 rounded-full text-sm bg-accent text-bg hover:bg-accent/90 transition-colors"
+          >
+            Рассчитать стоимость
+          </a>
+          <a
+            href="/services"
+            class="px-8 py-4 rounded-full text-sm border-2 border-accent text-accent hover:bg-accent/10 transition-colors"
+          >
+            Наши услуги
+          </a>
+          <a
+            href="/blog"
+            class="px-8 py-4 rounded-full text-sm border-2 border-border text-text hover:border-accent transition-colors"
+          >
+            Читать блог
+          </a>
+          <a
+            href="/client-form"
+            class="px-8 py-4 rounded-full text-sm border-2 border-border text-text hover:border-accent transition-colors"
+          >
+            Оставить заявку
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -641,8 +727,20 @@ useStackScroll(stackRoot, {
 </template>
 
 <style scoped>
-/* Portfolio specific styles - matching what we do style */
+/* Начальное состояние для анимации - предотвращает FOUC */
+.title {
+  will-change: transform, opacity;
+  transform: translateZ(0); /* Создаем композиционный слой */
+}
+
+button {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+}
+
 .portfolio-card {
+  will-change: transform, opacity;
+  transform: translateZ(0);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(10px);
 }
@@ -737,6 +835,12 @@ button.bg-rose-custom {
 
 button.border-rose-custom {
   border-color: #e0bbb9 !important;
+}
+
+/* Hover effects for filter buttons */
+button.bg-rose-custom:hover {
+  background-color: #ae70ac !important;
+  border-color: #ae70ac !important;
 }
 
 /* Dark mode support - matching what we do style */

@@ -2,24 +2,241 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8">
-    <link rel="icon" href="/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" href="/logo3.png">
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/logo3.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Kodify — продажа сайтов и цифровых решений для развития бизнеса. Разработка корпоративных сайтов, интернет-магазинов, лендингов. Продвижение и поддержка. Портфолио и экспертный блог.">
+    <meta name="yandex-verification" content="" />
+    <meta name="google-site-verification" content="HB8_ge4y42V45ASCsEusJyNFDCtD0_8M5104x6jKuno" />
+    <meta property="og:title" content="Kodify - Продажа сайтов и цифровых решений" />
+    <meta property="og:description" content="Kodify — продажа сайтов и цифровых решений для развития бизнеса. Разработка корпоративных сайтов, интернет-магазинов, лендингов. Продвижение и поддержка." />
+    <meta property="og:image" content="https://kodifyweb.ru/og-image.jpg" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://kodifyweb.ru/" />
+    <link rel="canonical" href="https://kodifyweb.ru/" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300..800&family=IBM+Plex+Sans+Condensed:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap&subset=cyrillic" rel="stylesheet">
-    <!-- Example: preload hero image if used as LCP element -->
-    <link rel="preload" as="image" href="/stratige.svg">
+    <!-- Preload критических шрифтов удален - шрифты загружаются через Google Fonts CSS -->
+    <!-- Шрифты загружаются асинхронно для оптимизации FCP -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300..800&family=IBM+Plex+Sans+Condensed:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap&subset=cyrillic" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300..800&family=IBM+Plex+Sans+Condensed:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap&subset=cyrillic" rel="stylesheet"></noscript>
+    <!-- Preload hero image удален - изображение загружается через компоненты -->
 
     <!-- Critical CSS for minimal layout to render above-the-fold quickly -->
     <style>
-      html, body { height: 100%; }
-      body { margin: 0; background: var(--color-bg, #030F0F); color: #fff; font-family: var(--font-sans, Manrope, system-ui, -apple-system, Segoe UI, Roboto, sans-serif); }
-      #app { min-height: 100vh; }
+      /* Critical CSS for LCP element (h1) */
+      * { box-sizing: border-box; }
+      #app { 
+        min-height: 100vh; 
+        background: #0f0f23; 
+        margin: 0;
+        padding: 0;
+      }
+      .main-section { 
+        min-height: 400px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        padding: 2rem;
+        background: #0f0f23;
+        color: white;
+        position: relative;
+        width: 100%;
+      }
+      .main-section h1 {
+        font-size: clamp(1.5rem, 4vw, 3rem);
+        font-weight: 700;
+        line-height: 1.2;
+        margin: 0;
+        color: #6366f1;
+        font-family: 'IBM Plex Sans Condensed', sans-serif;
+        max-width: 1200px;
+        width: 100%;
+      }
+      /* Reserve space for header to prevent CLS */
+      header { 
+        position: fixed; 
+        top: 0.7rem; 
+        left: 0; 
+        width: 100%; 
+        height: 48px;
+        z-index: 10;
+        margin: 0;
+        padding: 0;
+      }
+      body { 
+        margin: 0; 
+        padding: 0;
+        padding-top: 64px; /* Reserve space for fixed header */
+        overflow-x: hidden;
+        background: #0f0f23;
+        color: white;
+      }
+      /* Font display swap to prevent CLS - используем fallback шрифты */
+      @font-face {
+        font-family: 'IBM Plex Sans Condensed';
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Manrope';
+        font-display: swap;
+      }
+      /* Резервируем место для шрифтов чтобы предотвратить CLS */
+      h1, h2, h3, h4, h5, h6 {
+        font-family: 'IBM Plex Sans Condensed', 'Arial Narrow', Arial, sans-serif;
+        font-weight: 700;
+        line-height: 1.2;
+      }
+      body, p {
+        font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+        line-height: 1.6;
+      }
+      /* Prevent layout shift during Vue hydration */
+      .stack-section {
+        min-height: 400px;
+        width: 100%;
+        box-sizing: border-box;
+        contain: layout style paint;
+      }
+      /* Prevent CLS from font loading */
+      h1 {
+        font-family: 'IBM Plex Sans Condensed', sans-serif;
+        font-size-adjust: 0.5;
+      }
+      h2, h3, p {
+        font-size-adjust: 0.5;
+      }
+      /* Reserve space for all dynamic content */
+      img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        box-sizing: border-box;
+        object-fit: cover;
+      }
+      /* Prevent CLS from images with dimensions */
+      img[width][height] {
+        height: auto;
+      }
+      /* Prevent CLS from dynamic content */
+      * {
+        box-sizing: border-box;
+      }
+      /* Optimize rendering performance */
+      .stack-section {
+        will-change: auto;
+        transform: translateZ(0);
+        backface-visibility: hidden;
+        contain: layout style paint;
+      }
+      /* Prevent CLS from font fallback */
+      body {
+        font-size: 16px;
+        line-height: 1.5;
+      }
+      /* Расширенный критический CSS для быстрого рендеринга - обновлено для точного соответствия Vue компоненту */
+      .main-section > div > div:first-child {
+        min-height: 120px;
+        width: 100%;
+        display: flex;
+        box-sizing: border-box;
+        contain: layout style paint;
+      }
+      .main-section > div > div:nth-child(2) {
+        min-height: 200px;
+        box-sizing: border-box;
+        contain: layout style paint;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+      .main-section > div > div:nth-child(2) > div:first-child {
+        min-height: 80px;
+        width: 100%;
+        padding: 1.5rem 2.5rem;
+        box-sizing: border-box;
+        contain: layout style paint;
+      }
+      .main-section > div > div:nth-child(2) > div:nth-child(2) {
+        min-height: 120px;
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        justify-content: center;
+        align-items: center;
+        box-sizing: border-box;
+        contain: layout style paint;
+      }
+      .main-section > div > div:nth-child(3) {
+        min-height: 50px;
+        box-sizing: border-box;
+        contain: layout style paint;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
     </style>
-    <title>Vite App</title>
+  
+    <title>Kodify - Продажа сайтов и цифровых решений для развития бизнеса</title>
   </head>
   <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
+    <div id="app">
+      <!-- Pre-rendered hero section for instant LCP - will be replaced by Vue -->
+      <!-- Размеры точно совпадают с Vue компонентом для предотвращения CLS -->
+      <section class="main-section stack-section" style="min-height: 400px; display: flex; align-items: center; justify-content: center; padding: 1.25rem 1rem; padding-top: 64px; background: #0f0f23; color: white; position: relative; width: 100%; overflow: hidden; box-sizing: border-box; contain: layout style paint;">
+        <div style="max-width: 1200px; width: 100%; display: flex; flex-direction: column; gap: 1.5rem; min-height: 300px; box-sizing: border-box; contain: layout style paint;">
+          <div style="width: 100%; min-height: 120px; display: flex; box-sizing: border-box; contain: layout style paint;">
+            <h1 style="font-size: clamp(1.5rem, 4vw, 3rem); font-weight: 700; line-height: 1.2; margin: 0; color: #6366f1; font-family: 'IBM Plex Sans Condensed', sans-serif; width: 100%; box-sizing: border-box; contain: layout style paint; font-size-adjust: 0.5;">
+              Продажа сайтов и цифровых решений для развития бизнеса
+            </h1>
+          </div>
+          <!-- Placeholder для контента с описанием и stats - точная структура из Vue компонента для предотвращения CLS -->
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 1.5rem; width: 100%; box-sizing: border-box; contain: layout style paint;">
+            <div style="display: flex; flex-direction: column; gap: 1.5rem; width: 100%; box-sizing: border-box; contain: layout style paint;">
+              <!-- Placeholder для описания (bg-error блок) - точные размеры -->
+              <div style="min-height: 100px; width: 100%; padding: 1.5rem 2.5rem; background: rgba(239, 68, 68, 0.1); border-radius: 2rem; box-sizing: border-box; contain: layout style paint; display: flex; align-items: center; justify-content: center;">
+                <div style="width: 100%; height: 1.5rem; background: rgba(239, 68, 68, 0.2); border-radius: 0.5rem; box-sizing: border-box;"></div>
+              </div>
+              <!-- Placeholder для stats - точные размеры из Vue компонента для предотвращения CLS -->
+              <div style="min-height: 120px; width: 100%; display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; align-items: center; box-sizing: border-box; contain: layout style paint;">
+                <div style="min-width: 100px; min-height: 100px; max-width: 200px; width: calc(50% - 0.5rem); background: rgba(239, 68, 68, 0.1); border-radius: 2rem; box-sizing: border-box; contain: layout style paint; padding: 0.75rem 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem;">
+                  <div style="width: 80%; height: 0.875rem; background: rgba(239, 68, 68, 0.2); border-radius: 0.25rem; box-sizing: border-box;"></div>
+                  <div style="width: 60%; height: 1.5rem; background: rgba(239, 68, 68, 0.2); border-radius: 0.25rem; box-sizing: border-box;"></div>
+                </div>
+                <div style="min-width: 100px; min-height: 100px; max-width: 200px; width: calc(50% - 0.5rem); background: rgba(239, 68, 68, 0.1); border-radius: 2rem; box-sizing: border-box; contain: layout style paint; padding: 0.75rem 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem;">
+                  <div style="width: 80%; height: 0.875rem; background: rgba(239, 68, 68, 0.2); border-radius: 0.25rem; box-sizing: border-box;"></div>
+                  <div style="width: 60%; height: 1.5rem; background: rgba(239, 68, 68, 0.2); border-radius: 0.25rem; box-sizing: border-box;"></div>
+                </div>
+                <div style="min-width: 100px; min-height: 100px; max-width: 200px; width: calc(50% - 0.5rem); background: rgba(239, 68, 68, 0.1); border-radius: 2rem; box-sizing: border-box; contain: layout style paint; padding: 0.75rem 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem;">
+                  <div style="width: 80%; height: 0.875rem; background: rgba(239, 68, 68, 0.2); border-radius: 0.25rem; box-sizing: border-box;"></div>
+                  <div style="width: 60%; height: 1.5rem; background: rgba(239, 68, 68, 0.2); border-radius: 0.25rem; box-sizing: border-box;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Placeholder для кнопки CTA -->
+          <div style="min-height: 50px; width: 100%; display: flex; justify-content: center; align-items: center; box-sizing: border-box; contain: layout style paint;">
+            <div style="min-width: 200px; min-height: 48px; background: rgba(0, 229, 160, 0.1); border-radius: 1rem; box-sizing: border-box;"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+    <!-- Runtime API base override for production hosting without .env injection -->
+    <script>
+      window.API_BASE = window.API_BASE || 'https://udevfchvbjgdalzyqbph.supabase.co/functions/v1'
+    </script>
+    <script type="module" defer src="/src/main.ts"></script>
+    
+    <!-- Yandex.Metrika noscript fallback -->
+    <noscript>
+      <div>
+        <img src="https://mc.yandex.ru/watch/104923147" style="position:absolute; left:-9999px;" alt="" />
+      </div>
+    </noscript>
   </body>
 </html>

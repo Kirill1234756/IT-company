@@ -38,7 +38,7 @@ describe('performance benchmarks', () => {
     bench('services getCategoryBySlug (map lookup) 10000x', () => {
         const slugs = ['site-development', 'site-integration']
         for (let i = 0; i < 10000; i++) {
-            void servicesStore.getCategoryBySlug(slugs[i % slugs.length])
+            void servicesStore.getCategoryBySlug(slugs[i % slugs.length] || '')
         }
     })
 })

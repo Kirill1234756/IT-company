@@ -9,6 +9,15 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue'
+import { useHead } from '@unhead/vue'
+
+// Устанавливаем noindex для 404 страницы
+onMounted(() => {
+  useHead({
+    meta: [{ name: 'robots', content: 'noindex, nofollow' }],
+  })
+})
 </script>
 
 <style scoped>

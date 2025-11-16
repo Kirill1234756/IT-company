@@ -15,6 +15,11 @@ export interface ClientFormData {
 
   // Privacy policy
   privacyAccepted: boolean
+
+  // Anti-bot (client only)
+  honeypot: string;
+  formStartedAt: number;
+  [key: string]: string | number | File | boolean | null;
 }
 
 export interface ClientFormErrors {
@@ -27,8 +32,11 @@ export interface ClientFormErrors {
   company?: string
   phone?: string
   email?: string
-  file?: string
-  privacy?: string
+  attachedFile?: string
+  privacyAccepted?: string
+  honeypot?: string
+  formStartedAt?: string
+  [key: string]: string | undefined;
 }
 
 export interface ClientFormSubmissionResponse {

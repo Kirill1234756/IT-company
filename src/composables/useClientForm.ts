@@ -1,10 +1,12 @@
 import { ref, reactive } from 'vue'
 import type { ClientFormData, ClientFormErrors, ClientFormSubmissionResponse } from '../types/client-form'
 import { ClientFormAPI } from '../api/client-form'
+import { useYandexMetrika } from './useYandexMetrika'
 
 export function useClientForm() {
     const isSubmitting = ref(false)
     const errors = ref<ClientFormErrors>({})
+    const { trackFormSubmit } = useYandexMetrika()
 
     const formData = reactive<ClientFormData>({
         companyDescription: '',
@@ -17,7 +19,9 @@ export function useClientForm() {
         phone: '',
         email: '',
         attachedFile: null,
-        privacyAccepted: false
+        privacyAccepted: false,
+        honeypot: '',
+        formStartedAt: Date.now()
     })
 
     // File upload handler
@@ -33,6 +37,17 @@ export function useClientForm() {
             formData.attachedFile = file
             errors.value.file = ''
         }
+    }
+
+    // Helpers
+    const normalizePhone = (value: string): string => {
+        const digits = value.replace(/\D/g, '')
+        if (!digits) return ''
+        let norm = digits
+        if (digits.startsWith('8') && digits.length === 11) norm = '7' + digits.slice(1)
+        else if (digits.length === 10) norm = '7' + digits
+        else if (digits.startsWith('7') && digits.length === 11) norm = digits
+        return norm.length === 11 ? `+${norm}` : value
     }
 
     // Form validation
@@ -65,8 +80,12 @@ export function useClientForm() {
         }
 
         // Phone validation (basic)
-        const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,}$/
-        if (formData.phone && !phoneRegex.test(formData.phone)) {
+        // Normalize and validate phone (E.164 +7)
+        if (formData.phone) {
+            formData.phone = normalizePhone(formData.phone)
+        }
+        const phoneRegex = /^\+?[0-9]{11,15}$/
+        if (formData.phone && !phoneRegex.test(formData.phone.replace(/\D/g, '').length === 11 ? formData.phone : formData.phone)) {
             errors.value.phone = 'Некорректный номер телефона'
         }
 
@@ -88,6 +107,16 @@ export function useClientForm() {
 
         try {
             const result = await ClientFormAPI.submitForm(formData)
+
+            // Отслеживаем успешную отправку формы
+            if (result.success) {
+                trackFormSubmit('client-form', {
+                    budget: formData.budget,
+                    company: formData.company,
+                    has_file: formData.attachedFile ? 'yes' : 'no'
+                })
+            }
+
             return result
         } catch (error) {
             console.error('Form submission error:', error)

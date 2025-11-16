@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ref, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, nextTick, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 defineOptions({ name: 'AppHeader' })
@@ -16,14 +16,14 @@ const closeMobileMenu = () => {
 
 // navigation model
 const leftNav = [
-  { to: '/services', label: 'Services', type: 'route' as const },
-  { to: '/contacts', label: 'Контакты', type: 'route' as const },
-  { href: '#about', label: 'About', type: 'anchor' as const },
+  { to: '/services', label: 'Сервисы', type: 'route' as const, href: undefined },
+  { to: '/cases', label: 'Кейсы', type: 'route' as const, href: undefined },
+  { to: '/calculator', label: 'Калькулятор', type: 'route' as const, href: undefined },
 ]
 const rightNav = [
-  { to: '/blog', label: 'Blog', type: 'route' as const },
-  { to: '/cases', label: 'Cases', type: 'route' as const },
-  { to: '/client-form', label: 'Стать клиентом', type: 'route' as const },
+  { to: '/blog', label: 'Блог', type: 'route' as const, href: undefined },
+  { to: '/contacts', label: 'Контакты', type: 'route' as const, href: undefined },
+  { to: '/client-form', label: 'Стать клиентом', type: 'route' as const, href: undefined },
 ]
 
 // Refs for animations
@@ -87,7 +87,59 @@ const route = useRoute()
 const isActive = (to?: string) => computed(() => (to ? route.path.startsWith(to) : false))
 const getRouteTo = (item: { to?: string }) => (item.to ? item.to : '/')
 
+// Close menu on route change
+watch(
+  () => route.path,
+  () => {
+    if (isMobileMenuOpen.value) {
+      closeMobileMenu()
+    }
+  }
+)
+
+// Close menu on outside click
+const handleClickOutside = (event: MouseEvent) => {
+  if (!isMobileMenuOpen.value) return
+
+  const target = event.target as HTMLElement
+  const clickedElement = target.closest('button') || target
+
+  // Check if click is on the burger menu button
+  const isMenuButton =
+    clickedElement.getAttribute('aria-expanded') !== null ||
+    clickedElement.closest('button[aria-expanded]') !== null
+
+  // Check if click is inside the mobile menu
+  const isInsideMenu = mobileMenuRef.value?.contains(target) || false
+
+  // Close menu only if clicking outside menu and not on menu button
+  if (!isMenuButton && !isInsideMenu && mobileMenuRef.value) {
+    closeMobileMenu()
+  }
+}
+
+// Store handlers for cleanup
+let onKeyHandler: ((e: KeyboardEvent) => void) | null = null
+let clickHandler: ((event: MouseEvent) => void) | null = null
+
 onMounted(async () => {
+  // Add click outside listener - only when menu is open
+  const handleDocumentClick = (event: MouseEvent) => {
+    if (isMobileMenuOpen.value) {
+      handleClickOutside(event)
+    }
+  }
+  document.addEventListener('click', handleDocumentClick, true)
+
+  // Store handler for cleanup
+  clickHandler = handleDocumentClick
+
+  // accessibility: close on Escape
+  onKeyHandler = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') closeMobileMenu()
+  }
+  window.addEventListener('keydown', onKeyHandler)
+
   // Defer GSAP to next frame/idle to avoid early layout shifts impacting CLS
   await new Promise((r) => requestAnimationFrame(() => r(null)))
   if ('requestIdleCallback' in window) {
@@ -179,19 +231,22 @@ onMounted(async () => {
       timeline.from(mobileMenuRef.value, { opacity: 0, scale: 0.9, duration: 0.4 }, '-=0.3')
     }
   })
+})
 
-  // accessibility: close on Escape
-  const onKey = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') closeMobileMenu()
+// Cleanup event listeners
+onBeforeUnmount(() => {
+  if (onKeyHandler) {
+    window.removeEventListener('keydown', onKeyHandler)
   }
-  window.addEventListener('keydown', onKey)
-  onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
+  if (clickHandler) {
+    document.removeEventListener('click', clickHandler, true)
+  }
 })
 </script>
 
 <template>
   <nav
-    class="bg-bg/90 backdrop-blur py-2 px-2 md:px-5 flex items-center rounded-3xl justify-between w-full border border-border/30"
+    class="bg-border/90 backdrop-blur py-2 px-2 md:px-5 flex items-center rounded-3xl justify-between w-full"
     aria-label="Main"
   >
     <!-- Left Navigation -->
@@ -200,7 +255,7 @@ onMounted(async () => {
         <router-link
           v-if="item.type === 'route'"
           :to="getRouteTo(item)"
-          class="rounded-2xl py-1 px-3 text-accent border border-border hover:bg-border hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
+          class="rounded-2xl py-2 px-3 text-accent hover:bg-bg hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[44px] min-w-[44px] flex items-center"
           :aria-current="isActive(item.to).value ? 'page' : undefined"
         >
           {{ item.label }}
@@ -208,7 +263,7 @@ onMounted(async () => {
         <a
           v-else
           :href="item.href"
-          class="rounded-2xl py-1 px-3 text-accent border border-border hover:bg-border hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
+          class="rounded-2xl py-2 px-3 text-accent hover:bg-border hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[44px] min-w-[44px] flex items-center"
         >
           {{ item.label }}
         </a>
@@ -217,22 +272,27 @@ onMounted(async () => {
 
     <!-- Center Logo -->
     <div class="flex px-2 md:px-3 flex-1 md:flex-none justify-start md:justify-center">
-      <router-link to="/" class="inline-flex items-center" @click="closeMobileMenu">
-        <h1
+      <router-link
+        to="/"
+        class="inline-flex items-center"
+        @click="closeMobileMenu"
+        aria-label="Главная страница"
+      >
+        <div
           ref="brandLogoRef"
           class="font-extrabold text-2xl text-center relative"
           style="cursor: pointer"
+          role="img"
+          aria-label="Kodify"
         >
-          <span ref="brandFirstRef" class="inline-block text-accent"> N </span>
+          <span ref="brandFirstRef" class="inline-block text-accent"> K </span>
           <span ref="brandCharsRef" class="inline-block">
-            <span data-ch class="inline-block">e</span>
-            <span data-ch class="inline-block">x</span>
-            <span data-ch class="inline-block">t</span>
-            <span ref="brandCodeRef" class="inline-block will-change-transform">
-              <span data-ch data-code class="inline-block">C</span>
-              <span data-ch data-code class="inline-block">o</span>
-              <span data-ch data-code class="inline-block">d</span>
-              <span data-ch data-code class="inline-block">e</span>
+            <span data-ch class="inline-block">o</span>
+            <span data-ch class="inline-block">d</span>
+            <span data-ch class="inline-block">i</span>
+            <span ref="brandCodeRef" class="inline-block">
+              <span data-ch data-code class="inline-block">f</span>
+              <span data-ch data-code class="inline-block">y</span>
             </span>
           </span>
           <span
@@ -242,17 +302,17 @@ onMounted(async () => {
               background: linear-gradient(90deg, transparent, var(--color-accent), transparent);
             "
           ></span>
-        </h1>
+        </div>
       </router-link>
     </div>
 
     <!-- Right Navigation -->
-    <div ref="navRightRef" class="hidden md:flex gap-3" v-route-prefetch>
+    <div ref="navRightRef" class="hidden md:flex gap-3">
       <template v-for="item in rightNav" :key="item.label">
         <router-link
           v-if="item.type === 'route'"
           :to="getRouteTo(item)"
-          class="rounded-2xl py-1 px-3 text-accent border border-border hover:bg-border hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
+          class="rounded-2xl py-2 px-3 text-accent hover:bg-bg hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[44px] min-w-[44px] flex items-center"
           :aria-current="isActive(item.to).value ? 'page' : undefined"
         >
           {{ item.label }}
@@ -260,7 +320,7 @@ onMounted(async () => {
         <a
           v-else
           :href="item.href"
-          class="rounded-2xl py-1 px-3 text-accent border border-border hover:bg-border hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
+          class="rounded-2xl py-2 px-3 text-accent hover:bg-border hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[44px] min-w-[44px] flex items-center"
         >
           {{ item.label }}
         </a>
@@ -269,9 +329,11 @@ onMounted(async () => {
 
     <!-- Mobile Menu Button -->
     <button
-      @click="toggleMobileMenu"
-      class="md:hidden p-2 text-accent"
+      @click.stop="toggleMobileMenu"
+      class="md:hidden p-3 text-accent relative z-[10000] min-h-[44px] min-w-[44px] flex items-center justify-center"
       :aria-expanded="isMobileMenuOpen"
+      :aria-label="isMobileMenuOpen ? 'Закрыть меню' : 'Открыть меню'"
+      type="button"
     >
       <svg
         v-if="!isMobileMenuOpen"
@@ -305,19 +367,19 @@ onMounted(async () => {
         v-if="isMobileMenuOpen"
         ref="mobileMenuRef"
         id="mobile-menu"
-        class="md:hidden absolute top-[64px] left-0 w-full px-4"
+        class="md:hidden fixed top-[70px] left-0 right-0 w-full px-4 z-[9999]"
         role="dialog"
         aria-modal="true"
       >
-        <div class="bg-bg/95 backdrop-blur rounded-2xl border border-border/30 p-4">
+        <div class="bg-bg/95 backdrop-blur rounded-2xl p-4">
           <nav class="flex flex-col space-y-3">
             <template v-for="item in [...leftNav, ...rightNav]" :key="item.label">
               <router-link
                 v-if="item.type === 'route'"
                 :to="getRouteTo(item)"
                 @click="closeMobileMenu"
-                class="rounded-2xl py-2 px-4 text-accent border border-border hover:bg-border hover:text-white transition-colors duration-300"
-                active-class="bg-border text-white"
+                class="rounded-2xl py-2 px-4 text-accent hover:bg-border hover:text-white transition-colors duration-300"
+                active-class="text-white"
               >
                 {{ item.label }}
               </router-link>
@@ -325,7 +387,7 @@ onMounted(async () => {
                 v-else
                 :href="item.href"
                 @click="closeMobileMenu"
-                class="rounded-2xl py-2 px-4 text-accent border border-border hover:bg-border hover:text-white transition-colors duration-300"
+                class="rounded-2xl py-2 px-4 text-accent hover:bg-border hover:text-white transition-colors duration-300"
               >
                 {{ item.label }}
               </a>

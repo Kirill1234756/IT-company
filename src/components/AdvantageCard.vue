@@ -16,8 +16,8 @@ const props = defineProps<{
       'p-6 md:p-8 ',
       // alternate big padding sides
       (props.index ?? 0) % 2 === 0
-        ? 'ps-[1rem] md:ps-[5rem] lg:ps-[10rem] pe-6 rounded-e-[3rem]'
-        : 'pe-[1rem] md:pe-[5rem] lg:pe-[10rem] ps-6 rounded-s-[3rem]',
+        ? 'ps-4 md:ps-8 lg:ps-12 pe-6 rounded-e-[3rem]'
+        : 'pe-4 md:pe-8 lg:pe-12 ps-6 rounded-s-[3rem]',
       // background color: invert ONLY for central cards
       props.isCentral
         ? (props.index ?? 0) % 2 === 0

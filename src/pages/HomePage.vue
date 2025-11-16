@@ -11,29 +11,57 @@ declare global {
     scrollToSection?: (sectionIndex: number) => void
   }
 }
-// router not needed in this page after section extraction
-// intersection observers moved into section components
-// keep only defineAsyncComponent
+
 import { useStackScroll } from '../composables/useStackScroll'
-// moved into dedicated section component
-const MainSection = defineAsyncComponent(() => import('../components/sections/MainSection.vue'))
-const WhatWeDoSection = defineAsyncComponent(
-  () => import('../components/sections/WhatWeDoSection.vue')
-)
-const PortfolioSection = defineAsyncComponent(
-  () => import('../components/sections/PortfolioSection.vue')
-)
-const AdvantagesSection = defineAsyncComponent(
-  () => import('../components/sections/AdvantagesSection.vue')
-)
-const AboutSection = defineAsyncComponent(() => import('../components/sections/AboutSection.vue'))
-const BlogWrapperSection = defineAsyncComponent(
-  () => import('../components/sections/BlogWrapperSection.vue')
-)
-const BlogModal = defineAsyncComponent(() => import('../modal/BlogModal.vue'))
-const ContactSection = defineAsyncComponent(
-  () => import('../components/sections/ContactSection.vue')
-)
+
+// MainSection - async без задержки для баланса FCP и размера бандла
+// Pre-rendered контент в index.html обеспечивает мгновенный LCP
+// Async для уменьшения начального бандла, но без задержки для быстрого FCP
+const MainSection = defineAsyncComponent({
+  loader: () => import('../components/sections/MainSection.vue'),
+  delay: 0,
+  timeout: 2000,
+})
+
+// Ленивая загрузка секций - без задержки для быстрого FCP
+const sectionDelay = 0
+
+const WhatWeDoSection = defineAsyncComponent({
+  loader: () => import('../components/sections/WhatWeDoSection.vue'),
+  delay: sectionDelay,
+  timeout: 5000,
+  loadingComponent: () => import('../components/LoadingFallback.vue'),
+})
+
+const PortfolioSection = defineAsyncComponent({
+  loader: () => import('../components/sections/PortfolioSection.vue'),
+  delay: sectionDelay,
+  timeout: 5000,
+  loadingComponent: () => import('../components/LoadingFallback.vue'),
+})
+
+const AdvantagesSection = defineAsyncComponent({
+  loader: () => import('../components/sections/AdvantagesSection.vue'),
+  delay: sectionDelay,
+  timeout: 5000,
+  loadingComponent: () => import('../components/LoadingFallback.vue'),
+})
+
+const BlogWrapperSection = defineAsyncComponent({
+  loader: () => import('../components/sections/BlogWrapperSection.vue'),
+  delay: sectionDelay,
+  timeout: 5000,
+  loadingComponent: () => import('../components/LoadingFallback.vue'),
+})
+
+const BlogModal = defineAsyncComponent({
+  loader: () => import('../components/modals/BlogModal.vue'),
+  delay: 0,
+  timeout: 5000,
+  loadingComponent: () => import('../components/LoadingFallback.vue'),
+})
+
+// ContactSection and Footer are now global in App.vue
 
 const stackRoot = ref<HTMLElement | null>(null)
 const router = useRouter()
@@ -60,19 +88,15 @@ const handleBlogPostClick = (post: BlogPost) => {
 // Function to scroll to blog section
 const scrollToBlogSection = () => {
   const blogSection = document.getElementById('blog')
-  console.log('Blog section found:', blogSection)
+  // Removed console.log for production performance
   if (blogSection) {
     // Find the blog section index in the stack
     const stackContainer = document.getElementById('stack')
     if (stackContainer) {
       const sections = stackContainer.querySelectorAll('.stack-section')
-      console.log('Stack sections found:', sections.length)
-      console.log('Blog section parent:', blogSection.parentElement)
+      // Removed console.log for production performance
 
-      // Debug: log each section and check for blog div
-      sections.forEach((section, index) => {
-        console.log(`Section ${index}:`, section.className, 'id:', section.id, 'element:', section)
-      })
+      // Removed debug logging for production performance
 
       const blogSectionIndex = Array.from(sections).findIndex((section) => {
         // Check if this section has id="blog"
@@ -80,33 +104,39 @@ const scrollToBlogSection = () => {
       })
 
       if (blogSectionIndex !== -1) {
-        console.log('Blog section index:', blogSectionIndex)
+        // Removed console.log for production performance
 
         // Try to use global scrollToSection function if available
         if (window.scrollToSection) {
-          console.log('Using global scrollToSection function')
+          // Removed console.log for production performance
           window.scrollToSection(blogSectionIndex)
         } else {
           // Fallback to native scrollTo
           const scrollPosition = blogSectionIndex * window.innerHeight
-          console.log('Using native scrollTo to position:', scrollPosition)
+          // Removed console.log for production performance
           window.scrollTo({
             top: scrollPosition,
             behavior: 'smooth',
           })
         }
       } else {
-        console.log('Blog section not found in stack, trying alternative approach')
+        // Removed console.log for production performance
         // Alternative: try to scroll to the blog section directly
-        try {
-          gsap.to(window, {
-            duration: 1,
-            scrollTo: blogSection,
-            ease: 'power2.inOut',
+        import('gsap')
+          .then(({ gsap }) => {
+            try {
+              gsap.to(window, {
+                duration: 1,
+                scrollTo: blogSection,
+                ease: 'power2.inOut',
+              })
+            } catch {
+              // Removed console.log for production performance
+            }
           })
-        } catch (error) {
-          console.log('Alternative scroll failed:', error)
-        }
+          .catch(() => {
+            // Removed console.log for production performance
+          })
       }
     }
   }
@@ -169,16 +199,16 @@ const relatedPosts = computed(() => {
 // intersection/lazy logic moved into corresponding section components
 
 useStackScroll(stackRoot, {
-  snap: true,
+  snap: false,
   onAfterGsapReady: ({ sections }) => {
-    console.log('StackScroll ready with sections:', sections.length)
+    // Removed console.log for production performance
 
     // Store reference to sections for later use
     window.stackSections = sections
 
     // Create a global function to scroll to specific section
     window.scrollToSection = (sectionIndex: number) => {
-      console.log('Scrolling to section index:', sectionIndex)
+      // Removed console.log for production performance
       const scrollPosition = sectionIndex * window.innerHeight
       window.scrollTo({
         top: scrollPosition,
@@ -190,6 +220,8 @@ useStackScroll(stackRoot, {
 
 // Initialize blog modal handling
 onMounted(() => {
+  // Removed console.log for production performance
+
   handleRouteParams()
 
   // Handle hash navigation on page load
@@ -259,16 +291,9 @@ watch(
     <!-- Our Advantages -->
     <AdvantagesSection />
 
-    <!-- about us -->
-    <AboutSection />
-
     <!-- blog -->
     <BlogWrapperSection id="blog" @post-click="handleBlogPostClick" />
-
-    <!-- contact -->
-    <ContactSection />
   </div>
-
   <!-- Blog Modal with Teleport -->
   <Teleport to="body">
     <BlogModal

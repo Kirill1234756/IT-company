@@ -3,103 +3,331 @@ import { defineStore } from 'pinia'
 import type { PortfolioProject, FilterType } from '@/types/portfolio'
 
 export const usePortfolioStore = defineStore('portfolio', () => {
+  // Маппинг русских названий на английские slug'и для URL
+  const projectSlugMap = {
+    'Сайт для аренды автомобилей': 'car-rental-website',
+    'Корпоративный сайт для производственной компании': 'corporate-manufacturing',
+    'Лендинг для бизнес-услуг': 'business-services-landing',
+    'Корпоративный портал': 'corporate-portal',
+    'Промо-сайт для технологического стартапа': 'tech-startup-promo',
+    'Интернет-магазин модной одежды': 'fashion-ecommerce',
+    'Корпоративный сайт консалтинговой компании': 'consulting-corporate',
+    'Лендинг для образовательной платформы': 'education-landing'
+  }
+
   // State - объединенные данные проектов с модальными данными
   const projects = ref<PortfolioProject[]>([
     {
       id: 1,
-      title: 'Интернет-магазин RB Home',
-      category: 'Интернет-магазины',
-      image: "https://avatars.mds.yandex.net/get-altay/13947802/2a0000019488a7cb593ba8d213404c645469/orig",
-      // Модальные данные - modalImg будет использовать image автоматически
+      title: 'Сайт для аренды автомобилей',
+      category: 'Лендинги',
+      image: "/img/cases/case-1.jpg",
+      description: 'Современный лендинг для компании по аренде автомобилей премиум класса. Интуитивный интерфейс, быстрая бронь и удобный каталог автомобилей',
+      technologies: ['Vue.js', 'TypeScript', 'Responsive Design', 'GSAP'],
+      year: '2024',
+      status: 'Завершен',
       modalCard: [
         {
           id: 1,
-          title: "About what",
-          description: "This case is dedicated to the successful creation of a modern corporate catalog website for the company RB Home. The goal of the project was to provide customers with a unique opportunity to purchase premium interior products through an intuitive and colorful online portal. It was important to reflect the company's service - Design Project, which is provided by the company on favorable terms. And also tell designers, businesses and partners about cooperation with RB Home."
+          title: "О чем проект",
+          description: "Этот кейс посвящен созданию современного лендинга для компании по аренде автомобилей премиум класса. Основная цель заключалась в создании привлекательной и функциональной платформы, которая позволит потенциальным клиентам легко просматривать каталог автомобилей, рассчитывать потенциальный доход для владельцев авто и быстро оформлять бронирование. Лендинг фокусируется на демонстрации премиальных автомобилей и показывает потенциал заработка для владельцев, которые хотят сдавать свои автомобили в аренду."
         },
         {
           id: 2,
-          title: "Problem",
-          description: "The RB Home company has a virtual space for the presentation, exclusively, of lighting and electrical products. The inability to present other categories of goods, services and terms of interaction with customers has become a significant obstacle to the company's development in the modern market."
+          title: "Проблема",
+          description: "Компании по аренде автомобилей требовалось современное онлайн-присутствие, которое эффективно представило бы их премиальный автопарк и привлекло бы как клиентов, ищущих возможность арендовать автомобили, так и владельцев автомобилей, заинтересованных в получении дохода от сдачи своих машин в аренду. Предыдущий сайт имел слабую визуальную привлекательность, плохой пользовательский опыт и не предоставлял инструментов для расчета дохода, что критично важно для привлечения владельцев автомобилей на платформу."
         },
         {
           id: 3,
-          title: "Target",
-          description: "The goal of the project was to create a recognizable, fashionable and modern website that would not only provide customers with the opportunity to purchase products, but would also emphasize the style and premium quality of the brand. The customer's key request was also the development of a personal account with unique capabilities for ordinary users and interior designers. An important condition was to introduce marketing techniques into the site to increase conversion on the site and increase requests for the company's services and products."
+          title: "Цель",
+          description: "Целью было создать современный лендинг, ориентированный на конверсию, с интуитивным интерфейсом, который эффективно демонстрирует премиальные автомобили, предоставляет быструю систему бронирования и включает инструменты для расчета потенциального дохода для владельцев автомобилей. Лендинг должен подчеркивать премиальную природу сервиса, сохраняя при этом простоту и удобство использования для всех категорий пользователей."
         }
       ],
       modalText: [
         {
           id: 1,
-          title: "Analytics",
-          description: "During the analytics phase, our team conducted comprehensive research aimed at understanding the unique needs and goals of RB Home. We sought to identify the core characteristics and values of the brand, as well as best practices in the premium home furnishings industry. We've scrutinized the websites of premium interiors and design brands to highlight the key elements of successful online platforms. Analyzing the catalog structure and customer interactions on competitor sites allowed us to identify effective product presentation methods. We held discussions with the RB Home team and identified the unique features of their brand in order to tailor the site design to match the corporate identity. Having learned that RB Home emphasizes the understated and elegant design of its products, we integrated the corresponding color schemes and structure of elements into the visual design of the site. We analyzed user experience sites similar to the company to identify pros and cons in navigation and functionality. The study found that the convenience of a personal account is a key factor in attracting interior designers. We took this into account when developing the functionality of the personal account. Taking into account the results of the analytics, at the site development stage steps were taken to create a unique and functional web platform for RB Home."
+          title: "Аналитика",
+          description: "На этапе аналитики мы провели комплексное исследование рынка аренды премиальных автомобилей и проанализировали сайты конкурентов. Мы изучили модели поведения пользователей, чтобы понять, как потенциальные клиенты ищут автомобили в аренду и какая информация для них наиболее важна. Мы проанализировали потребности двух основных целевых аудиторий: клиентов, желающих арендовать премиальные автомобили, и владельцев автомобилей, желающих получать доход от сдачи своих машин в аренду. Мы определили, что владельцам автомобилей нужна четкая визуализация потенциального дохода, что стало ключевой особенностью проекта. Мы исследовали лучшие практики на платформах аренды автомобилей и выявили ключевые элементы конверсии, такие как качественные изображения автомобилей, прозрачное ценообразование и простой процесс бронирования. Мы также проанализировали технические требования для быстрой загрузки страницы и адаптивного дизайна, чтобы обеспечить оптимальный пользовательский опыт на всех устройствах."
         },
         {
           id: 2,
-          title: "Site development",
-          description: "Our designers created a visual design that reflects the style and aesthetics of the brand. We ensured the site's attractiveness through the use of high-quality product images and harmonious color schemes. The integration of beige and brown shades into the website design elements emphasized the premium nature of the products. Marketing elements added zest to the site design, both visually and functionally. The choice of the Bitrix platform ensured ease of content and functionality management, giving the RB Home team flexibility in managing the site. Integration with Bitrix ensures fast order processing and updating of the product catalog. A personal account with individual functions for ordinary users and designers was developed. This included the ability to create articles and interact with 3D models of products. Designers can easily publish their projects and interact with clients through their personal account, creating a unique brand experience. Integration of the site with AmoCRM will allow the company to quickly process every order and every request from the site. The addition of quizzes and landing pages further focused attention on the product and attracted various categories of customers. Quiz quizzes such as Find Your Style have created engaging content and increased engagement with site visitors. We have ensured that the site is displayed correctly on all devices, which allows customers to conveniently use the site on tablets and smartphones. The adaptive design of the RB Home website ensures equally convenient interaction with the platform on any device."
+          title: "Разработка сайта",
+          description: "На этапе разработки мы создали современный лендинг с акцентом на премиальную эстетику и пользовательский опыт. Дизайн подчеркивает качественную автомобильную фотографию и использует изысканную цветовую схему, отражающую роскошную природу сервиса. Мы разработали интуитивный каталог автомобилей с возможностями фильтрации и подробной информацией об автомобилях. Ключевой особенностью проекта является инструмент расчета дохода, который позволяет владельцам автомобилей видеть потенциальный месячный доход от своих машин. Мы внедрили быструю систему бронирования с упрощенным процессом, который минимизирует количество шагов, необходимых для завершения бронирования. Лендинг включает разделы, демонстрирующие реальные примеры заработка владельцев автомобилей, что служит социальным доказательством и повышает доверие. Мы использовали Vue.js и TypeScript для обеспечения качества кода и поддерживаемости, в то время как анимации GSAP добавляют плавные переходы и усиливают премиальное ощущение сайта. Адаптивный дизайн обеспечивает идеальное отображение на всех устройствах, от мобильных телефонов до больших настольных экранов."
         }
       ]
     },
     {
       id: 2,
-      title: 'Корпоративный сайт БЫТПЛаст',
+      title: 'Корпоративный сайт для производственной компании',
       category: 'Корпоративные сайты',
-      image: "https://via.placeholder.com/400/300/D0D0D0/A0A0A0?text=Bytplast+Website",
-      // Модальные данные - modalImg будет использовать image автоматически
+      image: "/img/cases/case-2.jpg",
+      description: 'Комплексный корпоративный сайт с презентацией продукции, истории компании и возможностей сотрудничества',
+      technologies: ['React', 'Next.js', 'TypeScript', 'Tailwind CSS'],
+      year: '2024',
+      status: 'Завершен',
       modalCard: [
         {
           id: 1,
-          title: "About what",
-          description: "This case is dedicated to the creation of a modern website for Bytplast, a Russian manufacturer of plastic products for home and children. The main focus was on improving the site's usability, ensuring quick and easy access to information and the product catalog, and adapting the site for various devices."
+          title: "О чем проект",
+          description: "Этот кейс посвящен разработке комплексного корпоративного сайта для производственной компании. Проект был направлен на создание профессиональной онлайн-платформы, которая эффективно представляет продукцию компании, производственные возможности, историю компании и возможности сотрудничества. Сайт служит ключевым инструментом для привлечения новых клиентов, партнеров и инвесторов, предоставляя при этом комплексную информацию о деятельности и экспертизе компании."
         },
         {
           id: 2,
-          title: "Problem",
-          description: "\"Bytplast\" faced the need to modernize its old website. The site did not meet modern usability and design standards, was difficult to use on mobile devices, and had navigation issues within the product catalog. The company aimed to enhance the presentation of its extensive product line, consisting of over 1,100 items, and make the information accessible and understandable for users."
+          title: "Проблема",
+          description: "У производственной компании отсутствовал современный профессиональный сайт, который мог бы эффективно демонстрировать их обширный каталог продукции и производственные возможности. Существующее онлайн-присутствие было устаревшим, трудным для навигации и не отражало должным образом масштаб и экспертность компании. Требовалась платформа, которая помогла бы установить доверие к компании, способствовала бы развитию делового партнерства и предоставляла легкий доступ к информации о продукции для потенциальных клиентов."
         },
         {
           id: 3,
-          title: "Target",
-          description: "The goal of the project was to create a modern and functional website for \"Bytplast,\" combining attractive design, usability, and extensive capabilities for presenting the vast product catalog."
+          title: "Цель",
+          description: "Целью было создать комплексный корпоративный сайт, который представил бы продукцию и услуги компании в лучшем свете, эффективно рассказал историю компании и способствовал бы развитию деловых отношений. Сайт должен иметь профессиональный дизайн, отражающий промышленную экспертность компании, оставаясь при этом доступным и удобным для навигации для различных категорий пользователей, включая клиентов, партнеров и потенциальных инвесторов."
         }
       ],
       modalText: [
         {
           id: 1,
-          title: "Analytics",
-          description: "In the analysis phase, our team conducted comprehensive research to understand the company's current needs and determine the optimal solutions. We studied the behavior of potential users to understand their needs and expectations. Competitor research helped identify best practices in product presentation and user experience. Competitor analysis showed that clear and intuitive catalog navigation significantly improves the user experience. We took this into account when developing the structure of the new site. We gathered all necessary information about the company's products, including descriptions, photos, and texts. This content was revised and adapted for the new design. Product photos were updated and optimized for the web to improve visual perception and page load speed. Collecting and analyzing existing content helped us understand how best to structure the information on the new site. We conducted UX research to identify the main needs and preferences of users. This included analyzing user behavior, creating user scenarios, and conducting interviews with potential customers. Testing showed that users value simplicity and quick access to the information they need. Therefore, we prioritized developing convenient and intuitive navigation and filter systems for the catalog."
+          title: "Аналитика",
+          description: "На этапе аналитики мы провели глубокое исследование производственной индустрии и проанализировали корпоративные сайты аналогичных компаний. Мы изучили, как промышленные компании представляют свою продукцию и возможности в интернете, выявив лучшие практики для каталогов продукции и корпоративных презентаций. Мы собрали комплексную информацию о линейках продукции компании, производственных процессах и корпоративной истории. Мы проанализировали потребности различных групп пользователей: потенциальных клиентов, ищущих производственные услуги, партнеров, заинтересованных в сотрудничестве, и инвесторов, ищущих информацию о компании. Мы определили ключевые разделы, которые будут наиболее ценными для каждой аудитории, и структурировали контент соответственно. Мы также исследовали технические требования для отображения сложных каталогов продукции и промышленной фотографии, чтобы обеспечить эффективную демонстрацию возможностей компании."
         },
         {
           id: 2,
-          title: "Site development",
-          description: "In the development phase, our team took the following key steps to create the new site: 1. Unique Design Development. We created a new, modern website design that reflects the \"Bytplast\" brand and products. The design was developed in the Figma editor and took into account all aspects of the company's corporate identity. The color palette, including orange and light gray colors, and visual elements were chosen to match the company's corporate style while creating a fresh and attractive look for the site. The design included the use of large product images, minimalist icons, and convenient navigation buttons. 2. Responsive Design Creation. We developed seven responsive versions of the site for various devices, ensuring correct display and usability on all platforms. Carefully crafted design elements, such as menus and buttons, were adapted for convenient use on both desktop computers and mobile devices. Responsive design ensures that users can easily browse the site regardless of whether they use a computer, tablet, or smartphone. 3. Catalog Functionality Development. We implemented catalog filter functionality so that users could easily find the necessary products. The catalog was organized by categories, brands, and product lines. Implementing filters by parameters such as line, brand, and product type significantly simplified the process of finding the desired product. Filters were designed so that users could quickly sort products and find exactly what they need. 4. 3D Animation Implementation. A unique feature of the project was 3D animation, allowing users to rotate a virtual cup with a design that the company can provide. Interactive 3D animation demonstrates the possibilities of product customization and attracts users' attention, making the interaction with the site more engaging and informative. 5. 1C:Bitrix Integration. The site was developed on the 1C:Bitrix platform, ensuring convenient content and functionality management. Integration allows \"Bytplast\" to easily update the product catalog and manage the site without needing to contact developers. This solution also ensures high performance and site security. As a result, the new \"Bytplast\" website became a modern and functional tool, contributing to improved user experience, increased customer loyalty, and strengthening the company's market position. The development process included solving complex design, layout, and programming tasks on the 1C:Bitrix platform."
+          title: "Разработка сайта",
+          description: "На этапе разработки мы создали профессиональный корпоративный сайт, используя React и Next.js для обеспечения оптимальной производительности и SEO-возможностей. Дизайн отражает промышленный профессионализм, сохраняя при этом современную эстетику. Мы разработали комплексный каталог продукции с подробной информацией, спецификациями и качественными изображениями. Сайт включает разделы о истории компании, производственных возможностях, стандартах качества и возможностях партнерства. Мы внедрили чистую, интуитивную структуру навигации, которая позволяет пользователям легко находить нужную информацию. Сайт имеет адаптивный дизайн, который идеально работает на всех устройствах, обеспечивая доступ к информации для деловых партнеров и клиентов как в офисе, так и на производственном объекте. Интеграция с системами управления контентом позволяет компании легко обновлять информацию о продукции и новости компании без технической помощи."
         }
       ]
     },
     {
       id: 3,
-      title: 'Платформа бронирования отелей',
-      category: 'Мобильные приложения',
-      image: "https://via.placeholder.com/400/300/4F46E5/FFFFFF?text=Booking+App"
+      title: 'Лендинг для бизнес-услуг',
+      category: 'Лендинги',
+      image: "/img/cases/case-3.jpg",
+      description: 'Эффективный лендинг для продвижения бизнес-услуг с акцентом на конверсию и привлечение клиентов',
+      technologies: ['Vue.js', 'TypeScript', 'GSAP Animations'],
+      year: '2023',
+      status: 'Завершен',
+      modalCard: [
+        {
+          id: 1,
+          title: "О чем проект",
+          description: "Этот кейс посвящен созданию высококонверсионного лендинга для бизнес-услуг. Проект был сосредоточен на создании эффективного маркетингового инструмента, который привлечет потенциальных клиентов, четко представит предложения услуг и максимизирует показатели конверсии. Лендинг был разработан для быстрой коммуникации ценностных предложений и поощрения посетителей к действию, будь то запрос консультации, загрузка материалов или прямой контакт."
+        },
+        {
+          id: 2,
+          title: "Проблема",
+          description: "Компании бизнес-услуг требовалось эффективное онлайн-присутствие, которое могло бы генерировать лиды и конвертировать посетителей в клиентов. Предыдущие маркетинговые материалы были разбросаны по разным платформам и не имели целенаправленного подхода к конверсии. Требовался единый, целостный лендинг, который мог бы служить основной точкой входа для маркетинговых кампаний, четко представляя услуги и побуждая потенциальных клиентов к взаимодействию."
+        },
+        {
+          id: 3,
+          title: "Цель",
+          description: "Целью было создать лендинг, ориентированный на конверсию, который эффективно представит бизнес-услуги, построит доверие с потенциальными клиентами и побудит их к действию. Лендинг должен иметь четкую структуру, которая проводит посетителей через ценностное предложение, отвечает на распространенные вопросы и упрощает запрос услуг или контакт с компанией."
+        }
+      ],
+      modalText: [
+        {
+          id: 1,
+          title: "Аналитика",
+          description: "На этапе аналитики мы исследовали целевую аудиторию для бизнес-услуг и проанализировали, что мотивирует лиц, принимающих бизнес-решения, взаимодействовать с поставщиками услуг. Мы изучили лучшие практики конверсии для B2B-лендингов и определили ключевые элементы, которые стимулируют действие. Мы проанализировали лендинги конкурентов, чтобы понять рыночное позиционирование и выявить возможности для дифференциации. Мы составили карту пути клиента от первоначального осознания до запроса услуги, определив точки соприкосновения, где лендинг может повлиять на принятие решений. Мы также исследовали типы информации, необходимые бизнес-клиентам перед принятием решений, что информировало структуру контента и иерархию информации."
+        },
+        {
+          id: 2,
+          title: "Разработка сайта",
+          description: "На этапе разработки мы создали оптимизированный для конверсии лендинг с четкими ценностными предложениями и убедительными призывами к действию. Дизайн подчеркивает элементы построения доверия, такие как отзывы, кейсы и четкие описания услуг. Мы внедрили плавные анимации GSAP, которые повышают вовлеченность пользователей, не отвлекая от основного сообщения. Лендинг имеет логический поток, который проводит посетителей от распознавания проблемы к презентации решения и к действию. Мы интегрировали множественные точки конверсии по всей странице, включая заметные формы обратной связи, кнопки запроса консультации и четкую презентацию услуг. Страница оптимизирована для быстрой загрузки и мобильной адаптивности, чтобы обеспечить оптимальную производительность на всех устройствах и скоростях соединения. Возможности A/B тестирования были встроены для обеспечения непрерывной оптимизации элементов конверсии."
+        }
+      ]
     },
     {
       id: 4,
-      title: 'Лендинг для IT-компании',
-      category: 'Лендинги',
-      image: "https://via.placeholder.com/400/300/10B981/FFFFFF?text=IT+Landing"
+      title: 'Корпоративный портал',
+      category: 'Корпоративные сайты',
+      image: "/img/cases/case-4.jpg",
+      description: 'Многофункциональный корпоративный портал с интегрированными решениями для бизнеса и управления',
+      technologies: ['Vue.js', 'Pinia', 'TypeScript', 'Vite'],
+      year: '2023',
+      status: 'Завершен',
+      modalCard: [
+        {
+          id: 1,
+          title: "О чем проект",
+          description: "Этот кейс посвящен разработке комплексного корпоративного портала, который интегрирует различные решения для управления бизнесом и коммуникации. Портала служит центральным узлом для сотрудников, предоставляя доступ к инструментам управления проектами, внутренним коммуникациям, управлению документами и различным функциям автоматизации бизнеса. Платформа была разработана для оптимизации внутренних процессов и улучшения сотрудничества в организации."
+        },
+        {
+          id: 2,
+          title: "Проблема",
+          description: "Компания столкнулась с проблемами разрозненных внутренних систем и инструментов, которые сотрудникам приходилось использовать отдельно, что приводило к неэффективности и пробелам в коммуникации. Отсутствовала централизованная платформа для управления проектами, обмена информацией или координации работы между отделами. Отсутствие интеграции между различными системами создавало узкие места в рабочих процессах и снижало общую производительность. Сотрудникам требовалась единая платформа, которая объединила бы все необходимые инструменты и информацию в одном месте."
+        },
+        {
+          id: 3,
+          title: "Цель",
+          description: "Целью было создать единый корпоративный портал, который интегрировал бы управление проектами, внутренние коммуникации, обмен документами и инструменты автоматизации бизнеса в одну удобную для пользователей платформу. Портала должен улучшить внутренние процессы, усилить сотрудничество и предоставить сотрудникам легкий доступ ко всем необходимым инструментам и информации, которые им нужны для ежедневной работы."
+        }
+      ],
+      modalText: [
+        {
+          id: 1,
+          title: "Аналитика",
+          description: "На этапе аналитики мы провели комплексное исследование внутренних рабочих процессов компании и выявили болевые точки в текущих процессах. Мы проанализировали, как взаимодействуют различные отделы и какие инструменты они используют ежедневно. Мы изучили лучшие практики в дизайне корпоративных порталов и пользовательском опыте для внутренних платформ. Мы составили карту информационной архитектуры, необходимой для поддержки различных бизнес-функций, и определили ключевые точки интеграции с существующими системами. Мы также исследовали потребности и предпочтения сотрудников, чтобы обеспечить принятие и эффективное использование портала. Это включало понимание различных пользовательских ролей и их специфических требований к доступу к информации и инструментам."
+        },
+        {
+          id: 2,
+          title: "Разработка сайта",
+          description: "На этапе разработки мы создали комплексный корпоративный портал, используя Vue.js и Pinia для управления состоянием, обеспечивая масштабируемую архитектуру и отличный пользовательский опыт. Портала имеет интуитивную навигацию с контролем доступа на основе ролей, позволяя различным группам пользователей видеть релевантную информацию и инструменты. Мы интегрировали модули управления проектами, которые позволяют командам отслеживать прогресс, назначать задачи и сотрудничать над проектами. Платформа включает функции внутренней коммуникации, такие как новости компании, объявления и пространства для командного сотрудничества. Мы разработали возможности управления документами с контролем версий и функциями обмена. Портала полностью адаптивен, обеспечивая сотрудникам доступ с настольных компьютеров, планшетов или мобильных устройств. Оптимизация производительности обеспечивает быструю загрузку даже при больших объемах данных, а современный технологический стек обеспечивает основу для будущих дополнений функций."
+        }
+      ]
     },
     {
       id: 5,
-      title: 'Промо-сайт для стартапа',
+      title: 'Промо-сайт для технологического стартапа',
       category: 'Промо-сайты',
-      image: "https://via.placeholder.com/400/300/8B5CF6/FFFFFF?text=Fintech+Promo"
+      image: "/img/cases/case-5.jpg",
+      description: 'Современный промо-сайт для технологического стартапа с инновационным дизайном и анимациями',
+      technologies: ['Vue.js', 'GSAP', 'TypeScript', 'Responsive Design'],
+      year: '2024',
+      status: 'Завершен',
+      modalCard: [
+        {
+          id: 1,
+          title: "О чем проект",
+          description: "Этот кейс посвящен созданию современного промо-сайта для технологического стартапа. Проект был направлен на создание инновационной, визуально впечатляющей платформы, которая эффективно донесет видение стартапа, технологию и ценностное предложение до потенциальных инвесторов, партнеров и ранних последователей. Промо-сайт служит основным цифровым контактом для бренда стартапа и истории инноваций."
+        },
+        {
+          id: 2,
+          title: "Проблема",
+          description: "Технологическому стартапу требовалось убедительное онлайн-присутствие, которое выделилось бы на переполненном рынке и эффективно донесло сложные технологические концепции до различных аудиторий. У стартапа отсутствовал профессиональный сайт, который мог бы демонстрировать их инновации, привлекать инвесторов и генерировать интерес со стороны потенциальных партнеров и клиентов. Требовалась платформа, которая отражала бы передовой характер стартапа, оставаясь при этом доступной и понятной."
+        },
+        {
+          id: 3,
+          title: "Цель",
+          description: "Целью было создать инновационный промо-сайт, который эффективно донесет видение и технологию стартапа через современный дизайн, увлекательные анимации и четкое послание. Сайт должен создать ажиотаж вокруг инноваций стартапа, построить доверие и побудить к взаимодействию целевые аудитории, включая инвесторов, потенциальных партнеров и ранних последователей."
+        }
+      ],
+      modalText: [
+        {
+          id: 1,
+          title: "Аналитика",
+          description: "На этапе аналитики мы исследовали экосистему технологических стартапов и проанализировали, как успешные стартапы представляют себя онлайн. Мы изучили промо-сайты конкурентов, чтобы выявить тренды дизайна и эффективные стратегии коммуникации для технологических стартапов. Мы проанализировали целевые аудитории: инвесторов, ищущих перспективные возможности, потенциальных партнеров, ищущих инновационные решения, и ранних последователей, заинтересованных в новых технологиях. Мы исследовали, как сложные технологические концепции можно объяснить визуально и интерактивно, чтобы сделать их доступными для различных аудиторий. Мы также изучили лучшие практики в дизайне сайтов стартапов, сосредоточившись на элементах, которые помогают построить доверие и генерировать интерес."
+        },
+        {
+          id: 2,
+          title: "Разработка сайта",
+          description: "На этапе разработки мы создали инновационный промо-сайт с передовым дизайном и плавными анимациями GSAP, которые оживляют историю стартапа. Сайт включает интерактивные элементы, которые вовлекают посетителей и помогают объяснять сложные технологические концепции через визуальное повествование. Мы разработали разделы, которые эффективно передают видение стартапа, технологические инновации, экспертизу команды и потенциальное влияние. Дизайн использует современную эстетику с смелой типографикой, динамичными анимациями и цветовой схемой, отражающей технологические инновации. Мы внедрили плавные анимации прокрутки и интерактивные элементы, которые усиливают вовлеченность пользователей. Сайт полностью адаптивен, обеспечивая оптимальный опыт на всех устройствах. Оптимизация производительности обеспечивает быструю загрузку, а современная архитектура Vue.js обеспечивает гибкость для будущих обновлений по мере развития стартапа."
+        }
+      ]
     },
     {
       id: 6,
-      title: 'Система технической поддержки',
-      category: 'Техническая поддержка',
-      image: "https://via.placeholder.com/400/300/6B7280/FFFFFF?text=Support+System"
+      title: 'Интернет-магазин модной одежды',
+      category: 'Интернет-магазины',
+      image: "/img/cases/case-6.jpg",
+      description: 'Современный интернет-магазин модной одежды с интуитивной навигацией и удобным поиском товаров',
+      technologies: ['Vue.js', 'TypeScript', 'Tailwind CSS', 'GSAP'],
+      year: '2024',
+      status: 'Завершен',
+      modalCard: [
+        {
+          id: 1,
+          title: "О чем проект",
+          description: "Этот кейс посвящен созданию современного интернет-магазина модной одежды. Проект был направлен на создание стильной и функциональной платформы электронной коммерции, которая предоставляет пользователям удобный способ просматривать каталог модных товаров, выбирать размеры и оформлять заказы. Интернет-магазин сочетает в себе визуальную привлекательность и удобство использования для максимального комфорта покупателей."
+        },
+        {
+          id: 2,
+          title: "Проблема",
+          description: "Компании требовался современный интернет-магазин, который мог бы эффективно представлять модную коллекцию одежды и обеспечивать удобный процесс покупок. Существующая платформа была устаревшей, имела сложную навигацию и не соответствовала современным стандартам пользовательского опыта. Необходимо было создать решение, которое бы привлекало целевую аудиторию и способствовало росту продаж."
+        },
+        {
+          id: 3,
+          title: "Цель",
+          description: "Целью было создать современный интернет-магазин модной одежды с интуитивной навигацией, удобной системой фильтрации и поиска, а также простым процессом оформления заказа. Сайт должен был визуально отражать стиль и качество бренда, обеспечивая при этом максимальное удобство для пользователей."
+        }
+      ],
+      modalText: [
+        {
+          id: 1,
+          title: "Аналитика",
+          description: "На этапе аналитики мы провели исследование рынка модной электронной коммерции и изучили поведение онлайн-покупателей. Мы проанализировали популярные интернет-магазины одежды, выявив ключевые элементы успешных платформ: удобная фильтрация по размерам и параметрам, качественные изображения товаров, система размерной сетки и отзывы покупателей. Мы изучили предпочтения целевой аудитории и выявили важность мобильной версии сайта, так как значительная часть покупок совершается с мобильных устройств. Мы также проанализировали процесс оформления заказа и выявили возможности для его оптимизации."
+        },
+        {
+          id: 2,
+          title: "Разработка сайта",
+          description: "На этапе разработки мы создали современный интернет-магазин с акцентом на визуальную презентацию товаров. Дизайн отражает стиль и эстетику модного бренда, используя качественные изображения товаров и интуитивную навигацию. Мы разработали удобную систему фильтрации, позволяющую пользователям быстро находить нужные товары по категориям, размерам, цветам и ценам. Каталог товаров включает подробные страницы с множеством фотографий, описанием материалов и размерами. Мы внедрили систему корзины и оформления заказа с минимальным количеством шагов. Адаптивный дизайн обеспечивает отличное отображение на всех устройствах, от смартфонов до настольных компьютеров. Использование Vue.js и TypeScript обеспечивает высокую производительность и удобство поддержки."
+        }
+      ]
+    },
+    {
+      id: 7,
+      title: 'Корпоративный сайт консалтинговой компании',
+      category: 'Корпоративные сайты',
+      image: "/img/cases/case-7.jpg",
+      description: 'Профессиональный корпоративный сайт для консалтинговой компании с презентацией услуг и экспертизы',
+      technologies: ['React', 'Next.js', 'TypeScript', 'Tailwind CSS'],
+      year: '2023',
+      status: 'Завершен',
+      modalCard: [
+        {
+          id: 1,
+          title: "О чем проект",
+          description: "Этот кейс посвящен разработке профессионального корпоративного сайта для консалтинговой компании. Проект был направлен на создание авторитетной онлайн-платформы, которая эффективно представляет услуги компании, демонстрирует экспертизу и достижения, а также облегчает взаимодействие с потенциальными клиентами. Сайт служит ключевым инструментом для привлечения клиентов и построения доверия в индустрии консалтинга."
+        },
+        {
+          id: 2,
+          title: "Проблема",
+          description: "Консалтинговой компании требовался современный корпоративный сайт, который мог бы эффективно представлять их услуги и экспертизу. Существующее онлайн-присутствие не отражало профессиональный уровень компании и не способствовало привлечению новых клиентов. Требовалась платформа, которая бы демонстрировала авторитет компании и облегчала процесс взаимодействия с потенциальными клиентами."
+        },
+        {
+          id: 3,
+          title: "Цель",
+          description: "Целью было создать профессиональный корпоративный сайт, который эффективно представит услуги компании, продемонстрирует экспертность команды и достижения, а также обеспечит удобный способ связи для потенциальных клиентов. Сайт должен был отражать профессионализм и авторитет компании в сфере консалтинга."
+        }
+      ],
+      modalText: [
+        {
+          id: 1,
+          title: "Аналитика",
+          description: "На этапе аналитики мы исследовали индустрию консалтинговых услуг и проанализировали корпоративные сайты ведущих консалтинговых компаний. Мы изучили, как консалтинговые компании представляют свои услуги, экспертизу и кейсы. Мы проанализировали потребности потенциальных клиентов консалтинговых услуг и выявили важность демонстрации успешных проектов, экспертизы команды и методологий работы. Мы также исследовали типичный путь клиента от знакомства с компанией до запроса консультации."
+        },
+        {
+          id: 2,
+          title: "Разработка сайта",
+          description: "На этапе разработки мы создали профессиональный корпоративный сайт, используя React и Next.js для обеспечения оптимальной производительности и SEO. Дизайн отражает профессионализм и авторитет консалтинговой компании. Мы разработали разделы, представляющие услуги компании, методологии работы, команду экспертов и портфолио успешных проектов. Сайт включает систему фильтрации кейсов и удобную форму для запроса консультации. Мы внедрили раздел с отзывами клиентов и историями успеха, что способствует построению доверия. Адаптивный дизайн обеспечивает профессиональное отображение на всех устройствах, что особенно важно для деловых клиентов, которые могут просматривать сайт в офисе или в дороге."
+        }
+      ]
+    },
+    {
+      id: 8,
+      title: 'Лендинг для образовательной платформы',
+      category: 'Лендинги',
+      image: "/img/cases/case-8.jpg",
+      description: 'Эффективный лендинг для образовательной платформы с акцентом на курсы и возможности обучения',
+      technologies: ['Vue.js', 'TypeScript', 'GSAP Animations', 'Responsive Design'],
+      year: '2024',
+      status: 'Завершен',
+      modalCard: [
+        {
+          id: 1,
+          title: "О чем проект",
+          description: "Этот кейс посвящен созданию эффективного лендинга для образовательной платформы. Проект был направлен на создание привлекательной и информативной страницы, которая представляет образовательные курсы, возможности обучения и преимущества платформы. Лендинг был разработан для привлечения студентов и увеличения регистраций на платформу."
+        },
+        {
+          id: 2,
+          title: "Проблема",
+          description: "Образовательной платформе требовался эффективный лендинг, который мог бы привлекать потенциальных студентов и конвертировать посетителей в зарегистрированных пользователей. Существующая страница не предоставляла четкой информации о преимуществах платформы и курсах, что препятствовало привлечению новых студентов. Требовалась страница, которая бы эффективно представляла образовательные возможности и побуждала к регистрации."
+        },
+        {
+          id: 3,
+          title: "Цель",
+          description: "Целью было создать конверсионный лендинг, который эффективно представит образовательную платформу, покажет разнообразие курсов и преимущества обучения, а также обеспечит простой процесс регистрации. Лендинг должен был мотивировать посетителей к действию и увеличить количество регистраций."
+        }
+      ],
+      modalText: [
+        {
+          id: 1,
+          title: "Аналитика",
+          description: "На этапе аналитики мы исследовали образовательные платформы и проанализировали, как они привлекают студентов. Мы изучили поведение потенциальных студентов и выявили, какая информация наиболее важна при выборе образовательной платформы: разнообразие курсов, формат обучения, квалификация преподавателей и отзывы студентов. Мы проанализировали конкурентов и выявили ключевые элементы успешных образовательных лендингов. Мы также исследовали процесс принятия решения о регистрации и выявили важность социального доказательства и четкого представления преимуществ."
+        },
+        {
+          id: 2,
+          title: "Разработка сайта",
+          description: "На этапе разработки мы создали современный лендинг с акцентом на визуальную привлекательность и конверсию. Дизайн отражает современный и инновационный подход к образованию. Мы разработали разделы, представляющие основные курсы, преимущества платформы, информацию о преподавателях и отзывы студентов. Лендинг включает привлекательные анимации GSAP, которые делают взаимодействие более вовлекающим. Мы внедрили систему категорий курсов с удобной навигацией и четкими призывами к действию для регистрации. Процесс регистрации максимально упрощен и требует минимальное количество шагов. Адаптивный дизайн обеспечивает отличное отображение на всех устройствах, что особенно важно для студентов, которые могут изучать информацию с различных устройств."
+        }
+      ]
     }
   ])
 
@@ -254,6 +482,22 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     return projects.value.filter(p => p.status === status)
   }
 
+  // Функции для работы с slug'ами
+  const getProjectSlug = (title: string): string => {
+    return projectSlugMap[title as keyof typeof projectSlugMap] || title
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+  }
+
+  const findProjectBySlug = (slug: string): PortfolioProject | null => {
+    return projects.value.find(project =>
+      getProjectSlug(project.title) === slug
+    ) || null
+  }
+
   // Simulate API call
   const fetchProjects = async () => {
     isLoading.value = true
@@ -292,6 +536,10 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     getProjectById,
     getProjectsByCategory,
     getProjectsByStatus,
-    fetchProjects
+    fetchProjects,
+
+    // Slug functions
+    getProjectSlug,
+    findProjectBySlug
   }
 })

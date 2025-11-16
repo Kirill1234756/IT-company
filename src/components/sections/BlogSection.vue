@@ -1,63 +1,77 @@
 <script setup lang="ts">
-import { ref, computed, defineAsyncComponent } from 'vue'
+import { computed, defineAsyncComponent, shallowRef } from 'vue'
 import { useBlogStore } from '../../stores/blog'
+import { debounce } from '../../utils/performance'
 import type { BlogPost } from '../../types/blog'
 
 const BlogCard = defineAsyncComponent(() => import('../BlogCard.vue'))
 
 const blogStore = useBlogStore()
 
-// Filter state
-const activeTab = ref('all')
+// Filter state with shallowRef for better performance
+const activeTab = shallowRef('all')
 
 // Define emits
 const emit = defineEmits<{
   (e: 'postClick', post: BlogPost): void
 }>()
 
-// Get filtered posts
+// Memoized filtered posts with better caching
 const filteredPosts = computed(() => {
   return blogStore.getPostsByCategory(activeTab.value)
 })
+
+// Debounced tab switching for better performance
+const debouncedSetTab = debounce(
+  ((tabId: string) => {
+    activeTab.value = tabId
+  }) as unknown as (...args: unknown[]) => unknown,
+  100
+)
 
 // Handle post click
 const handlePostClick = (post: BlogPost) => {
   emit('postClick', post)
 }
 
-// Set tab
+// Set tab with debouncing
 const setTab = (tabId: string) => {
-  activeTab.value = tabId
+  debouncedSetTab(tabId)
 }
 </script>
 
 <template>
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+  <div class="max-w-7xl">
     <!-- Main Title -->
-    <h1 class="text-5xl md:text-6xl font-extrabold text-blog-title mb-10 text-center">Блог</h1>
+    <h1
+      class="title no-title-effects text-center text-3xl md:text-4xl font-black tracking-tight mb-8 text-accent opacity-100"
+    >
+      Блог
+    </h1>
 
-    <!-- Tabs -->
-    <div class="flex justify-center space-x-4 mb-12">
+    <!-- Category Tabs -->
+    <div class="flex flex-wrap justify-center gap-4 mb-12">
       <button
         v-for="tab in blogStore.tabs"
         :key="tab.id"
         @click="setTab(tab.id)"
         :class="[
-          'px-6 py-3 rounded-full text-sm font-semibold transition-all duration-300',
+          'px-6 py-3 rounded-full font-medium transition-all duration-200',
           activeTab === tab.id
-            ? 'bg-blog-tab-active text-white shadow-lg'
-            : 'bg-blog-tab-inactive text-blog-subtitle border hover:bg-white/90 hover:border-blog-tab-active',
+            ? 'bg-blog-title text-white shadow-lg'
+            : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
         ]"
       >
         {{ tab.name }}
       </button>
     </div>
 
-    <!-- Blog Posts Grid -->
+    <!-- Blog Posts Grid with v-memo optimization -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       <BlogCard
         v-for="post in filteredPosts"
         :key="post.id"
+        v-memo="[post.id, activeTab]"
         :post="post"
         @click="handlePostClick"
       />
@@ -67,4 +81,18 @@ const setTab = (tabId: string) => {
 
 <style scoped>
 /* Blog section specific styles */
+.text-blog-title {
+  color: #6366f1;
+}
+
+.bg-blog-title {
+  background-color: #6366f1;
+}
+
+/* Performance optimizations */
+.grid {
+  contain: layout;
+}
+
+/* will-change удален - не нужен для статических элементов */
 </style>

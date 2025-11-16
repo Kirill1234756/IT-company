@@ -1,26 +1,111 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
-import { defineAsyncComponent, onMounted } from 'vue'
-// @ts-expect-error - Loader component uses script setup without explicit default export
-import Loader from './components/Loader.vue'
+import { defineAsyncComponent, onMounted, ref } from 'vue'
+import { useIntersectionObserver } from '@vueuse/core'
+const LoaderC = defineAsyncComponent(() => import('./components/ui/Loader.vue'))
 import { usePageLoader } from './composables/usePageLoader'
 const Header = defineAsyncComponent(() => import('./pages/Header.vue'))
-const Footer = defineAsyncComponent(() => import('./components/Footer.vue'))
 const ContactSection = defineAsyncComponent(
   () => import('./components/sections/ContactSection.vue')
 )
+const Footer = defineAsyncComponent(() => import('./pages/Footer.vue'))
 
-const { isLoading, progress, isRouteChange, initLoader, initRouterLoader } = usePageLoader()
+const { isLoading, progress, isRouteChange, initLoader, initRouterLoader, addLoadingPromise } =
+  usePageLoader()
 
-onMounted(() => {
+// Lazy load triggers and flags
+const contactSectionTrigger = ref<HTMLElement | null>(null)
+const footerTrigger = ref<HTMLElement | null>(null)
+const shouldLoadContactSection = ref(false)
+const shouldLoadFooter = ref(false)
+
+// Типы для scheduler API
+interface SchedulerPostTaskOptions {
+  priority?: 'user-blocking' | 'user-visible' | 'background'
+  delay?: number
+  signal?: AbortSignal
+}
+
+interface Scheduler {
+  postTask(callback: () => void, options?: SchedulerPostTaskOptions): Promise<void>
+}
+
+declare global {
+  interface Window {
+    scheduler?: Scheduler
+  }
+}
+
+// Загрузка ContactSection и Footer без задержки - лоадер ждет реальной загрузки
+const loadContactSection = () => {
+  shouldLoadContactSection.value = true
+}
+
+const loadFooter = () => {
+  shouldLoadFooter.value = true
+}
+
+// Observers (vueuse handles cleanup when target unmounts)
+// Загрузка без задержки - лоадер ждет реальной загрузки
+useIntersectionObserver(
+  contactSectionTrigger,
+  ([entry]) => {
+    if (entry?.isIntersecting && !shouldLoadContactSection.value) {
+      loadContactSection()
+    }
+  },
+  { rootMargin: '300px', threshold: 0 }
+)
+
+useIntersectionObserver(
+  footerTrigger,
+  ([entry]) => {
+    if (entry?.isIntersecting && !shouldLoadFooter.value) {
+      loadFooter()
+    }
+  },
+  { rootMargin: '300px', threshold: 0 }
+)
+
+onMounted(async () => {
   initLoader()
   initRouterLoader()
+
+  // Ждем загрузки критических компонентов перед скрытием лоадера
+  // Pre-rendered контент в HTML обеспечивает мгновенный LCP, поэтому уменьшаем время ожидания
+  const waitForMainSection = new Promise<void>((resolve) => {
+    const isMobile = window.innerWidth < 768
+    const MAX_WAIT_TIME = isMobile ? 1500 : 2000 // Уменьшено для быстрого FCP
+    const startTime = Date.now()
+
+    // Проверяем наличие MainSection (LCP элемент) - pre-rendered в HTML
+    const checkMainSection = () => {
+      const mainSection = document.querySelector('.main-section')
+      const h1 = mainSection?.querySelector('h1')
+      const elapsed = Date.now() - startTime
+
+      // Проверяем что h1 загружен и имеет контент (pre-rendered или Vue)
+      if (mainSection && h1 && h1.textContent && h1.textContent.trim().length > 0) {
+        // Минимальная задержка для рендеринга контента
+        setTimeout(() => resolve(), isMobile ? 50 : 100)
+      } else if (elapsed >= MAX_WAIT_TIME) {
+        // Таймаут - принудительно завершаем, чтобы лоадер не зависал
+        resolve()
+      } else {
+        setTimeout(checkMainSection, isMobile ? 20 : 30)
+      }
+    }
+    // Начинаем проверку сразу
+    checkMainSection()
+  })
+
+  addLoadingPromise(waitForMainSection)
 })
 </script>
 
 <template>
   <main id="app">
-    <Loader v-if="isLoading" :progress="progress" :is-route-change="isRouteChange" />
+    <LoaderC v-if="isLoading" :progress="progress" :is-route-change="isRouteChange" />
     <header
       ref="headerRef"
       class="fixed top-[0.7rem] left-0 w-full flex justify-center items-center z-10 px-3 md:px-12 lg:px-[8rem]"
@@ -41,35 +126,16 @@ onMounted(() => {
     </header>
     <RouterView />
 
-    <!-- Contact Section (lazy loaded) -->
-    <Suspense>
-      <template #default>
-        <ContactSection />
-      </template>
-      <template #fallback>
-        <div class="py-20 text-center">
-          <div
-            class="animate-spin w-8 h-8 border-2 border-[var(--color-accent)] border-t-transparent rounded-full mx-auto"
-          ></div>
-        </div>
-      </template>
-    </Suspense>
+    <!-- Lazy placeholders and sections -->
+    <div ref="contactSectionTrigger" style="height: 1px; width: 100%"></div>
+    <ContactSection v-if="shouldLoadContactSection" />
 
-    <!-- Footer (lazy loaded) -->
-    <Suspense>
-      <template #default>
-        <Footer />
-      </template>
-      <template #fallback>
-        <div
-          class="h-24 bg-gradient-to-br from-[var(--color-bg)] to-[var(--color-border)] border-t border-[var(--color-accent)]/20"
-        ></div>
-      </template>
-    </Suspense>
+    <div ref="footerTrigger" style="height: 1px; width: 100%"></div>
+    <Footer v-if="shouldLoadFooter" />
 
     <!-- Telegram Icon -->
     <a
-      href="https://t.me/your_telegram_username"
+      href="https://t.me/ITcompany_tg"
       target="_blank"
       rel="noopener noreferrer"
       class="fixed bottom-6 right-6 md:bottom-8 md:right-8 w-9 h-9 md:w-12 md:h-12 bg-gradient-to-br from-[#0088cc] to-[#00a8ff] rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 hover:scale-105 active:scale-95 transition-all duration-300 z-[1000] animate-pulse"
@@ -103,19 +169,14 @@ onMounted(() => {
   --color-error: #ef4444;
   --color-info: #3b82f6;
   --color-text: #f8fafc;
-  --color-text-muted: #94a3b8;
+  --color-text-muted: #cbd5e1; /* Improved contrast from #94a3b8 */
 }
 
 * {
-
-
   box-sizing: border-box;
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background-color: var(--color-bg);
-  color: white;
   overflow-x: hidden;
 }
 
@@ -147,10 +208,6 @@ html {
 }
 
 /* Focus styles */
-*:focus {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-}
 
 /* Selection styles */
 ::selection {
@@ -204,33 +261,6 @@ img {
   aspect-ratio: 1 / 1;
 }
 
-/* Utility classes */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1rem;
-}
-
-.text-center {
-  text-align: center;
-}
-
-.flex {
-  display: flex;
-}
-
-.items-center {
-  align-items: center;
-}
-
-.justify-center {
-  justify-content: center;
-}
-
-.justify-between {
-  justify-content: space-between;
-}
-
 .space-x-2 > * + * {
   margin-left: 0.5rem;
 }
@@ -253,263 +283,5 @@ img {
 
 .space-y-8 > * + * {
   margin-top: 2rem;
-}
-
-/* Responsive utilities */
-@media (max-width: 768px) {
-  .container {
-    padding: 0 0.5rem;
-  }
-}
-
-/* Animation utilities */
-.transition-all {
-  transition: all 0.3s ease;
-}
-
-.duration-300 {
-  transition-duration: 300ms;
-}
-
-.ease-in-out {
-  transition-timing-function: ease-in-out;
-}
-
-/* Gradient utilities */
-.bg-gradient-to-r {
-  background-image: linear-gradient(to right, var(--tw-gradient-stops));
-}
-
-.bg-gradient-to-br {
-  background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
-}
-
-.from-\[var\(--color-accent\)\] {
-  --tw-gradient-from: var(--color-accent);
-  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(0, 223, 130, 0));
-}
-
-.to-\[var\(--color-purple\)\] {
-  --tw-gradient-to: var(--color-purple);
-}
-
-/* Border utilities */
-.border {
-  border-width: 1px;
-}
-
-.border-white\/10 {
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.border-\[var\(--color-accent\)\]\/20 {
-  border-color: rgba(0, 223, 130, 0.2);
-}
-
-.rounded-full {
-  border-radius: 9999px;
-}
-
-.rounded-lg {
-  border-radius: 0.5rem;
-}
-
-.rounded-xl {
-  border-radius: 0.75rem;
-}
-
-.rounded-2xl {
-  border-radius: 1rem;
-}
-
-.rounded-3xl {
-  border-radius: 1.5rem;
-}
-
-/* Shadow utilities */
-.shadow-lg {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
-
-.shadow-\[var\(--color-accent\)\]\/30 {
-  box-shadow: 0 10px 15px -3px rgba(0, 223, 130, 0.3);
-}
-
-/* Backdrop utilities */
-.backdrop-blur-md {
-  backdrop-filter: blur(12px);
-}
-
-.backdrop-blur-xl {
-  backdrop-filter: blur(24px);
-}
-
-/* Position utilities */
-.fixed {
-  position: fixed;
-}
-
-.absolute {
-  position: absolute;
-}
-
-.relative {
-  position: relative;
-}
-
-.top-0 {
-  top: 0;
-}
-
-.left-0 {
-  left: 0;
-}
-
-.right-0 {
-  right: 0;
-}
-
-.z-50 {
-  z-index: 50;
-}
-
-/* Display utilities */
-.hidden {
-  display: none;
-}
-
-.block {
-  display: block;
-}
-
-.inline-block {
-  display: inline-block;
-}
-
-/* Width utilities */
-.w-6 {
-  width: 1.5rem;
-}
-
-.w-8 {
-  width: 2rem;
-}
-
-.w-full {
-  width: 100%;
-}
-
-/* Height utilities */
-.h-6 {
-  height: 1.5rem;
-}
-
-.h-8 {
-  height: 2rem;
-}
-
-.h-full {
-  height: 100%;
-}
-
-/* Padding utilities */
-.p-2 {
-  padding: 0.5rem;
-}
-
-.px-4 {
-  padding-left: 1rem;
-  padding-right: 1rem;
-}
-
-.px-6 {
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
-}
-
-.py-2 {
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
-}
-
-.py-4 {
-  padding-top: 1rem;
-  padding-bottom: 1rem;
-}
-
-/* Margin utilities */
-.mt-4 {
-  margin-top: 1rem;
-}
-
-.mb-4 {
-  margin-bottom: 1rem;
-}
-
-/* Text utilities */
-.text-white {
-  color: white;
-}
-
-.text-white\/80 {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.text-white\/70 {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.text-\[var\(--color-accent\)\] {
-  color: var(--color-accent);
-}
-
-.text-xl {
-  font-size: 1.25rem;
-  line-height: 1.75rem;
-}
-
-.text-sm {
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-}
-
-.font-bold {
-  font-weight: 700;
-}
-
-.font-semibold {
-  font-weight: 600;
-}
-
-/* Hover utilities */
-.hover\:text-white:hover {
-  color: white;
-}
-
-.hover\:shadow-lg:hover {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
-
-.hover\:shadow-\[var\(--color-accent\)\]\/30:hover {
-  box-shadow: 0 10px 15px -3px rgba(0, 223, 130, 0.3);
-}
-
-/* Media queries */
-@media (min-width: 768px) {
-  .md\:flex {
-    display: flex;
-  }
-
-  .md\:hidden {
-    display: none;
-  }
-
-  .md\:block {
-    display: block;
-  }
-
-  .md\:space-x-8 > * + * {
-    margin-left: 2rem;
-  }
 }
 </style>

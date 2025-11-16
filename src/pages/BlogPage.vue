@@ -1,14 +1,20 @@
 <script setup lang="ts">
-import { onMounted, defineAsyncComponent, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { onMounted, defineAsyncComponent, ref, watch, watchEffect } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useBlogStore } from '../stores/blog'
 import type { BlogPost } from '../types/blog'
+import { useHead } from '@unhead/vue'
+import { useBreadcrumbSchema } from '../composables/useBreadcrumbSchema'
 
 const BlogSection = defineAsyncComponent(() => import('../components/sections/BlogSection.vue'))
-const BlogModal = defineAsyncComponent(() => import('../modal/BlogModal.vue'))
+const BlogModal = defineAsyncComponent(() => import('../components/modals/BlogModal.vue'))
 
 const router = useRouter()
+const route = useRoute()
 const blogStore = useBlogStore()
+
+// Breadcrumb schema
+const { schema: breadcrumbSchema } = useBreadcrumbSchema(route)
 
 // Modal state
 const activeModal = ref<'detail' | null>(null)
@@ -66,10 +72,59 @@ watch(
   },
   { deep: true }
 )
+
+// JSON-LD for BlogPosting when modal open + Breadcrumb schema
+watchEffect(() => {
+  const post = selectedPost.value
+  const scripts: Array<{
+    type: string
+    children: string
+    key: string
+  }> = []
+
+  // Breadcrumb schema (всегда добавляем)
+  if (breadcrumbSchema.value) {
+    scripts.push({
+      type: 'application/ld+json',
+      children: JSON.stringify(breadcrumbSchema.value),
+      key: 'breadcrumb-schema',
+    })
+  }
+
+  if (!post) {
+    // Blog listing page schema
+    scripts.push({
+      type: 'application/ld+json',
+      children: JSON.stringify({ '@context': 'https://schema.org', '@type': 'Blog' }),
+      key: 'blog-schema',
+    })
+  } else {
+    // BlogPosting schema
+    scripts.push({
+      type: 'application/ld+json',
+      children: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'BlogPosting',
+        headline: post.title,
+        datePublished: post.date || undefined,
+        articleSection: post.category,
+        url:
+          typeof window !== 'undefined'
+            ? `${window.location.origin}/blog/${post.category}/${post.slug}`
+            : `/blog/${post.category}/${post.slug}`,
+      }),
+      key: 'blogposting-schema',
+    })
+  }
+
+  if (scripts.length > 0) {
+    useHead({ script: scripts })
+  }
+})
 </script>
 
 <template>
-  <div class="min-h-screen blog-fonts" style="background-color: var(--color-border)">
+  <div class="min-h-screen blog-fonts blog-section-bg">
     <!-- Blog Section -->
     <BlogSection @post-click="handlePostClick" />
 

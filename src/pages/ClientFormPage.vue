@@ -1,36 +1,67 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import type { ClientFormData, ClientFormErrors } from '../types/client-form'
+import { ref, computed, watchEffect } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import type { ClientFormData } from '../types/client-form'
 import { useClientForm } from '../composables/useClientForm'
-import FormSection from '../components/client-form/FormSection.vue'
+import FormSection from '../components/sections/FormSection.vue'
+import { useHead } from '@unhead/vue'
+import { useBreadcrumbSchema } from '../composables/useBreadcrumbSchema'
 
 const router = useRouter()
+const route = useRoute()
+
+// Breadcrumb schema
+const { schema: breadcrumbSchema } = useBreadcrumbSchema(route)
+
+// Inject breadcrumb schema
+watchEffect(() => {
+  if (breadcrumbSchema.value) {
+    useHead({
+      script: [
+        {
+          type: 'application/ld+json',
+          children: JSON.stringify(breadcrumbSchema.value),
+          key: 'breadcrumb-schema',
+        },
+      ],
+    })
+  }
+})
 
 // Use the composable for form logic
-const {
-  formData,
-  errors,
-  isSubmitting,
-  handleFileUpload,
-  submitForm: submitFormComposable,
-} = useClientForm()
+const { formData, errors, isSubmitting, submitForm: submitFormComposable } = useClientForm()
 
 // File input ref for contact section
 const fileInput = ref<HTMLInputElement>()
 
 // Contact fields configuration
 const contactFields: Array<{ key: keyof ClientFormData; placeholder: string }> = [
-  { key: 'name', placeholder: 'Имя' },
-  { key: 'company', placeholder: 'Компания' },
-  { key: 'phone', placeholder: 'Телефон' },
+  { key: 'name', placeholder: 'Имя (как к вам обращаться)' },
+  { key: 'company', placeholder: 'Компания (если есть)' },
+  { key: 'phone', placeholder: 'Телефон (+7 XXX XXX-XX-XX, можно начать с 8)' },
   { key: 'email', placeholder: 'Электронная почта' },
 ]
 
 // Handle contact field input
 const handleContactInput = (key: keyof ClientFormData, event: Event) => {
   const target = event.target as HTMLInputElement
-  ;(formData as any)[key] = target.value
+  let value = target.value
+  if (key === 'phone') {
+    const digits = value.replace(/\D/g, '')
+    let norm = digits
+    if (digits.startsWith('8') && digits.length >= 1) {
+      norm = '7' + digits.slice(1)
+    }
+    if (norm.length >= 1) {
+      const n = norm
+      const pretty =
+        n.length >= 11
+          ? `+${n[0]} ${n.slice(1, 4)} ${n.slice(4, 7)}-${n.slice(7, 9)}-${n.slice(9, 11)}`
+          : `+${n}`
+      value = pretty.replace(/\s+/g, ' ').trim()
+    }
+  }
+  formData[key] = value
 }
 
 // Handle file upload click
@@ -82,17 +113,17 @@ const formSections = computed(() => [
 ])
 
 const updateFormField = (field: keyof ClientFormData, value: string) => {
-  ;(formData as any)[field] = value
+  formData[field] = value
 }
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <div class="min-h-screen bg-text">
+    <div class="mx-auto px-5 md:px-[5rem] py-[5rem]">
       <!-- Header Section -->
       <div class="text-center mb-16">
-        <h1 class="text-5xl md:text-6xl font-bold text-gray-900 mb-6">Стать клиентом</h1>
-        <p class="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+        <h1 class="text-3xl md:text-5xl font-bold text-accent mb-6 font-display">Стать клиентом</h1>
+        <p class="text-lg client-form-text max-w-3xl mx-auto leading-relaxed">
           Ответьте на пару вопросов. На основе ответов мы поймем, как можем быть полезны, соберем
           информацию и подготовимся к встрече. Если не сможем помочь — порекомендуем подходящих
           партнеров. Приоритетно отвечаем на email, считаем ответы лучшей заявкой.
@@ -100,6 +131,15 @@ const updateFormField = (field: keyof ClientFormData, value: string) => {
       </div>
 
       <form @submit.prevent="submitForm" class="space-y-8">
+        <!-- Honeypot anti-bot field (hidden) -->
+        <input
+          type="text"
+          autocomplete="off"
+          aria-hidden="true"
+          style="position: absolute; left: -9999px; opacity: 0"
+          v-model="formData.honeypot"
+        />
+        <input type="hidden" :value="formData.formStartedAt" />
         <!-- Dynamic Form Sections -->
         <FormSection
           v-for="section in formSections"
@@ -108,27 +148,28 @@ const updateFormField = (field: keyof ClientFormData, value: string) => {
           :helper-text="section.helperText"
           :variant="section.variant"
           :model-value="String(formData[section.field] || '')"
-          :error="errors[section.field as keyof ClientFormErrors]"
+          :error="errors[section.field]"
           @update:model-value="(value) => updateFormField(section.field, value)"
         />
 
         <!-- Contact Information Section -->
-        <div class="bg-white rounded-2xl p-8 shadow-sm">
-          <h2 class="text-3xl font-bold text-gray-900 text-center mb-8">И последняя информация</h2>
+        <div class="bg-text border border-bg rounded-[3rem] p-6 shadow-sm mt-8">
+          <h2 class="text-3xl font-bold text-accent text-center mb-8 font-display">
+            И последняя информация
+          </h2>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div v-for="field in contactFields" :key="field.key">
               <input
+                :id="`client-form-${field.key}`"
+                :name="field.key"
                 :value="formData[field.key]"
                 @input="handleContactInput(field.key, $event)"
                 :placeholder="field.placeholder"
-                class="w-full px-6 py-4 border border-gray-200 rounded-xl text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                class="w-full px-4 placeholder:text-bg py-3 client-form-input rounded-[3rem] text-sm focus:outline-none"
               />
-              <p
-                v-if="errors[field.key as keyof ClientFormErrors]"
-                class="text-red-500 text-sm mt-2"
-              >
-                {{ errors[field.key as keyof ClientFormErrors] }}
+              <p v-if="errors[field.key]" class="client-form-error text-sm mt-2">
+                {{ errors[field.key] }}
               </p>
             </div>
           </div>
@@ -138,14 +179,13 @@ const updateFormField = (field: keyof ClientFormData, value: string) => {
             <button
               type="button"
               @click="handleFileClick"
-              class="inline-flex items-center px-6 py-3 border border-gray-300 rounded-xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="inline-flex items-center px-6 py-3 !bg-accent rounded-[3rem] focus:outline-none"
             >
               <span class="text-lg mr-2">+</span>
               Attach file
             </button>
-            <input ref="fileInput" type="file" @change="handleFileUpload" class="hidden" />
-            <p class="text-sm text-gray-500 mt-2">Максимум 20 МБ</p>
-            <p v-if="errors.file" class="text-red-500 text-sm mt-2">
+            <p class="client-form-helper mt-2">Максимум 20 МБ</p>
+            <p v-if="errors.file" class="client-form-error text-sm mt-2">
               {{ errors.file }}
             </p>
           </div>
@@ -154,26 +194,30 @@ const updateFormField = (field: keyof ClientFormData, value: string) => {
         <!-- Privacy Policy and Submit -->
         <div class="text-center">
           <div class="mb-8">
-            <label class="flex items-center justify-center gap-3 text-sm text-gray-600">
+            <label class="flex items-center justify-center gap-3 text-sm client-form-text">
               <input
+                id="client-form-privacy"
+                name="privacyAccepted"
                 type="checkbox"
                 v-model="formData.privacyAccepted"
-                class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                class="w-4 h-4 client-form-checkbox border-border rounded focus:ring-accent"
               />
               <span>
                 Нажимая кнопку «Отправить», вы принимаете
-                <a href="#" class="text-blue-600 hover:underline">Политику конфиденциальности</a>.
+                <a href="#" class="client-form-link hover:underline">Политику конфиденциальности</a
+                >.
               </span>
             </label>
-            <p v-if="errors.privacy" class="text-red-500 text-sm mt-2">
+            <p v-if="errors.privacy" class="client-form-error text-sm mt-2">
               {{ errors.privacy }}
             </p>
           </div>
 
           <button
             type="submit"
-            class="bg-gray-800 hover:bg-gray-900 text-white px-12 py-4 rounded-xl text-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="!bg-accent hover:bg-purple px-8 py-3 rounded-[3rem] text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             :disabled="isSubmitting"
+            aria-label="Отправить форму"
           >
             <span v-if="isSubmitting">Отправка...</span>
             <span v-else>Отправить ответы</span>
@@ -185,4 +229,16 @@ const updateFormField = (field: keyof ClientFormData, value: string) => {
 </template>
 
 <style scoped>
+button,
+input:focus {
+  border-color: var(--color-accent) !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+button,
+input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
 </style>

@@ -6,7 +6,9 @@ import type { ClientFormData, ClientFormSubmissionResponse } from '../types/clie
  */
 
 export class ClientFormAPI {
-  private static baseURL = '/api'
+  private static baseURL = (globalThis as unknown as { API_BASE?: string }).API_BASE
+    || import.meta.env.VITE_API_URL
+    || 'https://udevfchvbjgdalzyqbph.supabase.co/functions/v1'
 
   /**
    * Submit client form data to backend
@@ -15,32 +17,46 @@ export class ClientFormAPI {
    */
   static async submitForm(formData: ClientFormData): Promise<ClientFormSubmissionResponse> {
     try {
-      // Create FormData for file upload
-      const formDataToSend = new FormData()
-
-      // Add text fields
-      formDataToSend.append('companyDescription', formData.companyDescription)
-      formDataToSend.append('task', formData.task)
-      formDataToSend.append('solutionVision', formData.solutionVision)
-      formDataToSend.append('expectations', formData.expectations)
-      formDataToSend.append('budget', formData.budget)
-      formDataToSend.append('name', formData.name)
-      formDataToSend.append('company', formData.company)
-      formDataToSend.append('phone', formData.phone)
-      formDataToSend.append('email', formData.email)
-
-      // Add file if present
-      if (formData.attachedFile) {
-        formDataToSend.append('attachedFile', formData.attachedFile)
+      // Edge Functions принимают JSON. Файл (если нужен) должен быть загружен в Storage заранее.
+      const payload: Record<string, unknown> = {
+        companyDescription: formData.companyDescription,
+        task: formData.task,
+        solutionVision: formData.solutionVision,
+        expectations: formData.expectations,
+        budget: formData.budget,
+        name: formData.name,
+        company: formData.company,
+        phone: formData.phone,
+        email: formData.email,
+        privacyAccepted: (formData as unknown as { privacyAccepted?: boolean }).privacyAccepted ?? true,
+        honeypot: formData.honeypot,
+        formStartedAt: formData.formStartedAt
       }
 
+      // Если файл присутствует, передаем только метаданные (URL должен формироваться на фронте после загрузки в Storage)
+      const meta = formData as unknown as {
+        attachedFileUrl?: string
+        attachedFileName?: string
+        attachedFileSize?: number
+        privacyAccepted?: boolean
+      }
+      if (meta.attachedFileUrl) {
+        payload.attachedFileUrl = meta.attachedFileUrl
+        payload.attachedFileName = meta.attachedFileName
+        payload.attachedFileSize = meta.attachedFileSize
+      }
+
+      const anon = (globalThis as unknown as { SUPABASE_ANON?: string }).SUPABASE_ANON || (import.meta as unknown as { env?: { VITE_SUPABASE_ANON_KEY?: string } }).env?.VITE_SUPABASE_ANON_KEY
+      const isSupabaseFn = this.baseURL.includes('supabase.co/functions')
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (isSupabaseFn && anon) {
+        headers['Authorization'] = `Bearer ${anon}`
+        headers['apikey'] = anon
+      }
       const response = await fetch(`${this.baseURL}/client-form`, {
         method: 'POST',
-        body: formDataToSend,
-        headers: {
-          // Don't set Content-Type header when using FormData
-          // The browser will set it automatically with the correct boundary
-        }
+        headers,
+        body: JSON.stringify(payload)
       })
 
       if (!response.ok) {
@@ -48,13 +64,27 @@ export class ClientFormAPI {
       }
 
       const result = await response.json()
+
+      if (!result.success) {
+        throw new Error(result.message || 'Ошибка при отправке формы')
+      }
+
       return {
         success: true,
-        message: 'Заявка успешно отправлена! Мы свяжемся с вами в ближайшее время.',
+        message: result.message || 'Заявка успешно отправлена! Мы свяжемся с вами в ближайшее время.',
         clientId: result.clientId
       }
     } catch (error) {
       console.error('Client form submission error:', error)
+
+      // Handle different types of errors
+      if (error instanceof Error) {
+        return {
+          success: false,
+          message: error.message
+        }
+      }
+
       return {
         success: false,
         message: 'Произошла ошибка при отправке формы. Попробуйте еще раз.'
@@ -91,16 +121,16 @@ export class ClientFormAPI {
 
 /**
  * Backend API endpoints that need to be implemented:
- * 
+ *
  * POST /api/client-form
  * - Accepts multipart/form-data
  * - Fields: companyDescription, task, solutionVision, expectations, budget, name, company, phone, email, attachedFile
  * - Returns: { success: boolean, clientId: string, message: string }
- * 
+ *
  * POST /api/client-form/validate (optional)
  * - Accepts application/json
  * - Returns: { valid: boolean, errors: Record<string, string> }
- * 
+ *
  * Expected backend response format:
  * {
  *   "success": true,

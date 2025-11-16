@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute, useRouter, RouteRecordNormalized } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useServicesStore } from '../../stores/services'
 import { useBlogStore } from '../../stores/blog'
 
@@ -19,7 +19,7 @@ const router = useRouter()
 const servicesStore = useServicesStore()
 const blogStore = useBlogStore()
 
-function resolveRecordHref(record: RouteRecordNormalized): string | undefined {
+function resolveRecordHref(record: any): string | undefined {
   // last crumb shouldn't be a link
   if (record === route.matched[route.matched.length - 1]) return undefined
   // Prefer named navigation to fill params
@@ -38,7 +38,7 @@ function resolveRecordHref(record: RouteRecordNormalized): string | undefined {
   return record.path || undefined
 }
 
-function titleFromRecord(record: RouteRecordNormalized): string {
+function titleFromRecord(record: any): string {
   // meta.breadcrumb can be a function (route => string) or a string
   const bc = (record.meta as any)?.breadcrumb
   if (typeof bc === 'function') {
@@ -89,11 +89,12 @@ const autoItems = computed<CrumbItem[]>(() => {
     crumbs.push({ label: titleFromRecord(rec), to: resolveRecordHref(rec) })
   }
   // Ensure last has no link
-  if (crumbs.length) crumbs[crumbs.length - 1].to = undefined
+  const lastCrumb = Array.isArray(crumbs) && crumbs.length ? crumbs[crumbs.length - 1] : undefined
+  if (lastCrumb) lastCrumb.to = undefined
   return crumbs
 })
 
-const crumbs = computed<CrumbItem[]>(() => (props.items?.length ? props.items : autoItems.value))
+const crumbs = props.items || []
 const sep = computed(() => props.separator ?? '/')
 </script>
 
@@ -104,7 +105,7 @@ const sep = computed(() => props.separator ?? '/')
     itemtype="https://schema.org/BreadcrumbList"
     class="text-sm text-gray-500"
   >
-    <ol class="flex items-center flex-wrap gap-1">
+    <ol class="flex items-center flex-wrap gap-1 mb-5">
       <li
         v-for="(c, i) in crumbs"
         :key="i"
