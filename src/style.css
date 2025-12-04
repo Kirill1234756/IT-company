@@ -627,12 +627,17 @@ body {
 #stack {
   /* Let GSAP handle height and overflow */
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  width: 100%;
   /* Hide background between sections */
   background-color: transparent;
   /* Ensure no background color */
   background: transparent !important;
   /* Prevent any blue background */
+  /* GSAP will set min-height dynamically */
+  min-height: 100vh;
+  /* Контролируем горизонтальный скролл на уровне контейнера */
+  overflow-x: hidden;
 }
 
 /* Stack section positioning - minimal styles to allow GSAP control */
@@ -640,23 +645,35 @@ body {
   /* Let GSAP handle all positioning and transforms */
   /* Only keep essential styles */
   pointer-events: auto;
-  /* Remove conflicting styles that GSAP needs to control */
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  /* Allow scrolling within sections */
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  /* Smooth transitions */
-  transition: transform 0.1s ease-out;
+  /* GSAP will set position, top, left, width via JavaScript */
+  /* Убрано transition - GSAP управляет анимациями напрямую */
+  /* Убрано will-change и transform - GSAP управляет этим напрямую */
+  /* Улучшаем производительность скролла */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  /* Ensure sections are visible initially before GSAP takes over */
+  opacity: 1;
+  /* GSAP will control visibility via autoAlpha */
+  /* Overflow: visible для работы анимации наслаивания и основного скролла */
+  /* overflow-x: hidden убран с секций, чтобы не обрезать трансформации */
+  /* Горизонтальный скролл контролируется на уровне контейнера #stack */
+  overflow: visible;
+}
 
+/* Внутренний скроллируемый контейнер для контента внутри секций */
+.internal-scroll-container {
+  /* Скрываем scrollbar, но сохраняем функциональность скролла */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE и Edge */
+}
+
+.internal-scroll-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 body {
   overflow-x: hidden;
+  /* overflow-y управляется ScrollTrigger через pinning */
 }
 
-html {
-  scroll-behavior: smooth;
-}
+/* Убрано scroll-behavior: smooth для html - GSAP ScrollTrigger управляет скроллом */

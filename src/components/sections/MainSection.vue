@@ -20,6 +20,10 @@ declare global {
 
 const CtaButton = defineAsyncComponent(() => import('../ui/CtaButton.vue'))
 
+// Ref для корневого элемента секции
+const rootEl = ref<HTMLElement | null>(null)
+const scrollContainerRef = ref<HTMLElement | null>(null)
+
 // Memoized stats data - используем ref для полной реактивности
 const stats = ref([
   { title: 'Многолетний опыт веб-разработки', count: 0, target: 7 },
@@ -171,15 +175,15 @@ onMounted(async () => {
     return
   }
 
-  // Defer GSAP loading until after LCP для оптимизации производительности
+  // Defer GSAP loading - минимальная задержка для первой секции
   const initGSAP = async () => {
     try {
-      // Этап 1: Дождаться idle времени или LCP
+      // Этап 1: Минимальная задержка для первой секции (она должна анимироваться быстро)
       const isMobile = window.innerWidth < 768
-      const delay = isMobile ? 2000 : 1500
+      const delay = isMobile ? 300 : 200 // Значительно уменьшена задержка
 
       if (window.scheduler?.postTask) {
-        await window.scheduler.postTask(() => {}, { priority: 'background', delay })
+        await window.scheduler.postTask(() => {}, { priority: 'user-visible', delay })
       } else if ('requestIdleCallback' in window) {
         await new Promise<void>((resolve) =>
           (
@@ -198,27 +202,64 @@ onMounted(async () => {
       // Yield для разбиения длинной задачи
       await new Promise((r) => setTimeout(r, 0))
 
-      // Этап 3: Поиск элементов в main-section
-      const mainSection = document.querySelector('.main-section')
-      if (!mainSection) return
+      // Этап 3: Поиск элементов в main-section с повторными попытками
+      // Используем rootEl.value вместо document.querySelector для правильного элемента
+      const mainSection = rootEl.value
+      if (!mainSection) {
+        // Повторяем попытку через небольшую задержку
+        setTimeout(() => initGSAP(), 300)
+        return
+      }
 
-      // Используем более надежные селекторы
-      const h1 = mainSection.querySelector('h1')
-      // Ищем описание по тексту или структуре
-      const descriptionBox = mainSection
-        .querySelector('p')
-        ?.closest('div[class*="bg-error"]') as HTMLElement
-      // Ищем карточки статистики - они содержат числа с "+"
-      const allCards = Array.from(
-        mainSection.querySelectorAll('div[class*="bg-error"]')
-      ) as HTMLElement[]
-      const statCards = allCards.filter((card) => {
-        const text = card.textContent || ''
-        return text.includes('+') && !text.includes('Калькулятор')
-      })
-      const ctaButton = mainSection.querySelector('a[href*="calculator"], button') as HTMLElement
+      // Функция для поиска элементов
+      const findElements = () => {
+        const h1 = mainSection.querySelector('h1')
+        // Ищем описание по тексту или структуре
+        const descriptionBox = mainSection
+          .querySelector('p')
+          ?.closest('div[class*="bg-error"]') as HTMLElement
+        // Ищем карточки статистики - они содержат числа с "+"
+        const allCards = Array.from(
+          mainSection.querySelectorAll('div[class*="bg-error"]')
+        ) as HTMLElement[]
+        const statCards = allCards.filter((card) => {
+          const text = card.textContent || ''
+          return text.includes('+') && !text.includes('Калькулятор')
+        })
+        // Ищем wrapper div для CTA кнопки
+        const ctaWrapper = mainSection.querySelector('.main-section-cta') as HTMLElement
+        const ctaButton =
+          ctaWrapper || (mainSection.querySelector('a[href*="calculator"], button') as HTMLElement)
+
+        return { h1, descriptionBox, statCards, ctaButton }
+      }
+
+      // Ждем появления элементов (для async компонентов)
+      let initAttempts = 0
+      const maxAttempts = 15
+      let { h1, descriptionBox, statCards, ctaButton } = findElements()
+
+      // Ждем появления элементов, особенно важны h1 и statCards
+      while ((!h1 || statCards.length === 0) && initAttempts < maxAttempts) {
+        await new Promise((r) => setTimeout(r, 200))
+        const found = findElements()
+        h1 = found.h1
+        descriptionBox = found.descriptionBox
+        statCards = found.statCards
+        ctaButton = found.ctaButton
+        initAttempts++
+      }
+
+      if (!h1 || statCards.length === 0) {
+        // Показываем элементы без анимации
+        stats.value.forEach((stat) => {
+          stat.count = stat.target
+        })
+        return
+      }
 
       // Этап 4: Создание timeline и анимаций
+      // Запускаем анимации сразу, без ScrollTrigger, чтобы не конфликтовать с stack scroll
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
 
       // Анимация заголовка - плавное появление сверху
@@ -289,15 +330,16 @@ onMounted(async () => {
         )
       }
 
-      // Этап 5: Инициализация ScrollTrigger для счетчиков
-      ScrollTrigger.create({
-        trigger: mainSection,
-        start: 'top 80%',
-        once: true,
-        onEnter: () => {
+      // Этап 5: Запуск анимации счетчиков сразу, без ScrollTrigger
+      // Это предотвращает конфликт с основным stack scroll ScrollTrigger
+      // Запускаем счетчики с небольшой задержкой после основной анимации
+      tl.call(
+        () => {
           animateCounters()
         },
-      })
+        null,
+        '+=0.5'
+      )
     } catch {
       // Fallback: устанавливаем финальные значения без анимации
       stats.value.forEach((stat) => {
@@ -306,16 +348,17 @@ onMounted(async () => {
     }
   }
 
-  // Запускаем инициализацию GSAP
+  // Запускаем инициализацию GSAP с меньшей задержкой для первой секции
+  // Первая секция должна анимироваться быстро, чтобы пользователь сразу видел эффект
   const isMobile = window.innerWidth < 768
-  const delay = isMobile ? 2000 : 1500
+  const delay = isMobile ? 800 : 500 // Уменьшена задержка для быстрого старта
 
   if (window.scheduler?.postTask) {
     window.scheduler.postTask(
       () => {
         initGSAP()
       },
-      { priority: 'background', delay }
+      { priority: 'user-visible', delay } // Изменен приоритет на user-visible
     )
   } else if ('requestIdleCallback' in window) {
     requestIdleCallback(
@@ -329,6 +372,43 @@ onMounted(async () => {
       initGSAP()
     }, delay)
   }
+
+  // Настраиваем обработчик wheel для внутреннего скролла
+  const setupScrollHandler = () => {
+    if (!scrollContainerRef.value) {
+      setTimeout(setupScrollHandler, 100)
+      return
+    }
+
+    const scrollContainer = scrollContainerRef.value
+    if ((scrollContainer as any).__scrollHandler) return
+
+    const handleWheel = (e: WheelEvent) => {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainer
+      const threshold = 10
+      const isAtTop = scrollTop <= threshold
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - threshold
+
+      if (e.deltaY > 0) {
+        // Скроллим вниз
+        if (!isAtBottom) {
+          e.stopPropagation()
+        }
+      } else if (e.deltaY < 0) {
+        // Скроллим вверх
+        if (!isAtTop) {
+          e.stopPropagation()
+        }
+      }
+    }
+
+    scrollContainer.addEventListener('wheel', handleWheel, { passive: false, capture: true })
+    ;(scrollContainer as any).__scrollHandler = handleWheel
+  }
+
+  // Ждем загрузки контейнера
+  setTimeout(setupScrollHandler, 500)
+  setTimeout(setupScrollHandler, 1500)
 })
 
 // Очистка при размонтировании компонента
@@ -339,16 +419,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-/* Начальное состояние для анимации - предотвращает FOUC */
-.main-section h1 {
-  will-change: transform, opacity;
-  transform: translateZ(0); /* Создаем композиционный слой */
-}
-
-.main-section [class*='bg-error'] {
-  will-change: transform, opacity;
-  transform: translateZ(0);
-}
+/* Убрано will-change и transform: translateZ(0) - GSAP управляет анимациями напрямую */
 
 /* Плавные переходы для интерактивных элементов */
 .main-section [class*='bg-error']:hover {
@@ -365,95 +436,115 @@ onBeforeUnmount(() => {
 <template>
   <!-- Main Hero Section -->
   <section
-    class="stack-section main-section no-scrollbar h-auto md:h-screen flex items-center justify-center py-5 md:py-[5rem] bg-bg text-white relative overflow-hidden px-4 md:px-[1rem] gap-6 md:gap-15"
-    style="
-      min-height: 400px;
-      width: 100%;
-      padding-top: 64px;
-      box-sizing: border-box;
-      contain: layout style paint;
-    "
+    ref="rootEl"
+    class="stack-section main-section no-scrollbar h-screen flex items-start justify-center py-5 md:py-[5rem] bg-bg text-white relative px-4 md:px-[1rem] gap-6 md:gap-15"
+    style="min-height: 400px; width: 100%; box-sizing: border-box; contain: layout style paint"
   >
     <div
-      class="flex flex-col w-full md:w-7/8 gap-6 md:gap-10 md:mt-[5rem]"
-      style="min-height: 300px; max-width: 1200px; width: 100%; box-sizing: border-box"
+      class="internal-scroll-container w-full h-full overflow-y-auto overflow-x-hidden flex flex-col"
+      ref="scrollContainerRef"
+      style="padding-bottom: 0; margin-bottom: 0"
     >
       <div
-        class="flex w-full md:w-2/3"
-        style="min-height: 120px; width: 100%; box-sizing: border-box"
+        class="flex flex-col w-full md:w-7/8 gap-6 md:gap-10"
+        style="
+          max-width: 1200px;
+          width: 100%;
+          box-sizing: border-box;
+          padding-bottom: 0;
+          margin-bottom: 0;
+        "
       >
-        <h1
-          class="text-3xl md:text-5xl text-condense text-purple"
-          style="
-            width: 100%;
-            font-size: clamp(1.5rem, 4vw, 3rem);
-            font-weight: 700;
-            line-height: 1.2;
-            margin: 0;
-            color: #6366f1;
-            font-family: 'IBM Plex Sans Condensed', sans-serif;
-            box-sizing: border-box;
-            contain: layout style paint;
-          "
-        >
-          Продажа сайтов и цифровых решений для развития бизнеса
-        </h1>
-      </div>
-
-      <div class="flex flex-col md:flex-row justify-center md:justify-end gap-6 md:gap-10">
-        <!-- <div class="w-3/12 bg-error rounded-[3rem]"></div> -->
         <div
-          class="flex flex-col gap-6 md:gap-10 w-full md:w-[62.5%] md:flex-shrink-0 md:flex-grow-0 items-start"
-          style="box-sizing: border-box"
+          class="flex w-full md:w-2/3"
+          style="min-height: 120px; width: 100%; box-sizing: border-box"
         >
-          <div
-            class="flex justify-end items-center p-6 md:p-10 bg-error rounded-[3rem] w-full md:w-[62.5%]"
-            style="box-sizing: border-box; contain: layout style paint; min-height: 80px"
+          <h1
+            class="text-3xl md:text-5xl text-condense text-purple main-section-title"
+            style="
+              width: 100%;
+              font-size: clamp(1.5rem, 4vw, 3rem);
+              font-weight: 700;
+              line-height: 1.2;
+              margin: 0;
+              color: #6366f1;
+              font-family: 'IBM Plex Sans Condensed', sans-serif;
+              box-sizing: border-box;
+              contain: layout style paint;
+              opacity: 0;
+            "
           >
-            <p style="box-sizing: border-box; margin: 0; line-height: 1.5">
-              От анализа целевого рынка до разработки сложных веб-приложений и внедрения
-              маркетинговой стратегии в короткие сроки по разумной цене.
-            </p>
-          </div>
+            Продажа сайтов и цифровых решений для развития бизнеса
+          </h1>
+        </div>
+
+        <div class="flex flex-col md:flex-row md:justify-start gap-6 md:gap-10">
+          <!-- <div class="w-3/12 bg-error rounded-[3rem]"></div> -->
           <div
-            class="flex flex-wrap md:flex-nowrap justify-center md:justify-end gap-4 md:gap-10 w-full"
-            style="box-sizing: border-box; min-height: 120px"
+            class="flex flex-col gap-6 md:gap-10 w-full md:flex-shrink-0 md:flex-grow-0 items-start"
+            style="box-sizing: border-box"
           >
             <div
-              v-for="stat in stats"
-              :key="stat.title"
-              class="flex flex-col items-center justify-center p-3 md:p-4 bg-error rounded-[2rem] md:rounded-[3rem] w-[calc(50%-0.5rem)] md:w-full max-w-[200px]"
+              class="flex justify-start items-center p-6 md:p-10 bg-error rounded-[3rem] md:w-[62.5%] w-full main-section-description"
               style="
                 box-sizing: border-box;
                 contain: layout style paint;
-                min-height: 100px;
-                width: 100%;
+                min-height: 80px;
+                opacity: 0;
               "
             >
-              <p
-                class="text-xs md:text-sm text-gray-300 text-center"
-                style="box-sizing: border-box; margin: 0; min-height: 20px"
-              >
-                {{ stat.title }}
+              <p style="box-sizing: border-box; margin: 0; line-height: 1.5">
+                От анализа целевого рынка до разработки сложных веб-приложений и внедрения
+                маркетинговой стратегии в короткие сроки по разумной цене.
               </p>
+            </div>
+            <div
+              class="flex flex-wrap md:flex-nowrap justify-center md:justify-end gap-4 md:gap-10 w-full"
+              style="box-sizing: border-box; min-height: 120px"
+            >
+              <div
+                v-for="stat in stats"
+                :key="stat.title"
+                class="flex flex-col items-center justify-center p-3 md:p-4 bg-error rounded-[2rem] md:rounded-[3rem] w-[calc(50%-0.5rem)] md:w-full max-w-[200px] main-section-stat-card"
+                style="
+                  box-sizing: border-box;
+                  contain: layout style paint;
+                  min-height: 100px;
+                  width: 100%;
+                  opacity: 0;
+                "
+              >
+                <p
+                  class="text-xs md:text-sm text-gray-300 text-center"
+                  style="box-sizing: border-box; margin: 0; min-height: 20px"
+                >
+                  {{ stat.title }}
+                </p>
 
-              <p
-                class="text-2xl md:text-3xl font-black text-white"
-                style="box-sizing: border-box; margin: 0; min-height: 40px; line-height: 1.2"
-              >
-                {{ stat.count.toString().padStart(3, '0') }}+
-              </p>
+                <p
+                  class="text-2xl md:text-3xl font-black text-white"
+                  style="box-sizing: border-box; margin: 0; min-height: 40px; line-height: 1.2"
+                >
+                  {{ stat.count.toString().padStart(3, '0') }}+
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      <div
-        class="flex justify-center w-full mt-2 md:mt-0"
-        style="box-sizing: border-box; min-height: 50px; contain: layout style paint"
-      >
-        <CtaButton to="/calculator" bgClass="bg-accent" textClass="text-bg"
-          >Калькулятор цены</CtaButton
+        <div
+          class="flex justify-center w-full main-section-cta"
+          style="
+            box-sizing: border-box;
+            contain: layout style paint;
+            opacity: 0;
+            padding-bottom: 0;
+            margin-bottom: 0;
+          "
         >
+          <CtaButton to="/calculator" bgClass="bg-accent" textClass="text-bg"
+            >Калькулятор цены</CtaButton
+          >
+        </div>
       </div>
     </div>
     <!-- <div class="flex w-3/8 py-[5rem] h-screen overflow-hidden relative">

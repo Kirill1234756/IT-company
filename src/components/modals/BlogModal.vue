@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineProps, defineEmits, defineAsyncComponent, onMounted } from 'vue'
+import { defineProps, defineEmits, defineAsyncComponent, onMounted, onUnmounted } from 'vue'
 import type { BlogPost } from '../../types/blog'
 import { useYandexMetrika } from '../../composables/useYandexMetrika'
 import OptimizedImage from '../OptimizedImage.vue'
@@ -21,23 +21,42 @@ const handleRelatedClick = (post: BlogPost) => {
   emit('relatedClick', post)
 }
 
-// Отслеживаем открытие модального окна блога
+// Блокируем скролл body при открытии модалки
 onMounted(() => {
+  // Сохраняем текущую позицию скролла
+  const scrollY = window.scrollY
+  document.body.style.position = 'fixed'
+  document.body.style.top = `-${scrollY}px`
+  document.body.style.width = '100%'
+  document.body.style.overflow = 'hidden'
+
   trackBlogView(props.post.fullTitle || props.post.title, props.post.category, {
     post_id: props.post.id,
     read_time: props.post.readTime,
     views: props.post.views || 0,
   })
 })
+
+// Восстанавливаем скролл body при закрытии модалки
+onUnmounted(() => {
+  const scrollY = document.body.style.top
+  document.body.style.position = ''
+  document.body.style.top = ''
+  document.body.style.width = ''
+  document.body.style.overflow = ''
+  if (scrollY) {
+    window.scrollTo(0, parseInt(scrollY || '0') * -1)
+  }
+})
 </script>
 
 <template>
   <Teleport to="body">
-    <div class="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
-      <div class="min-h-screen blog-modal">
+    <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex flex-col">
+      <div class="flex-1 overflow-y-auto blog-modal">
         <!-- Close Button -->
         <div class="sticky top-0 bg-blog-card border-b border-border z-10">
-          <div class="max-w-4xl mx-auto px-10 md:px-[8rem] sm:px-6 lg:px-8 py-4">
+          <div class="mx-auto px-10 md:px-[3rem] sm:px-6 lg:px-8 py-4">
             <button
               @click="$emit('close')"
               class="flex items-center gap-2 text-text-muted hover:text-text transition-colors"
@@ -56,7 +75,7 @@ onMounted(() => {
           </div>
         </div>
 
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <!-- Breadcrumbs -->
           <div class="text-sm text-text-muted mb-4">
             <span class="cursor-pointer hover:text-text">Главная</span>

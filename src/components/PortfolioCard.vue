@@ -22,7 +22,7 @@
     <!-- Project Image/Preview -->
     <div class="flex rounded-[3rem] flex-1 m-2 duration-300" style="aspect-ratio: 16/9">
       <OptimizedImage
-        :src="image || '/img/placeholder.jpg'"
+        :src="image || '/img/placeholder.webp'"
         :alt="title"
         :width="400"
         :height="300"

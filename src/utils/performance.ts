@@ -62,10 +62,6 @@ export const usePerformanceMonitoring = (componentName: string) => {
 
   const endRender = () => {
     metrics.renderEnd = performance.now()
-    // Delayed logging to avoid conflicts with async components
-    setTimeout(() => {
-      console.log(`${componentName} render time: ${metrics.renderEnd - metrics.renderStart}ms`)
-    }, 100)
   }
 
   const trackValidation = (fn: () => unknown) => {
@@ -79,9 +75,6 @@ export const usePerformanceMonitoring = (componentName: string) => {
     const start = performance.now()
     const result = await fn()
     metrics.apiCallTime += performance.now() - start
-    setTimeout(() => {
-      console.log(`${componentName} API call took: ${performance.now() - start}ms`)
-    }, 100)
     return result
   }
 
@@ -94,21 +87,8 @@ export const usePerformanceMonitoring = (componentName: string) => {
   }
 
   const logMetrics = () => {
-    // Delayed logging to avoid conflicts
-    setTimeout(() => {
-      console.log(`${componentName} Performance Metrics:`, {
-        renderTime: metrics.renderEnd - metrics.renderStart,
-        validationTime: metrics.validationTime,
-        inputDebounceTime: metrics.inputDebounceTime,
-        apiCallTime: metrics.apiCallTime,
-        cacheHits: metrics.cacheHits,
-        cacheMisses: metrics.cacheMisses,
-        cacheHitRate: metrics.cacheHits / (metrics.cacheHits + metrics.cacheMisses) || 0,
-      })
-
-      // Store metrics globally
-      globalPerformanceMetrics.set(componentName, metrics)
-    }, 200)
+    // Store metrics globally
+    globalPerformanceMetrics.set(componentName, metrics)
   }
 
   return {
@@ -144,7 +124,6 @@ export const createCachedValidator = <T>(
 // Memory management utilities
 export const clearValidationCache = () => {
   validationCache.clear()
-  console.log('Validation cache cleared')
 }
 
 export const getCacheStats = () => {
@@ -232,25 +211,14 @@ export const initGlobalPerformanceMonitoring = () => {
       // Stop monitoring after max checks to prevent memory leaks
       if (memoryCheckCount > maxMemoryChecks) {
         clearInterval(memoryInterval)
-        console.log('Memory monitoring stopped after 10 minutes to prevent leaks')
         return
       }
 
       const memory = (performance as unknown as { memory: { usedJSHeapSize: number; totalJSHeapSize: number } }).memory
 
-      // Only warn if memory usage is significantly high (>100MB)
-      if (memory.usedJSHeapSize > 100 * 1024 * 1024) {
-        console.warn('High memory usage detected:', {
-          used: Math.round(memory.usedJSHeapSize / 1024 / 1024) + 'MB',
-          total: Math.round(memory.totalJSHeapSize / 1024 / 1024) + 'MB',
-          checkNumber: memoryCheckCount
-        })
-
-        // Clear validation cache if memory is very high
-        if (memory.usedJSHeapSize > 150 * 1024 * 1024) {
-          clearValidationCache()
-          console.log('Cleared validation cache due to high memory usage')
-        }
+      // Clear validation cache if memory is very high
+      if (memory.usedJSHeapSize > 150 * 1024 * 1024) {
+        clearValidationCache()
       }
     }, 30000) // Check every 30 seconds
   }
@@ -265,12 +233,10 @@ export const initGlobalPerformanceMonitoring = () => {
     // Stop monitoring after max checks
     if (cacheCheckCount > maxCacheChecks) {
       clearInterval(cacheInterval)
-      console.log('Cache monitoring stopped after 30 minutes')
       return
     }
 
     if (validationCache.size > PERFORMANCE_CONFIG.CACHE_SIZE_LIMIT) {
-      console.warn('Cache size limit exceeded, clearing cache')
       clearValidationCache()
     }
   }, 60000) // Check every minute

@@ -3,7 +3,7 @@ import type { RouteLocationNormalized } from 'vue-router'
 import { useServicesStore } from '@/stores/services'
 import { useBlogStore } from '@/stores/blog'
 import { usePortfolioStore } from '@/stores/portfolio'
-import { getSEOConfig } from '@/config/seo'
+import { getSEOConfig, getBlogPostSEO } from '@/config/seo'
 
 const HomePage = () => import('@/pages/HomePage.vue')
 const ServicesPage = () => import('@/pages/ServicesPage.vue')
@@ -12,6 +12,7 @@ const ClientFormPage = () => import('@/pages/ClientFormPage.vue')
 const ContactPage = () => import('@/pages/ContactPage.vue')
 const BlogPage = () => import('@/pages/BlogPage.vue')
 const CalculatorPage = () => import('@/pages/CalculatorPage.vue')
+const PackagesPage = () => import('@/pages/PackagesPage.vue')
 const NotFound = () => import('@/pages/NotFound.vue')
 
 const router = createRouter({
@@ -26,12 +27,12 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomePage,
-      meta: { title: 'Главная', description: 'Kodify — продажа сайтов и цифровых решений для развития бизнеса. Разработка корпоративных сайтов, интернет-магазинов, лендингов. Продвижение и поддержка. Портфолио и экспертный блог.', canonicalPath: '/', ogImage: '/og-image.jpg' }
+      meta: { title: 'Главная', description: 'Kodify — продажа сайтов и цифровых решений для развития бизнеса. Разработка корпоративных сайтов, интернет-магазинов, лендингов. Продвижение и поддержка. Портфолио и экспертный блог.', canonicalPath: '/', ogImage: '/og-image.webp' }
     },
     {
       path: '/services',
       component: ServicesPage,
-      meta: { title: 'Наши услуги', description: 'Создание сайтов: интернет‑магазины, корпоративные сайты, лендинги, мобильные приложения, промо, техподдержка.', canonicalPath: '/services', ogImage: '/og-image.jpg' },
+      meta: { title: 'Наши услуги', description: 'Создание сайтов: интернет‑магазины, корпоративные сайты, лендинги, мобильные приложения, промо, техподдержка.', canonicalPath: '/services', ogImage: '/og-image.webp' },
       children: [
         // default /services → stay on ServicesPage
         { path: '', name: 'services', component: ServicesPage },
@@ -44,7 +45,7 @@ const router = createRouter({
             title: 'Услуги роста',
             description: 'Комплексное продвижение сайтов: SEO-оптимизация, контент-маркетинг, контекстная реклама, аналитика. Увеличиваем трафик и конверсию.',
             canonicalPath: '/services/growth',
-            ogImage: '/og-image.jpg',
+            ogImage: '/og-image.webp',
           },
         },
         {
@@ -55,7 +56,7 @@ const router = createRouter({
             title: 'Стратегические услуги',
             description: 'Разработка бизнес-стратегии, брендинг и позиционирование. Исследования рынка, анализ конкурентов, создание платформы бренда.',
             canonicalPath: '/services/strategy',
-            ogImage: '/og-image.jpg',
+            ogImage: '/og-image.webp',
           },
         },
         {
@@ -66,7 +67,7 @@ const router = createRouter({
             title: 'Услуги разработки',
             description: 'Разработка сайтов под ключ: корпоративные сайты, интернет-магазины, лендинги, SaaS-платформы. Интеграции и поддержка.',
             canonicalPath: '/services/development',
-            ogImage: '/og-image.jpg',
+            ogImage: '/og-image.webp',
           },
         },
         // dynamic categories and details with validation guards, same component
@@ -96,7 +97,7 @@ const router = createRouter({
       path: '/cases',
       name: 'cases',
       component: CasesPage,
-      meta: { title: 'Кейсы', description: 'Портфолио реализованных проектов: интернет‑магазины, корпоративные сайты, лендинги и приложения.', canonicalPath: '/cases', ogImage: '/og-image.jpg' }
+      meta: { title: 'Кейсы', description: 'Портфолио реализованных проектов: интернет‑магазины, корпоративные сайты, лендинги и приложения.', canonicalPath: '/cases', ogImage: '/og-image.webp' }
     },
     {
       path: '/cases/:projectTitle',
@@ -106,7 +107,7 @@ const router = createRouter({
         title: 'Проект портфолио',
         description: 'Детальное описание реализованного проекта. Технологии, этапы разработки, результаты и достижения.',
         canonicalPath: '/cases',
-        ogImage: '/og-image.jpg',
+        ogImage: '/og-image.webp',
       },
     },
     {
@@ -125,7 +126,7 @@ const router = createRouter({
       path: '/blog',
       name: 'blog',
       component: BlogPage,
-      meta: { title: 'Блог', description: 'Создание и развитие сайтов: статьи, руководства, кейсы и аналитика.', canonicalPath: '/blog', ogImage: '/og-image.jpg' }
+      meta: { title: 'Блог', description: 'Создание и развитие сайтов: статьи, руководства, кейсы и аналитика.', canonicalPath: '/blog', ogImage: '/og-image.webp' }
     },
     {
       path: '/calculator',
@@ -135,7 +136,18 @@ const router = createRouter({
         title: 'Калькулятор стоимости сайта',
         description: 'Рассчитайте стоимость разработки сайта за 60 секунд. Получите подробную смету в PDF и консультацию менеджера.',
         canonicalPath: '/calculator',
-        ogImage: '/og-image.jpg',
+        ogImage: '/og-image.webp',
+      },
+    },
+    {
+      path: '/packages',
+      name: 'packages',
+      component: PackagesPage,
+      meta: {
+        title: 'Пакеты услуг',
+        description: 'Готовые пакеты услуг для вашего бизнеса. Стартовый, Бизнес, E-commerce и Премиум пакеты с выгодной экономией до 20%.',
+        canonicalPath: '/packages',
+        ogImage: '/og-image.webp',
       },
     },
     {
@@ -146,7 +158,7 @@ const router = createRouter({
         title: 'Категория блога',
         description: 'Статьи и материалы по теме. Экспертные статьи о разработке сайтов, продвижении и веб-технологиях.',
         canonicalPath: '/blog',
-        ogImage: '/og-image.jpg',
+        ogImage: '/og-image.webp',
       },
     },
     {
@@ -157,7 +169,7 @@ const router = createRouter({
         title: 'Статья блога',
         description: 'Экспертная статья о разработке сайтов, веб-технологиях и продвижении. Практические советы и кейсы.',
         canonicalPath: '/blog',
-        ogImage: '/og-image.jpg',
+        ogImage: '/og-image.webp',
       },
     },
     // New route for blog posts opened from home page - made more specific
@@ -169,7 +181,7 @@ const router = createRouter({
         title: 'Статья блога',
         description: 'Экспертная статья о разработке сайтов, веб-технологиях и продвижении. Практические советы и кейсы.',
         canonicalPath: '/blog',
-        ogImage: '/og-image.jpg',
+        ogImage: '/og-image.webp',
       },
     },
     {
@@ -212,7 +224,7 @@ router.beforeEach((to, _from, next) => {
       }
     }
 
-    // 2. Для динамических роутов блога - загружаем description из store
+    // 2. Для динамических роутов блога - загружаем description из store или seo.ts
     if (to.name === 'blog-post' || to.name === 'home-blog-post') {
       const { category, post } = to.params
       if (post && typeof post === 'string') {
@@ -220,19 +232,39 @@ router.beforeEach((to, _from, next) => {
           const blogStore = useBlogStore()
           const blogPost = blogStore.getPostBySlug(post)
           if (blogPost) {
-            // Генерируем description из контента статьи
-            const postDescription =
-              blogPost.summary ||
-              (blogPost.content && blogPost.content[0]?.text
-                ? blogPost.content[0].text.substring(0, 160)
-                : null) ||
-              `Статья "${blogPost.title}" о разработке сайтов и веб-технологиях. Экспертные советы и практические рекомендации.`
-            to.meta = {
-              ...to.meta,
-              title: `${blogPost.fullTitle || blogPost.title} - Блог`,
-              description: postDescription.length > 160 ? postDescription.substring(0, 157) + '...' : postDescription,
-              canonicalPath: `/blog/${category}/${post}`,
-              ogImage: blogPost.image || '/og-image.jpg',
+            // Сначала проверяем, есть ли оптимизированная SEO-конфигурация в seo.ts
+            const blogSEO = getBlogPostSEO(post)
+
+            if (blogSEO) {
+              // Используем оптимизированные метаданные из семантического ядра
+              to.meta = {
+                ...to.meta,
+                title: blogSEO.title || `${blogPost.fullTitle || blogPost.title} - Блог`,
+                description: blogSEO.description || blogPost.summary ||
+                  (blogPost.content && blogPost.content[0]?.text
+                    ? blogPost.content[0].text.substring(0, 160)
+                    : `Статья "${blogPost.title}" о разработке сайтов и веб-технологиях. Экспертные советы и практические рекомендации.`),
+                canonicalPath: `/blog/${category}/${post}`,
+                h1: blogSEO.h1 || blogPost.fullTitle || blogPost.title,
+                h2Outline: blogSEO.h2Outline || [],
+                faq: blogSEO.faq || [],
+                ogImage: blogPost.image || blogSEO.ogImage || '/og-image.webp',
+              }
+            } else {
+              // Fallback: генерируем description из контента статьи (для существующих статей)
+              const postDescription =
+                blogPost.summary ||
+                (blogPost.content && blogPost.content[0]?.text
+                  ? blogPost.content[0].text.substring(0, 160)
+                  : null) ||
+                `Статья "${blogPost.title}" о разработке сайтов и веб-технологиях. Экспертные советы и практические рекомендации.`
+              to.meta = {
+                ...to.meta,
+                title: `${blogPost.fullTitle || blogPost.title} - Блог`,
+                description: postDescription.length > 160 ? postDescription.substring(0, 157) + '...' : postDescription,
+                canonicalPath: `/blog/${category}/${post}`,
+                ogImage: blogPost.image || '/og-image.webp',
+              }
             }
           }
         } catch (error) {
@@ -260,7 +292,7 @@ router.beforeEach((to, _from, next) => {
               title: `${project.title} - Портфолио`,
               description: projectDescription.length > 160 ? projectDescription.substring(0, 157) + '...' : projectDescription,
               canonicalPath: `/cases/${projectTitle}`,
-              ogImage: project.image || '/og-image.jpg',
+              ogImage: project.image || '/og-image.webp',
             }
           }
         } catch (error) {

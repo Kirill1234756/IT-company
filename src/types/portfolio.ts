@@ -1,6 +1,7 @@
 export interface PortfolioModal {
   id: number
   img: string
+  bottomImg?: string
   card: Array<{
     id: number
     title: string
@@ -29,6 +30,7 @@ export interface PortfolioProject {
   status?: string
   // Модальные данные (опциональные)
   modalImg?: string
+  modalBottomImg?: string
   modalCard?: Array<{
     id: number
     title: string

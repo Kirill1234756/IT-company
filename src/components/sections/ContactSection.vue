@@ -122,8 +122,14 @@ const validatePhone = (phone: string): string | undefined => {
   if (!phone.trim()) {
     result = 'Телефон обязателен для заполнения'
   } else {
-    const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,}$/
-    result = phoneRegex.test(phone) ? undefined : 'Введите корректный номер телефона'
+    // Улучшенная валидация: проверяем только цифры после очистки
+    const digits = phone.replace(/\D/g, '')
+    // Проверяем, что есть минимум 10 цифр (российский номер)
+    if (digits.length >= 10 && digits.length <= 15) {
+      result = undefined
+    } else {
+      result = 'Введите корректный номер телефона'
+    }
   }
 
   validationCache.set(cacheKey, result)
@@ -183,39 +189,39 @@ const debouncedValidateField = debounce(
   300
 )
 
-// Optimized input handler with throttling
-const handleInput = throttle(
-  ((key: keyof ContactFormData, event: Event) => {
-    const target = event.target as HTMLInputElement
-    let value = target.value
-    if (key === 'phone') {
-      // очистка и авто-нормализация 8 → +7
-      const digits = value.replace(/\D/g, '')
-      let norm = digits
-      if (digits.startsWith('8') && digits.length >= 1) {
-        norm = '7' + digits.slice(1)
-      }
-      // соберём человекочитаемый формат
-      if (norm.length >= 1) {
-        const n = norm.padEnd(11, '')
-        const pretty = `+${n[0] || ''} ${n.slice(1, 4).trim()} ${n.slice(4, 7).trim()}-${n
-          .slice(7, 9)
-          .trim()}-${n.slice(9, 11).trim()}`.trim()
-        value = pretty.replace(/\s+/g, ' ').trim()
-      }
+// Optimized input handler - removed throttle to ensure data sync
+const handleInput = (key: keyof ContactFormData, event: Event) => {
+  const target = event.target as HTMLInputElement
+  let value = target.value
+  
+  if (key === 'phone') {
+    // очистка и авто-нормализация 8 → +7
+    const digits = value.replace(/\D/g, '')
+    let norm = digits
+    if (digits.startsWith('8') && digits.length >= 1) {
+      norm = '7' + digits.slice(1)
     }
-    formData.value[key as keyof ContactFormData] = value
-
-    // Clear error immediately for better UX
-    if (errors.value[key]) {
-      delete errors.value[key]
+    // соберём человекочитаемый формат
+    if (norm.length >= 1) {
+      const n = norm.padEnd(11, '')
+      const pretty = `+${n[0] || ''} ${n.slice(1, 4).trim()} ${n.slice(4, 7).trim()}-${n
+        .slice(7, 9)
+        .trim()}-${n.slice(9, 11).trim()}`.trim()
+      value = pretty.replace(/\s+/g, ' ').trim()
     }
+  }
+  
+  // Update form data immediately
+  formData.value[key as keyof ContactFormData] = value
 
-    // Debounced validation
-    debouncedValidateField(key as ContactKeys, target.value)
-  }) as unknown as (...args: unknown[]) => unknown,
-  16
-) // 60fps throttling
+  // Clear error immediately for better UX
+  if (errors.value[key]) {
+    delete errors.value[key]
+  }
+
+  // Debounced validation
+  debouncedValidateField(key as ContactKeys, value)
+}
 
 // Memoized form validation
 const validateForm = (): boolean => {
@@ -240,8 +246,17 @@ const validateForm = (): boolean => {
 const submitForm = async () => {
   const submitStart = performance.now()
 
+  // Validate form before submission
   if (!validateForm()) {
     errors.value.general = 'Пожалуйста, исправьте ошибки в форме'
+    // Scroll to first error
+    nextTick(() => {
+      const firstErrorField = document.querySelector('[aria-invalid="true"]')
+      if (firstErrorField) {
+        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        ;(firstErrorField as HTMLElement).focus()
+      }
+    })
     return
   }
 
@@ -252,21 +267,20 @@ const submitForm = async () => {
     // Call API with performance tracking
     const apiStart = performance.now()
     const result = await ContactFormAPI.submitForm({
-      name: String(formData.value.name),
-      phone: String(formData.value.phone),
-      email: String(formData.value.email),
+      name: String(formData.value.name).trim(),
+      phone: String(formData.value.phone).trim(),
+      email: String(formData.value.email).trim(),
       honeypot: String(formData.value.honeypot),
       formStartedAt: Number(formData.value.formStartedAt),
     })
     const apiEnd = performance.now()
-
-    // Removed console.log for production performance
 
     if (result.success) {
       // Success - reset form
       formData.value.name = ''
       formData.value.phone = ''
       formData.value.email = ''
+      formData.value.honeypot = ''
       errors.value = {}
 
       // Clear validation cache
@@ -279,11 +293,10 @@ const submitForm = async () => {
         result.message || 'Произошла ошибка при отправке заявки. Попробуйте еще раз.'
     }
   } catch (error) {
-    // Removed console.error for production performance
+    console.error('Form submission error:', error)
     errors.value.general = 'Произошла ошибка при отправке заявки. Попробуйте еще раз.'
   } finally {
     isSubmitting.value = false
-    // Removed console.log for production performance
   }
 }
 
@@ -349,7 +362,7 @@ const getFieldError = (key: keyof ContactFormData): string | undefined =>
   <section
     ref="sectionRef"
     class="no-scrollbar bg-text px-4 sm:px-6 md:px-8 lg:px-12 xl:px-[12rem] py-4 sm:py-6 md:py-8 lg:py-[2rem] overflow-y-auto"
-    style="min-height: 600px; box-sizing: border-box; contain: layout style paint"
+    style="box-sizing: border-box; contain: layout style paint"
   >
     <!-- Loading placeholder with optimized animation -->
     <div v-if="!isVisible" class="flex items-center justify-center py-20">

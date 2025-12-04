@@ -43,7 +43,7 @@ const copyPhoneNumber = async () => {
 
 <template>
   <section
-    class="py-8 sm:py-12 md:py-[5rem] px-4 sm:px-6 md:px-8 lg:px-16 bg-text flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8"
+    class="py-8 sm:py-12 !min-height-[100px] px-4 sm:px-6 md:px-8 lg:px-16 bg-text flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8"
   >
     <!-- Contact Information Card - 2/5 width -->
     <div

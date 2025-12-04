@@ -30,6 +30,7 @@ const modalData = computed(() => {
 const cardData = computed(() => modalData.value?.card || [])
 const textData = computed(() => modalData.value?.text || [])
 const heroImage = computed(() => modalData.value?.img || '')
+const bottomImage = computed(() => modalData.value?.bottomImg || '')
 
 const handleClose = () => {
   emit('close')
@@ -80,7 +81,7 @@ watch(
   <!-- Project Modal - Full page content as per image -->
   <div
     v-if="showModal && modalData"
-    class="fixed inset-0 z-50 bg-info overflow-y-auto xp-10 md:px-[10rem]"
+    class="fixed inset-0 z-50 bg-info overflow-y-auto xp-10 md:px-[5rem]"
     @click="handleClose"
   >
     <div @click.stop class="modal-content w-full min-h-full">
@@ -167,6 +168,27 @@ watch(
               {{ item.description }}
             </p>
           </div>
+        </div>
+
+        <!-- Bottom Image Section (if available) -->
+        <div
+          v-if="bottomImage"
+          class="rounded-3xl mb-12 flex justify-center items-center relative overflow-hidden"
+          style="aspect-ratio: 16/9; min-height: 400px"
+        >
+          <OptimizedImage
+            :src="bottomImage"
+            alt="Project Additional View"
+            :width="1200"
+            :height="675"
+            :widths="[800, 1200, 1600]"
+            format="webp"
+            loading="lazy"
+            decoding="async"
+            fetchpriority="low"
+            class="w-full h-auto object-contain"
+            :sizes="{ mobile: '100vw', tablet: '100vw', desktop: '100vw' }"
+          />
         </div>
       </div>
     </div>

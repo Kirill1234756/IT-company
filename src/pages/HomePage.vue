@@ -30,35 +30,35 @@ const WhatWeDoSection = defineAsyncComponent({
   loader: () => import('../components/sections/WhatWeDoSection.vue'),
   delay: sectionDelay,
   timeout: 5000,
-  loadingComponent: () => import('../components/LoadingFallback.vue'),
+  loadingComponent: defineAsyncComponent(() => import('../components/LoadingFallback.vue')),
 })
 
 const PortfolioSection = defineAsyncComponent({
   loader: () => import('../components/sections/PortfolioSection.vue'),
   delay: sectionDelay,
   timeout: 5000,
-  loadingComponent: () => import('../components/LoadingFallback.vue'),
+  loadingComponent: defineAsyncComponent(() => import('../components/LoadingFallback.vue')),
 })
 
 const AdvantagesSection = defineAsyncComponent({
   loader: () => import('../components/sections/AdvantagesSection.vue'),
   delay: sectionDelay,
   timeout: 5000,
-  loadingComponent: () => import('../components/LoadingFallback.vue'),
+  loadingComponent: defineAsyncComponent(() => import('../components/LoadingFallback.vue')),
 })
 
 const BlogWrapperSection = defineAsyncComponent({
   loader: () => import('../components/sections/BlogWrapperSection.vue'),
   delay: sectionDelay,
   timeout: 5000,
-  loadingComponent: () => import('../components/LoadingFallback.vue'),
+  loadingComponent: defineAsyncComponent(() => import('../components/LoadingFallback.vue')),
 })
 
 const BlogModal = defineAsyncComponent({
   loader: () => import('../components/modals/BlogModal.vue'),
   delay: 0,
   timeout: 5000,
-  loadingComponent: () => import('../components/LoadingFallback.vue'),
+  loadingComponent: defineAsyncComponent(() => import('../components/LoadingFallback.vue')),
 })
 
 // ContactSection and Footer are now global in App.vue

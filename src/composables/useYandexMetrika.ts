@@ -26,14 +26,12 @@ export function useYandexMetrika() {
     const init = (config?: Partial<YandexMetrikaConfig>) => {
         // Проверяем, что мы в production режиме
         if (import.meta.env.MODE !== 'production') {
-            console.log('Yandex Metrika: отключена в режиме разработки')
             return
         }
 
         // Получаем ID из переменных окружения или конфигурации
         const metrikaId = import.meta.env.VITE_YANDEX_METRIKA_ID || config?.id
         if (!metrikaId) {
-            console.warn('Yandex Metrika: ID счётчика не найден')
             return
         }
 
@@ -46,7 +44,6 @@ export function useYandexMetrika() {
 
         // Проверяем, что скрипт ещё не загружен
         if (window.ym) {
-            console.log('Yandex Metrika: уже инициализирована')
             isInitialized.value = true
             isEnabled.value = true
             return
@@ -67,7 +64,6 @@ export function useYandexMetrika() {
 
                 isInitialized.value = true
                 isEnabled.value = true
-                console.log('Yandex Metrika: успешно инициализирована', finalConfig)
             }
         })
     }
@@ -119,7 +115,6 @@ export function useYandexMetrika() {
 
         try {
             window.ym(counterId.value, 'reachGoal', goal, params, callback)
-            console.log('Yandex Metrika: цель достигнута', goal, params)
         } catch (error) {
             console.error('Yandex Metrika: ошибка достижения цели', error)
         }
@@ -130,8 +125,6 @@ export function useYandexMetrika() {
      */
     const trackEvent = (event: UserEvent) => {
         if (!isEnabled.value) return
-
-        console.log('Yandex Metrika: событие', event)
 
         // Определяем цель на основе типа события
         let goal: YandexMetrikaGoal | null = null

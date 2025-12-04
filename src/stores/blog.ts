@@ -86,7 +86,6 @@ export const useBlogStore = defineStore('blog', {
     // Cache management
     clearCache() {
       this._cache.clear()
-      console.log('Blog store cache cleared')
     },
 
     // Performance monitoring

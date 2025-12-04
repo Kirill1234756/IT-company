@@ -6,31 +6,49 @@ import { useIntersectionObserver } from '@vueuse/core'
 const CasesPage = defineAsyncComponent(() => import('../../pages/CasesPage.vue'))
 
 const rootEl = ref<HTMLElement | null>(null)
-const isVisible = ref(false)
-const hasLoaded = ref(false)
+const scrollContainerRef = ref<HTMLElement | null>(null)
+// Отключаем lazy loading для правильной работы анимации наслаивания
+// Контент загружается сразу, чтобы GSAP мог правильно настроить анимацию
+const isVisible = ref(true)
+const hasLoaded = ref(true)
 
-const { stop } = useIntersectionObserver(
-  rootEl,
-  ([entry]) => {
-    if (entry && entry.isIntersecting) {
-      isVisible.value = true
-      hasLoaded.value = true
-      stop()
-    }
-  },
-  { rootMargin: '200px' }
-)
-
+// Настраиваем обработчик wheel для внутреннего скролла
 onMounted(() => {
-  // Загружаем секцию немедленно, если пользователь пришёл по якорю
-  if (typeof window !== 'undefined') {
-    const hash = window.location.hash
-    if (hash === '#cases' || hash === '#portfolio') {
-      isVisible.value = true
-      hasLoaded.value = true
-      stop()
+  const setupScrollHandler = () => {
+    if (!scrollContainerRef.value) {
+      setTimeout(setupScrollHandler, 100)
+      return
     }
+
+    const scrollContainer = scrollContainerRef.value
+    if ((scrollContainer as any).__scrollHandler) return
+
+    const handleWheel = (e: WheelEvent) => {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainer
+      const threshold = 10
+      const isAtTop = scrollTop <= threshold
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - threshold
+
+      if (e.deltaY > 0) {
+        // Скроллим вниз
+        if (!isAtBottom) {
+          e.stopPropagation()
+        }
+      } else if (e.deltaY < 0) {
+        // Скроллим вверх
+        if (!isAtTop) {
+          e.stopPropagation()
+        }
+      }
+    }
+
+    scrollContainer.addEventListener('wheel', handleWheel, { passive: false, capture: true })
+    ;(scrollContainer as any).__scrollHandler = handleWheel
   }
+
+  // Ждем загрузки контейнера
+  setTimeout(setupScrollHandler, 500)
+  setTimeout(setupScrollHandler, 1500)
 })
 </script>
 
@@ -40,9 +58,13 @@ onMounted(() => {
     class="stack-section no-scrollbar h-screen bg-bg flex flex-col items-center justify-start rounded-t-3xl py-[5rem]"
     style="min-height: 800px; box-sizing: border-box; contain: layout style paint"
   >
-    <Suspense>
+    <div
+      class="internal-scroll-container w-full h-full overflow-y-auto overflow-x-hidden"
+      ref="scrollContainerRef"
+    >
+      <Suspense>
       <template #default>
-        <CasesPage v-if="hasLoaded && isVisible" />
+        <CasesPage />
       </template>
       <template #fallback>
         <div
@@ -56,6 +78,7 @@ onMounted(() => {
         </div>
       </template>
     </Suspense>
+    </div>
   </section>
 </template>
 

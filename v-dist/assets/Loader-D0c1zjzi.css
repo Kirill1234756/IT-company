@@ -1,0 +1,1 @@
+@keyframes pulse-fa9a15a6{0%,to{opacity:.4;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}@keyframes shimmer-fa9a15a6{0%{transform:translate(-100%)}to{transform:translate(100%)}}.animate-pulse[data-v-fa9a15a6]{animation:pulse-fa9a15a6 1.5s ease-in-out infinite}.animate-shimmer[data-v-fa9a15a6]{animation:shimmer-fa9a15a6 2s ease-in-out infinite}

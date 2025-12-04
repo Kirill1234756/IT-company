@@ -58,7 +58,7 @@ const handleBreadcrumbClick = (index: number) => {
         </div>
       </div>
 
-      <div class="max-w-6xl mx-auto px-5 md:px-[15rem] py-[5rem]">
+      <div class="mx-auto px-5 md:px-[5rem] py-[5rem]">
         <!-- Breadcrumbs -->
         <div class="text-sm services-modal-breadcrumb mb-4">
           <span

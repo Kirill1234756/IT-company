@@ -73,6 +73,7 @@ const handleCardClick = (cardTitle: string) => {
 
 // Lazy mount internal content when in view
 const rootEl = ref<HTMLElement | null>(null)
+const scrollContainerRef = ref<HTMLElement | null>(null)
 const visible = ref(true) // Changed to true for immediate display
 
 // Removed console.log for production performance
@@ -145,95 +146,120 @@ onMounted(async () => {
       // Сбрасываем счетчик при успешной инициализации
       initAttempts = 0
 
-      // Этап 4: Создание timeline и анимаций через ScrollTrigger
-      ScrollTrigger.create({
-        trigger: section,
-        start: 'top 75%',
-        once: true,
-        onEnter: () => {
-          if (isAnimationInitialized.value) return
-          isAnimationInitialized.value = true
+      // Этап 4: Создание функции для запуска анимаций при появлении секции в viewport
+      // Используем IntersectionObserver вместо немедленного запуска
+      const runAnimations = () => {
+        if (isAnimationInitialized.value) return
+        isAnimationInitialized.value = true
 
-          const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+        const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
 
-          // Анимация заголовка - плавное появление сверху
-          if (title) {
-            gsap.set(title, { opacity: 0, y: 50, scale: 0.9 })
-            tl.to(
-              title,
-              {
-                opacity: 1,
-                y: 0,
-                scale: 1,
-                duration: 1,
-                ease: 'power3.out',
-              },
-              0
-            )
-          }
+        // Анимация заголовка - плавное появление сверху
+        if (title) {
+          gsap.set(title, { opacity: 0, y: 50, scale: 0.9 })
+          tl.to(
+            title,
+            {
+              opacity: 1,
+              y: 0,
+              scale: 1,
+              duration: 1,
+              ease: 'power3.out',
+            },
+            0
+          )
+        }
 
-          // Анимация карточек - каскадное появление с эффектом масштаба и поворота
-          if (cards.length > 0) {
-            cards.forEach((card) => {
-              gsap.set(card, {
-                opacity: 0,
-                y: 60,
-                scale: 0.8,
-                rotationY: 15,
-              })
+        // Анимация карточек - каскадное появление с эффектом масштаба и поворота
+        if (cards.length > 0) {
+          cards.forEach((card) => {
+            gsap.set(card, {
+              opacity: 0,
+              y: 60,
+              scale: 0.8,
+              rotationY: 15,
             })
-            tl.to(
-              cards,
-              {
-                opacity: 1,
-                y: 0,
-                scale: 1,
-                rotationY: 0,
-                duration: 0.8,
-                stagger: {
-                  each: 0.15,
-                  from: 'start',
-                  ease: 'power2.out',
-                },
-                ease: 'back.out(1.3)',
-              },
-              '-=0.5'
-            )
-          }
-
-          // Анимация CTA блока - плавное появление с эффектом bounce
-          if (ctaBox) {
-            gsap.set(ctaBox, { opacity: 0, y: 40, scale: 0.9 })
-            tl.to(
-              ctaBox,
-              {
-                opacity: 1,
-                y: 0,
-                scale: 1,
-                duration: 0.7,
-                ease: 'back.out(1.5)',
-              },
-              '-=0.4'
-            )
-          }
-
-          // Анимация кнопки "Узнать больше" - финальное появление
-          if (ctaButton) {
-            gsap.set(ctaButton, { opacity: 0, y: 30, scale: 0.95 })
-            tl.to(
-              ctaButton,
-              {
-                opacity: 1,
-                y: 0,
-                scale: 1,
-                duration: 0.6,
+          })
+          tl.to(
+            cards,
+            {
+              opacity: 1,
+              y: 0,
+              scale: 1,
+              rotationY: 0,
+              duration: 0.8,
+              stagger: {
+                each: 0.15,
+                from: 'start',
                 ease: 'power2.out',
               },
-              '-=0.3'
-            )
-          }
+              ease: 'back.out(1.3)',
+            },
+            '-=0.5'
+          )
+        }
+
+        // Анимация CTA блока - плавное появление с эффектом bounce
+        if (ctaBox) {
+          gsap.set(ctaBox, { opacity: 0, y: 40, scale: 0.9 })
+          tl.to(
+            ctaBox,
+            {
+              opacity: 1,
+              y: 0,
+              scale: 1,
+              duration: 0.7,
+              ease: 'back.out(1.5)',
+            },
+            '-=0.4'
+          )
+        }
+
+        // Анимация кнопки "Узнать больше" - финальное появление
+        if (ctaButton) {
+          gsap.set(ctaButton, { opacity: 0, y: 30, scale: 0.95 })
+          tl.to(
+            ctaButton,
+            {
+              opacity: 1,
+              y: 0,
+              scale: 1,
+              duration: 0.6,
+              ease: 'power2.out',
+            },
+            '-=0.3'
+          )
+        }
+      }
+
+      // Используем IntersectionObserver для отслеживания видимости секции
+      // Это работает даже внутри pinned контейнера
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && entry.intersectionRatio > 0.3) {
+              runAnimations()
+              observer.disconnect()
+            }
+          })
         },
-      })
+        {
+          threshold: 0.3,
+          rootMargin: '0px',
+        }
+      )
+
+      observer.observe(section)
+
+      // Запускаем анимацию с задержкой, если секция уже видна
+      setTimeout(() => {
+        const rect = section.getBoundingClientRect()
+        const isVisible = rect.top < window.innerHeight && rect.bottom > 0
+        if (isVisible && !isAnimationInitialized.value) {
+          runAnimations()
+          observer.disconnect()
+        }
+      }, 500)
     } catch {
       // Fallback: если GSAP не загрузился, просто показываем элементы
       isAnimationInitialized.value = true
@@ -263,6 +289,43 @@ onMounted(async () => {
       initGSAP()
     }, delay)
   }
+
+  // Настраиваем обработчик wheel для внутреннего скролла
+  const setupScrollHandler = () => {
+    if (!scrollContainerRef.value) {
+      setTimeout(setupScrollHandler, 100)
+      return
+    }
+
+    const scrollContainer = scrollContainerRef.value
+    if ((scrollContainer as any).__scrollHandler) return
+
+    const handleWheel = (e: WheelEvent) => {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainer
+      const threshold = 10
+      const isAtTop = scrollTop <= threshold
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - threshold
+
+      if (e.deltaY > 0) {
+        // Скроллим вниз
+        if (!isAtBottom) {
+          e.stopPropagation()
+        }
+      } else if (e.deltaY < 0) {
+        // Скроллим вверх
+        if (!isAtTop) {
+          e.stopPropagation()
+        }
+      }
+    }
+
+    scrollContainer.addEventListener('wheel', handleWheel, { passive: false, capture: true })
+    ;(scrollContainer as any).__scrollHandler = handleWheel
+  }
+
+  // Ждем загрузки контейнера
+  setTimeout(setupScrollHandler, 500)
+  setTimeout(setupScrollHandler, 1500)
 })
 
 // Очистка при размонтировании компонента
@@ -277,15 +340,19 @@ onBeforeUnmount(() => {
   <section
     ref="rootEl"
     class="stack-section no-scrollbar bg-text h-screen flex flex-col items-center justify-start rounded-t-3xl lg:py-[5rem] py-[2rem] lg:px-[15rem] md:px-[6rem] px-[1rem]"
-    style="min-height: 600px; box-sizing: border-box; contain: layout style paint"
+    style="box-sizing: border-box; contain: layout style paint"
   >
-    <h2
-      class="title no-title-effects text-3xl md:text-4xl font-black tracking-tight mb-8 text-bg opacity-100"
+    <div
+      class="internal-scroll-container w-full h-full overflow-y-auto overflow-x-hidden"
+      ref="scrollContainerRef"
     >
-      Что мы делаем
-    </h2>
+      <h2
+        class="title no-title-effects text-3xl md:text-4xl font-black tracking-tight mb-8 text-bg opacity-100"
+      >
+        Что мы делаем
+      </h2>
 
-    <div class="grid grid-cols-1 md:grid-cols-12 gap-8 max-w-6xl w-full mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-8 max-w-6xl w-full mb-8">
       <template v-if="visible">
         <WhatWeDoCard
           v-for="card in whatWeDoCards"
@@ -318,28 +385,15 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <div class="flex justify-center">
-      <CtaButton to="/services">Узнать больше</CtaButton>
+      <div class="flex justify-center">
+        <CtaButton to="/services">Узнать больше</CtaButton>
+      </div>
     </div>
   </section>
 </template>
 
 <style scoped>
-/* Начальное состояние для анимации - предотвращает FOUC */
-.stack-section h2.title {
-  will-change: transform, opacity;
-  transform: translateZ(0); /* Создаем композиционный слой */
-}
-
-.wwd-card {
-  will-change: transform, opacity;
-  transform: translateZ(0);
-}
-
-.wwd-cta {
-  will-change: transform, opacity;
-  transform: translateZ(0);
-}
+/* Убрано will-change и transform: translateZ(0) - GSAP управляет анимациями напрямую */
 
 /* Плавные переходы для интерактивных элементов */
 .wwd-card:hover {

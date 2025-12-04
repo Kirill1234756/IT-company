@@ -6,8 +6,9 @@ import type { ClientFormData, ClientFormSubmissionResponse } from '../types/clie
  */
 
 export class ClientFormAPI {
-  private static baseURL = (globalThis as unknown as { API_BASE?: string }).API_BASE
-    || import.meta.env.VITE_API_URL
+  private static baseURL: string = 
+    (globalThis as unknown as { API_BASE?: string }).API_BASE
+    || (import.meta as unknown as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL
     || 'https://udevfchvbjgdalzyqbph.supabase.co/functions/v1'
 
   /**

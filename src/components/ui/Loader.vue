@@ -1,7 +1,6 @@
 <script setup lang="ts">
 defineOptions({ name: 'AppLoader' })
 import { defineProps, computed } from 'vue'
-import OptimizedImage from '../OptimizedImage.vue'
 
 const props = defineProps<{
   progress: number
@@ -19,15 +18,15 @@ const loadingText = computed(() => {
   <div class="fixed inset-0 z-[9999] bg-bg flex flex-col items-center justify-center">
     <!-- Logo/Brand -->
     <div class="mb-8">
-      <div class="w-16 h-16 bg-border rounded-2xl flex items-center justify-center">
-        <OptimizedImage
-          src="/logo3.png"
+      <div class="w-16 h-16 bg-border rounded-2xl flex items-center justify-center overflow-hidden">
+        <img
+          src="/logo3.webp"
           alt="Kodify Logo"
-          :width="64"
-          :height="64"
+          width="64"
+          height="64"
           loading="eager"
           fetchpriority="high"
-          :widths="[64, 128]"
+          class="w-full h-full object-contain"
         />
       </div>
     </div>

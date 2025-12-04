@@ -6,8 +6,9 @@ import type { ContactFormData, ContactFormSubmissionResponse } from '../types/co
  */
 
 export class ContactFormAPI {
-  private static baseURL = (globalThis as unknown as { API_BASE?: string }).API_BASE
-    || import.meta.env.VITE_API_URL
+  private static baseURL: string =
+    (globalThis as unknown as { API_BASE?: string }).API_BASE
+    || (import.meta as unknown as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL
     || 'https://udevfchvbjgdalzyqbph.supabase.co/functions/v1'
 
   /**
@@ -17,22 +18,39 @@ export class ContactFormAPI {
    */
   static async submitForm(formData: ContactFormData): Promise<ContactFormSubmissionResponse> {
     try {
+      // Validate baseURL is a string
+      if (typeof this.baseURL !== 'string') {
+        throw new Error('Invalid API base URL configuration')
+      }
+
       const payload = { ...formData }
-      const anon = (globalThis as unknown as { SUPABASE_ANON?: string }).SUPABASE_ANON || (import.meta as unknown as { env?: { VITE_SUPABASE_ANON_KEY?: string } }).env?.VITE_SUPABASE_ANON_KEY
-      const isSupabaseFn = this.baseURL.includes('supabase.co/functions')
+      const anon = (globalThis as unknown as { SUPABASE_ANON?: string }).SUPABASE_ANON
+        || (import.meta as unknown as { env?: { VITE_SUPABASE_ANON_KEY?: string } }).env?.VITE_SUPABASE_ANON_KEY
+
+      const isSupabaseFn = typeof this.baseURL === 'string' && this.baseURL.includes('supabase.co/functions')
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+
       if (isSupabaseFn && anon) {
         headers['Authorization'] = `Bearer ${anon}`
         headers['apikey'] = anon
       }
-      const response = await fetch(`${this.baseURL}/contact-form`, {
+
+      const url = `${this.baseURL}/contact-form`
+
+      // Log for debugging (only in development)
+      if (import.meta.env.DEV) {
+        console.log('Contact form API call:', { url, hasAnonKey: !!anon, baseURL: this.baseURL })
+      }
+
+      const response = await fetch(url, {
         method: 'POST',
         headers,
         body: JSON.stringify(payload)
       })
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        const errorText = await response.text().catch(() => 'Unknown error')
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`)
       }
 
       const result = await response.json()
@@ -48,12 +66,32 @@ export class ContactFormAPI {
       }
     } catch (error) {
       console.error('Contact form submission error:', error)
+      console.error('Base URL:', this.baseURL)
+
+      // Handle network errors specifically
+      if (error instanceof TypeError) {
+        // Network error (CORS, connection refused, etc.)
+        if (error.message.includes('fetch') || error.message.includes('Failed to fetch')) {
+          const isSupabase = this.baseURL.includes('supabase.co')
+          return {
+            success: false,
+            message: isSupabase
+              ? 'Не удалось подключиться к Supabase Edge Functions. Убедитесь, что функции развернуты и доступны.'
+              : 'Ошибка подключения к серверу. Проверьте интернет-соединение и попробуйте еще раз.'
+          }
+        }
+      }
 
       // Handle different types of errors
       if (error instanceof Error) {
+        // Don't expose technical error messages to users
+        const userMessage = error.message.includes('HTTP error') || error.message.includes('fetch')
+          ? 'Ошибка при отправке формы. Попробуйте еще раз позже.'
+          : error.message
+
         return {
           success: false,
-          message: error.message
+          message: userMessage
         }
       }
 

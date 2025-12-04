@@ -17,6 +17,7 @@ const closeMobileMenu = () => {
 // navigation model
 const leftNav = [
   { to: '/services', label: 'Сервисы', type: 'route' as const, href: undefined },
+  { to: '/packages', label: 'Пакеты', type: 'route' as const, href: undefined },
   { to: '/cases', label: 'Кейсы', type: 'route' as const, href: undefined },
   { to: '/calculator', label: 'Калькулятор', type: 'route' as const, href: undefined },
 ]

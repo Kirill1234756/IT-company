@@ -1,0 +1,1 @@
+import{d as e,a as t,o}from"./vendor-vue-core-Da35iIbE.js";import"./vendor-other-M6hoS51G.js";import"./vendor-unhead-Ctj13N-t.js";const n={class:"h-screen flex items-center justify-center bg-red-500 text-white text-2xl font-bold"},_=e({__name:"LoadingFallback",setup(a){return(c,r)=>(o(),t("div",n," Loading Section... "))}});export{_ as default};

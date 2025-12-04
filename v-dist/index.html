@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="/logo3.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Веб‑компания полного цикла: создание сайтов, поддержка, продвижение. Портфолио проектов и экспертный блог.">
+    <meta name="yandex-verification" content="" />
+    <meta name="google-site-verification" content="" />
+    <meta property="og:title" content="IT Company" />
+    <meta property="og:description" content="Создание сайтов и веб‑сервисов. Портфолио и блог." />
+    <meta property="og:image" content="/og-image.jpg" />
+    <meta property="og:type" content="website" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <!-- Preload критических шрифтов для оптимизации CLS и SI -->
+    <link rel="preload" href="https://fonts.gstatic.com/s/ibmplexsanscondensed/v19/Gg8nN4UfRSqPg9mw2cjruF-PTQK5fqR71lYNPy8.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="https://fonts.gstatic.com/s/manrope/v15/xn7_YHE41ni1AdIRqAuZuw1Bx9mbZk59FO_F87jxeN7B.woff2" as="font" type="font/woff2" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300..800&family=IBM+Plex+Sans+Condensed:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap&subset=cyrillic" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300..800&family=IBM+Plex+Sans+Condensed:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap&subset=cyrillic" rel="stylesheet"></noscript>
+    <!-- Example: preload hero image if used as LCP element -->
+    <link rel="preload" as="image" href="/stratige.svg">
+
+    <!-- Critical CSS for minimal layout to render above-the-fold quickly -->
+    <style>
+      /* Critical CSS for LCP element (h1) */
+      * { box-sizing: border-box; }
+      #app { 
+        min-height: 100vh; 
+        background: #0f0f23; 
+        margin: 0;
+        padding: 0;
+      }
+      .main-section { 
+        min-height: 400px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        padding: 2rem;
+        background: #0f0f23;
+        color: white;
+        position: relative;
+        width: 100%;
+      }
+      .main-section h1 {
+        font-size: clamp(1.5rem, 4vw, 3rem);
+        font-weight: 700;
+        line-height: 1.2;
+        margin: 0;
+        color: #6366f1;
+        font-family: 'IBM Plex Sans Condensed', sans-serif;
+        max-width: 1200px;
+        width: 100%;
+      }
+      /* Reserve space for header to prevent CLS */
+      header { 
+        position: fixed; 
+        top: 0.7rem; 
+        left: 0; 
+        width: 100%; 
+        height: 48px;
+        z-index: 10;
+        margin: 0;
+        padding: 0;
+      }
+      body { 
+        margin: 0; 
+        padding: 0;
+        padding-top: 64px; /* Reserve space for fixed header */
+        overflow-x: hidden;
+        background: #0f0f23;
+        color: white;
+      }
+      /* Font display optional to prevent CLS and LCP blocking - критично для CLS <0.1 */
+      @font-face {
+        font-family: 'IBM Plex Sans Condensed';
+        font-display: optional;
+      }
+      @font-face {
+        font-family: 'Manrope';
+        font-display: optional;
+      }
+      /* Дополнительная защита от CLS - резервируем место для шрифтов */
+      body, h1, h2, h3, p {
+        font-display: optional;
+      }
+      /* Prevent layout shift during Vue hydration */
+      .stack-section {
+        min-height: 400px;
+        width: 100%;
+        box-sizing: border-box;
+        contain: layout style paint;
+      }
+      /* Prevent CLS from font loading */
+      h1 {
+        font-family: 'IBM Plex Sans Condensed', sans-serif;
+        font-size-adjust: 0.5;
+      }
+      h2, h3, p {
+        font-size-adjust: 0.5;
+      }
+      /* Reserve space for all dynamic content */
+      img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        box-sizing: border-box;
+        object-fit: cover;
+      }
+      /* Prevent CLS from images with dimensions */
+      img[width][height] {
+        height: auto;
+      }
+      /* Prevent CLS from dynamic content */
+      * {
+        box-sizing: border-box;
+      }
+      /* Optimize rendering performance */
+      .stack-section {
+        will-change: auto;
+        transform: translateZ(0);
+        backface-visibility: hidden;
+        contain: layout style paint;
+      }
+      /* Prevent CLS from font fallback */
+      body {
+        font-size: 16px;
+        line-height: 1.5;
+      }
+      /* Расширенный критический CSS для быстрого рендеринга - обновлено для точного соответствия Vue компоненту */
+      .main-section > div > div:first-child {
+        min-height: 120px;
+        width: 100%;
+        display: flex;
+        box-sizing: border-box;
+        contain: layout style paint;
+      }
+      .main-section > div > div:nth-child(2) {
+        min-height: 200px;
+        box-sizing: border-box;
+        contain: layout style paint;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+      .main-section > div > div:nth-child(2) > div:first-child {
+        min-height: 80px;
+        width: 100%;
+        padding: 1.5rem 2.5rem;
+        box-sizing: border-box;
+        contain: layout style paint;
+      }
+      .main-section > div > div:nth-child(2) > div:nth-child(2) {
+        min-height: 120px;
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        justify-content: center;
+        align-items: center;
+        box-sizing: border-box;
+        contain: layout style paint;
+      }
+      .main-section > div > div:nth-child(3) {
+        min-height: 50px;
+        box-sizing: border-box;
+        contain: layout style paint;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+    </style>
+  
+    <title>IT Company</title>
+    <script type="module" crossorigin src="/assets/index-tZrBhQiO.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-unhead-Ctj13N-t.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-other-M6hoS51G.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-vue-core-Da35iIbE.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-pinia-Diq2_CCV.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-vue-router-VH5bjaC2.js">
+    <link rel="modulepreload" crossorigin href="/assets/page-calculatorpage-BvWRwaQl.js">
+    <link rel="modulepreload" crossorigin href="/assets/section-blogsection-Dyu7Gg14.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-tailwind-C6Cmh_M-.js">
+    <link rel="modulepreload" crossorigin href="/assets/page-servicespage-CcXjCdwV.js">
+    <link rel="modulepreload" crossorigin href="/assets/page-casespage-saNDYYdD.js">
+    <link rel="stylesheet" crossorigin href="/assets/page-calculatorpage-tn0RQdqM.css">
+    <link rel="stylesheet" crossorigin href="/assets/section-blogsection-C8Ib8ecF.css">
+    <link rel="stylesheet" crossorigin href="/assets/page-servicespage-C7hT2Edh.css">
+    <link rel="stylesheet" crossorigin href="/assets/page-casespage-Dvd2xWXh.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-BCj7LoZr.css">
+  <link rel="prefetch" href="/assets/section-advantagessection-Nx7gFC9D.js"><link rel="prefetch" href="/assets/section-blogwrappersection-f_xd5CdE.js"><link rel="prefetch" href="/assets/section-contactsection-Llg_FZzA.js"><link rel="prefetch" href="/assets/section-mainsection-DWhQkrAM.js"><link rel="prefetch" href="/assets/section-portfoliosection-BEBzdkvu.js"><link rel="prefetch" href="/assets/section-whatwedosection-DSB28oUU.js"><link rel="prefetch" href="/assets/vendor-gsap-Bw0I9Inj.js"><link rel="prefetch" href="/assets/Loader-Bgtn1xtU.js"><link rel="prefetch" href="/assets/Header-DyvMBwiH.js"><link rel="prefetch" href="/assets/Footer-D4nYY93G.js"><link rel="prefetch" href="/assets/HomePage-CyfDaGpZ.js"><link rel="prefetch" href="/assets/ClientFormPage-BtMJdcKO.js"><link rel="prefetch" href="/assets/ContactPage-B7GvFwrZ.js"><link rel="prefetch" href="/assets/BlogPage-BTzSVgv5.js"><link rel="prefetch" href="/assets/NotFound-D6IndlOI.js"><link rel="prefetch" href="/assets/services.data-DJMbhR8t.js"><link rel="prefetch" href="/assets/NavColumn-CJS7ojg9.js"><link rel="prefetch" href="/assets/LoadingFallback-fQkhLQCM.js"><link rel="prefetch" href="/assets/BlogModal-CJU9QmJR.js"><link rel="prefetch" href="/assets/SEOContent-DgNrTgve.js"><link rel="prefetch" href="/assets/Breadcrumbs-BYCs2sHD.js"><link rel="prefetch" href="/assets/ServiceCard-DAvnG9EY.js"><link rel="prefetch" href="/assets/ServiceListModal-mntwJGtC.js"><link rel="prefetch" href="/assets/ServiceDetailModal-DNi0gpjW.js"><link rel="prefetch" href="/assets/PortfolioCard-DGz0Y-bT.js"><link rel="prefetch" href="/assets/PortfolioModal-B-_mzgyK.js"><link rel="prefetch" href="/assets/PriceSummary-De_hs3cl.js"><link rel="prefetch" href="/assets/CtaButton-EPxA9jWj.js"><link rel="prefetch" href="/assets/WhatWeDoCard-B_fzaa-X.js"><link rel="prefetch" href="/assets/AdvantageCard-CbFUz2os.js"><link rel="prefetch" href="/assets/BlogCard-CcPXCaPN.js">  <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">
+</head>
+  <body>
+    <div id="app">
+      <!-- Pre-rendered hero section for instant LCP - will be replaced by Vue -->
+      <!-- Размеры точно совпадают с Vue компонентом для предотвращения CLS -->
+      <section class="main-section stack-section" style="min-height: 400px; display: flex; align-items: center; justify-content: center; padding: 1.25rem 1rem; padding-top: 64px; background: #0f0f23; color: white; position: relative; width: 100%; overflow: hidden; box-sizing: border-box; contain: layout style paint;">
+        <div style="max-width: 1200px; width: 100%; display: flex; flex-direction: column; gap: 1.5rem; min-height: 300px; box-sizing: border-box; contain: layout style paint;">
+          <div style="width: 100%; min-height: 120px; display: flex; box-sizing: border-box; contain: layout style paint;">
+            <h1 style="font-size: clamp(1.5rem, 4vw, 3rem); font-weight: 700; line-height: 1.2; margin: 0; color: #6366f1; font-family: 'IBM Plex Sans Condensed', sans-serif; width: 100%; box-sizing: border-box; contain: layout style paint; font-size-adjust: 0.5;">
+              Продажа сайтов и цифровых решений для развития бизнеса
+            </h1>
+          </div>
+          <!-- Placeholder для контента с описанием и stats - точная структура из Vue компонента для предотвращения CLS -->
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 1.5rem; width: 100%; box-sizing: border-box; contain: layout style paint;">
+            <div style="display: flex; flex-direction: column; gap: 1.5rem; width: 100%; box-sizing: border-box; contain: layout style paint;">
+              <!-- Placeholder для описания (bg-error блок) - точные размеры -->
+              <div style="min-height: 100px; width: 100%; padding: 1.5rem 2.5rem; background: rgba(239, 68, 68, 0.1); border-radius: 2rem; box-sizing: border-box; contain: layout style paint; display: flex; align-items: center; justify-content: center;">
+                <div style="width: 100%; height: 1.5rem; background: rgba(239, 68, 68, 0.2); border-radius: 0.5rem; box-sizing: border-box;"></div>
+              </div>
+              <!-- Placeholder для stats - точные размеры из Vue компонента для предотвращения CLS -->
+              <div style="min-height: 120px; width: 100%; display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; align-items: center; box-sizing: border-box; contain: layout style paint;">
+                <div style="min-width: 100px; min-height: 100px; max-width: 200px; width: calc(50% - 0.5rem); background: rgba(239, 68, 68, 0.1); border-radius: 2rem; box-sizing: border-box; contain: layout style paint; padding: 0.75rem 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem;">
+                  <div style="width: 80%; height: 0.875rem; background: rgba(239, 68, 68, 0.2); border-radius: 0.25rem; box-sizing: border-box;"></div>
+                  <div style="width: 60%; height: 1.5rem; background: rgba(239, 68, 68, 0.2); border-radius: 0.25rem; box-sizing: border-box;"></div>
+                </div>
+                <div style="min-width: 100px; min-height: 100px; max-width: 200px; width: calc(50% - 0.5rem); background: rgba(239, 68, 68, 0.1); border-radius: 2rem; box-sizing: border-box; contain: layout style paint; padding: 0.75rem 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem;">
+                  <div style="width: 80%; height: 0.875rem; background: rgba(239, 68, 68, 0.2); border-radius: 0.25rem; box-sizing: border-box;"></div>
+                  <div style="width: 60%; height: 1.5rem; background: rgba(239, 68, 68, 0.2); border-radius: 0.25rem; box-sizing: border-box;"></div>
+                </div>
+                <div style="min-width: 100px; min-height: 100px; max-width: 200px; width: calc(50% - 0.5rem); background: rgba(239, 68, 68, 0.1); border-radius: 2rem; box-sizing: border-box; contain: layout style paint; padding: 0.75rem 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem;">
+                  <div style="width: 80%; height: 0.875rem; background: rgba(239, 68, 68, 0.2); border-radius: 0.25rem; box-sizing: border-box;"></div>
+                  <div style="width: 60%; height: 1.5rem; background: rgba(239, 68, 68, 0.2); border-radius: 0.25rem; box-sizing: border-box;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Placeholder для кнопки CTA -->
+          <div style="min-height: 50px; width: 100%; display: flex; justify-content: center; align-items: center; box-sizing: border-box; contain: layout style paint;">
+            <div style="min-width: 200px; min-height: 48px; background: rgba(0, 229, 160, 0.1); border-radius: 1rem; box-sizing: border-box;"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+    <!-- Runtime API base override for production hosting without .env injection -->
+    <script>
+      window.API_BASE = window.API_BASE || 'https://udevfchvbjgdalzyqbph.supabase.co/functions/v1'
+    </script>
+    
+    <!-- Yandex.Metrika noscript fallback -->
+    <noscript>
+      <div>
+        <img src="https://mc.yandex.ru/watch/104923147" style="position:absolute; left:-9999px;" alt="" />
+      </div>
+    </noscript>
+  </body>
+</html>

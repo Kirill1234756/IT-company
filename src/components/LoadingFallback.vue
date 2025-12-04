@@ -5,7 +5,6 @@
 </template>
 
 <script setup lang="ts">
-console.log('Fallback component loaded')
 </script>
 
 

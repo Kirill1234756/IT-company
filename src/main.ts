@@ -56,7 +56,7 @@ if (window.scheduler?.postTask) {
       const fullTitle = `${titlePart} - Kodify`
       const description = (meta as Record<string, unknown>).description as string || 'Веб‑компания полного цикла: разработка, поддержка, продвижение. Кейсы и блог.'
       const canonicalPath = (meta as Record<string, unknown>).canonicalPath as string || to.fullPath
-      const ogImage = (meta as Record<string, unknown>).ogImage as string || '/og-image.jpg'
+      const ogImage = (meta as Record<string, unknown>).ogImage as string || '/og-image.webp'
 
       head.push({
         title: fullTitle,
@@ -83,7 +83,7 @@ if (window.scheduler?.postTask) {
       const fullTitle = `${titlePart} - Kodify`
       const description = (meta as Record<string, unknown>).description as string || 'Веб‑компания полного цикла: разработка, поддержка, продвижение. Кейсы и блог.'
       const canonicalPath = (meta as Record<string, unknown>).canonicalPath as string || to.fullPath
-      const ogImage = (meta as Record<string, unknown>).ogImage as string || '/og-image.jpg'
+      const ogImage = (meta as Record<string, unknown>).ogImage as string || '/og-image.webp'
 
       head.push({
         title: fullTitle,
@@ -110,7 +110,7 @@ if (window.scheduler?.postTask) {
       const fullTitle = `${titlePart} - Kodify`
       const description = (meta as Record<string, unknown>).description as string || 'Веб‑компания полного цикла: разработка, поддержка, продвижение. Кейсы и блог.'
       const canonicalPath = (meta as Record<string, unknown>).canonicalPath as string || to.fullPath
-      const ogImage = (meta as Record<string, unknown>).ogImage as string || '/og-image.jpg'
+      const ogImage = (meta as Record<string, unknown>).ogImage as string || '/og-image.webp'
 
       head.push({
         title: fullTitle,

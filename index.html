@@ -136,6 +136,106 @@
         font-size: 16px;
         line-height: 1.5;
       }
+      /* Loader animations */
+      @keyframes pulse {
+        0%, 100% {
+          opacity: 0.4;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.1);
+        }
+      }
+      @keyframes shimmer {
+        0% {
+          transform: translateX(-100%);
+        }
+        100% {
+          transform: translateX(100%);
+        }
+      }
+      .loader-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        width: 100%;
+      }
+      .loader-logo {
+        width: 64px;
+        height: 64px;
+        background: rgba(99, 102, 241, 0.2);
+        border-radius: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 2rem;
+      }
+      .loader-logo img {
+        width: 48px;
+        height: 48px;
+        object-fit: contain;
+      }
+      .loader-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #00e5a0;
+        margin-bottom: 2rem;
+        font-family: 'IBM Plex Sans Condensed', sans-serif;
+      }
+      .loader-progress {
+        width: 320px;
+        max-width: 90%;
+        margin-bottom: 0.75rem;
+      }
+      .loader-progress-bar {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 9999px;
+        height: 8px;
+        overflow: hidden;
+        position: relative;
+      }
+      .loader-progress-fill {
+        background: linear-gradient(to right, #2455ff, #1e40af);
+        height: 100%;
+        width: 30%;
+        border-radius: 9999px;
+        position: relative;
+        animation: shimmer 2s ease-in-out infinite;
+      }
+      .loader-progress-fill::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.3), transparent);
+        animation: shimmer 2s ease-in-out infinite;
+      }
+      .loader-dots {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 2rem;
+      }
+      .loader-dot {
+        width: 8px;
+        height: 8px;
+        background: #2455ff;
+        border-radius: 50%;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+      .loader-dot:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .loader-dot:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+      .loader-text {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.875rem;
+        margin-top: 1.5rem;
+        font-family: 'Manrope', sans-serif;
+      }
       /* Расширенный критический CSS для быстрого рендеринга - обновлено для точного соответствия Vue компоненту */
       .main-section > div > div:first-child {
         min-height: 120px;
@@ -186,49 +286,77 @@
   </head>
   <body>
     <div id="app">
-      <!-- Pre-rendered hero section for instant LCP - will be replaced by Vue -->
-      <!-- Размеры точно совпадают с Vue компонентом для предотвращения CLS -->
-      <section class="main-section stack-section" style="min-height: 400px; display: flex; align-items: center; justify-content: center; padding: 1.25rem 1rem; padding-top: 64px; background: #0f0f23; color: white; position: relative; width: 100%; overflow: hidden; box-sizing: border-box; contain: layout style paint;">
-        <div style="max-width: 1200px; width: 100%; display: flex; flex-direction: column; gap: 1.5rem; min-height: 300px; box-sizing: border-box; contain: layout style paint;">
-          <div style="width: 100%; min-height: 120px; display: flex; box-sizing: border-box; contain: layout style paint;">
-            <h1 style="font-size: clamp(1.5rem, 4vw, 3rem); font-weight: 700; line-height: 1.2; margin: 0; color: #6366f1; font-family: 'IBM Plex Sans Condensed', sans-serif; width: 100%; box-sizing: border-box; contain: layout style paint; font-size-adjust: 0.5;">
-              Продажа сайтов и цифровых решений для развития бизнеса
-            </h1>
+      <!-- Pre-rendered loader - will be updated by JavaScript and hidden by Vue after load -->
+      <div id="pre-rendered-loader" class="loader-container" style="min-height: 100vh; background: #0f0f23; padding-top: 64px; box-sizing: border-box; position: fixed; inset: 0; z-index: 9999;">
+        <!-- Logo -->
+        <div class="loader-logo">
+          <img src="/logo3.png" alt="Kodify Logo" style="width: 48px; height: 48px; object-fit: contain;">
+        </div>
+        
+        <!-- Loading Text -->
+        <h2 class="loader-title">Kodify</h2>
+        
+        <!-- Progress Bar -->
+        <div class="loader-progress">
+          <div class="loader-progress-bar">
+            <div id="loader-progress-fill" class="loader-progress-fill" style="width: 0%;"></div>
           </div>
-          <!-- Placeholder для контента с описанием и stats - точная структура из Vue компонента для предотвращения CLS -->
-          <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 1.5rem; width: 100%; box-sizing: border-box; contain: layout style paint;">
-            <div style="display: flex; flex-direction: column; gap: 1.5rem; width: 100%; box-sizing: border-box; contain: layout style paint;">
-              <!-- Placeholder для описания (bg-error блок) - точные размеры -->
-              <div style="min-height: 100px; width: 100%; padding: 1.5rem 2.5rem; background: rgba(239, 68, 68, 0.1); border-radius: 2rem; box-sizing: border-box; contain: layout style paint; display: flex; align-items: center; justify-content: center;">
-                <div style="width: 100%; height: 1.5rem; background: rgba(239, 68, 68, 0.2); border-radius: 0.5rem; box-sizing: border-box;"></div>
-              </div>
-              <!-- Placeholder для stats - точные размеры из Vue компонента для предотвращения CLS -->
-              <div style="min-height: 120px; width: 100%; display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; align-items: center; box-sizing: border-box; contain: layout style paint;">
-                <div style="min-width: 100px; min-height: 100px; max-width: 200px; width: calc(50% - 0.5rem); background: rgba(239, 68, 68, 0.1); border-radius: 2rem; box-sizing: border-box; contain: layout style paint; padding: 0.75rem 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem;">
-                  <div style="width: 80%; height: 0.875rem; background: rgba(239, 68, 68, 0.2); border-radius: 0.25rem; box-sizing: border-box;"></div>
-                  <div style="width: 60%; height: 1.5rem; background: rgba(239, 68, 68, 0.2); border-radius: 0.25rem; box-sizing: border-box;"></div>
-                </div>
-                <div style="min-width: 100px; min-height: 100px; max-width: 200px; width: calc(50% - 0.5rem); background: rgba(239, 68, 68, 0.1); border-radius: 2rem; box-sizing: border-box; contain: layout style paint; padding: 0.75rem 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem;">
-                  <div style="width: 80%; height: 0.875rem; background: rgba(239, 68, 68, 0.2); border-radius: 0.25rem; box-sizing: border-box;"></div>
-                  <div style="width: 60%; height: 1.5rem; background: rgba(239, 68, 68, 0.2); border-radius: 0.25rem; box-sizing: border-box;"></div>
-                </div>
-                <div style="min-width: 100px; min-height: 100px; max-width: 200px; width: calc(50% - 0.5rem); background: rgba(239, 68, 68, 0.1); border-radius: 2rem; box-sizing: border-box; contain: layout style paint; padding: 0.75rem 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem;">
-                  <div style="width: 80%; height: 0.875rem; background: rgba(239, 68, 68, 0.2); border-radius: 0.25rem; box-sizing: border-box;"></div>
-                  <div style="width: 60%; height: 1.5rem; background: rgba(239, 68, 68, 0.2); border-radius: 0.25rem; box-sizing: border-box;"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- Placeholder для кнопки CTA -->
-          <div style="min-height: 50px; width: 100%; display: flex; justify-content: center; align-items: center; box-sizing: border-box; contain: layout style paint;">
-            <div style="min-width: 200px; min-height: 48px; background: rgba(0, 229, 160, 0.1); border-radius: 1rem; box-sizing: border-box;"></div>
+          <!-- Progress Percentage -->
+          <div style="text-align: center; margin-top: 0.75rem;">
+            <span id="loader-progress-text" style="font-size: 0.875rem; font-weight: 600; color: rgba(255, 255, 255, 0.6); font-family: 'Manrope', sans-serif;">0%</span>
           </div>
         </div>
-      </section>
+        
+        <!-- Loading Animation -->
+        <div class="loader-dots">
+          <div class="loader-dot"></div>
+          <div class="loader-dot"></div>
+          <div class="loader-dot"></div>
+        </div>
+        
+        <!-- Loading Text -->
+        <p id="loader-text" class="loader-text">Загрузка...</p>
+      </div>
     </div>
     <!-- Runtime API base override for production hosting without .env injection -->
     <script>
       window.API_BASE = window.API_BASE || 'https://udevfchvbjgdalzyqbph.supabase.co/functions/v1'
+      
+      // Update pre-rendered loader progress before Vue loads
+      (function() {
+        const progressFill = document.getElementById('loader-progress-fill')
+        const progressText = document.getElementById('loader-progress-text')
+        const loaderText = document.getElementById('loader-text')
+        const loader = document.getElementById('pre-rendered-loader')
+        
+        if (!progressFill || !progressText || !loaderText || !loader) return
+        
+        let progress = 0
+        const startTime = Date.now()
+        const maxTime = 3000 // 3 seconds max
+        const maxProgress = 70 // Max 70% before Vue takes over
+        
+        // Simulate progress
+        const interval = setInterval(() => {
+          const timeElapsed = Date.now() - startTime
+          const baseProgress = Math.min(timeElapsed / maxTime, maxProgress / 100)
+          const randomFactor = (Math.random() * 0.1 - 0.05) // -0.05 to 0.05
+          progress = Math.min(baseProgress * 100 + randomFactor * 100, maxProgress)
+          
+          progressFill.style.width = progress + '%'
+          progressText.textContent = Math.round(progress) + '%'
+        }, 100)
+        
+        // Cleanup when Vue takes over (Vue will handle hiding)
+        window.addEventListener('vue-mounted', () => {
+          clearInterval(interval)
+        })
+        
+        // Fallback cleanup after 5 seconds
+        setTimeout(() => {
+          clearInterval(interval)
+        }, 5000)
+      })()
     </script>
     <script type="module" defer src="/src/main.ts"></script>
     

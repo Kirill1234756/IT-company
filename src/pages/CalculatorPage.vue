@@ -402,7 +402,7 @@ const submitContactForm = async () => {
                   @click="answers.siteType = type.id"
                   :aria-label="`Выбрать тип сайта: ${type.label}`"
                   :class="[
-                    'p-6 rounded-[3rem] border-2 text-left transition-all duration-300',
+                    'p-3 rounded-[3rem] border-2 text-left transition-all duration-300',
                     answers.siteType === type.id
                       ? 'border-accent bg-accent/20'
                       : 'border-border hover:border-accent/50 bg-bg/50',

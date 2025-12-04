@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
-import { defineAsyncComponent, onMounted, ref } from 'vue'
+import { defineAsyncComponent, onMounted, ref, watch, onBeforeUnmount } from 'vue'
 import { useIntersectionObserver } from '@vueuse/core'
 const LoaderC = defineAsyncComponent(() => import('./components/ui/Loader.vue'))
 import { usePageLoader } from './composables/usePageLoader'
@@ -12,6 +12,44 @@ const Footer = defineAsyncComponent(() => import('./pages/Footer.vue'))
 
 const { isLoading, progress, isRouteChange, initLoader, initRouterLoader, addLoadingPromise } =
   usePageLoader()
+
+// Track if this is initial load (use pre-rendered loader) or route change (use Vue loader)
+const isInitialLoad = ref(true)
+
+// Update pre-rendered loader progress
+const updatePreRenderedLoader = () => {
+  const progressFill = document.getElementById('loader-progress-fill')
+  const progressText = document.getElementById('loader-progress-text')
+  const loaderText = document.getElementById('loader-text')
+  
+  if (progressFill && progressText && loaderText) {
+    progressFill.style.width = progress.value + '%'
+    progressText.textContent = Math.round(progress.value) + '%'
+    loaderText.textContent = isRouteChange.value ? 'Переход...' : 'Загрузка...'
+  }
+}
+
+// Hide pre-rendered loader
+const hidePreRenderedLoader = () => {
+  const loader = document.getElementById('pre-rendered-loader')
+  if (loader) {
+    loader.style.opacity = '0'
+    loader.style.transition = 'opacity 0.3s ease-out'
+    setTimeout(() => {
+      loader.style.display = 'none'
+    }, 300)
+  }
+}
+
+// Watch progress and update pre-rendered loader
+watch([progress, isLoading, isRouteChange], () => {
+  if (isInitialLoad.value && !isRouteChange.value) {
+    updatePreRenderedLoader()
+    if (!isLoading.value) {
+      hidePreRenderedLoader()
+    }
+  }
+}, { immediate: true })
 
 // Lazy load triggers and flags
 const contactSectionTrigger = ref<HTMLElement | null>(null)
@@ -68,6 +106,12 @@ useIntersectionObserver(
 )
 
 onMounted(async () => {
+  // Notify that Vue is mounted (stops pre-rendered loader's own progress simulation)
+  window.dispatchEvent(new Event('vue-mounted'))
+  
+  // Initial update of pre-rendered loader
+  updatePreRenderedLoader()
+  
   initLoader()
   initRouterLoader()
 
@@ -100,12 +144,25 @@ onMounted(async () => {
   })
 
   addLoadingPromise(waitForMainSection)
+  
+  // Mark initial load as complete after first load
+  watch(isLoading, (newVal) => {
+    if (!newVal && isInitialLoad.value) {
+      isInitialLoad.value = false
+    }
+  }, { once: true })
+})
+
+onBeforeUnmount(() => {
+  // Cleanup: hide pre-rendered loader if still visible
+  hidePreRenderedLoader()
 })
 </script>
 
 <template>
   <main id="app">
-    <LoaderC v-if="isLoading" :progress="progress" :is-route-change="isRouteChange" />
+    <!-- Show Vue loader only for route changes, not initial load (pre-rendered loader handles that) -->
+    <LoaderC v-if="isLoading && !isInitialLoad" :progress="progress" :is-route-change="isRouteChange" />
     <header
       ref="headerRef"
       class="fixed top-[0.7rem] left-0 w-full flex justify-center items-center z-10 px-3 md:px-12 lg:px-[8rem]"

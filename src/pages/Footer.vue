@@ -27,6 +27,7 @@ const navColumnsData: NavColumn[] = [
     items: [
       { to: '/', label: 'Главная' },
       { to: '/services', label: 'Услуги' },
+      { to: '/packages', label: 'Пакеты' },
       { to: '/cases', label: 'Кейсы' },
       { to: '/blog', label: 'Блог' },
     ],
@@ -149,7 +150,7 @@ onUnmounted(() => {
           <div class="flex flex-col items-center md:items-start space-y-2">
             <div class="flex items-center justify-center space-x-2">
               <div class="w-10 h-10 bg-bg rounded-[3rem] flex items-center justify-center">
-                <img class="w-[60%]" src="/logo3.png" alt="KODIFY Logo" width="24" height="24" />
+                <img class="w-[60%]" src="/logo3.webp" alt="KODIFY Logo" width="24" height="24" />
               </div>
               <span class="text-accent font-bold text-lg md:text-xl">KODIFY</span>
             </div>
