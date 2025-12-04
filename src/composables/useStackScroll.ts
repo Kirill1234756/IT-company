@@ -155,10 +155,10 @@ export function useStackScroll(
 
       // Настройка контейнера
       // Для ScrollTrigger с pinning контейнер должен иметь высоту, достаточную для скролла
-      // Высота будет установлена через pinSpacing автоматически, но нужно начальное значение
+      // Высота будет установлена через pinSpacing автоматически
       gsap.set(root, {
         height: 'auto',
-        minHeight: `${sections.length * 100}vh`,
+        minHeight: '100vh', // Минимальная высота - одна секция, остальное добавит pinSpacing
         overflow: 'visible',
         backgroundColor: 'transparent',
         position: 'relative'
