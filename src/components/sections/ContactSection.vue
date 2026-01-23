@@ -404,7 +404,7 @@ const getFieldError = (key: keyof ContactFormData): string | undefined =>
           >
             <input
               :id="`contact-${field.key}`"
-              :name="field.key"
+              :name="String(field.key)"
               :type="field.type"
               :value="formData[field.key]"
               @input="handleInput(field.key, $event)"

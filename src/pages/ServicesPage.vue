@@ -10,6 +10,7 @@ import { useHead } from '@unhead/vue'
 const SEOContent = defineAsyncComponent(() => import('../components/seo/SEOContent.vue'))
 import { useServiceSchema } from '../composables/useServiceSchema'
 import { useBreadcrumbSchema } from '../composables/useBreadcrumbSchema'
+import FilterButtons from '../components/FilterButtons.vue'
 
 const Breadcrumbs = defineAsyncComponent(() => import('../components/ui/Breadcrumbs.vue'))
 const ServiceCard = defineAsyncComponent(() => import('../components/ServiceCard.vue'))
@@ -53,8 +54,8 @@ type Service = {
   title: string
   description: string
   priceFrom: string
-  icon: string
-  iconBg: string
+  iconPath: string
+  iconUseFill?: boolean
   category?: string
   slug?: string
 }
@@ -124,6 +125,20 @@ const filterServices = (category: string) => {
   })
 }
 
+// Оранжевые цвета как в портфолио
+const filterButtonColors = {
+  bg: '!bg-accent',
+  border: 'border-rose-custom',
+  hover: 'hover:bg-[#ae70ac] hover:border-[#ae70ac]',
+  inner: 'bg-[#ae70ac]',
+  text: 'text-white',
+}
+
+// Обработчик изменения фильтра
+const handleFilterChange = (value: string) => {
+  filterServices(value)
+}
+
 // Handle service click
 const handleServiceClick = (service: ServiceCardProps & { category?: ServiceCategory }) => {
   // Пытаемся получить детальную информацию по slug или ID
@@ -140,7 +155,7 @@ const handleServiceClick = (service: ServiceCardProps & { category?: ServiceCate
         service_id: service.id,
         service_slug: service.slug ?? '',
         price_from: service.priceFrom,
-        has_icon: service.icon ? 'yes' : 'no',
+        has_icon: service.iconPath ? 'yes' : 'no',
       }
     )
     // Открываем детальную информацию услуги
@@ -351,7 +366,7 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div class="min-h-screen py-[5rem] px-8 md:px-[20rem] bg-text">
+  <div class="min-h-screen py-[5rem] px-8 md:px-[5rem] bg-text">
     <!-- Detail Page with SEO Content -->
     <main v-if="isDetailPage && selectedServiceDetail" class="max-w-7xl mx-auto">
       <Breadcrumbs
@@ -717,23 +732,13 @@ watchEffect(() => {
       </div>
 
       <!-- Filter Buttons -->
-      <div class="flex flex-wrap gap-4 mb-12">
-        <button
-          v-for="category in availableCategories"
-          :key="category.key"
-          @click="filterServices(category.key)"
-          :class="
-            cn(
-              'px-6 py-3 rounded-full font-semibold transition-all duration-300',
-              activeFilter === category.key
-                ? 'services-filter-active shadow-lg'
-                : 'services-filter-inactive hover:shadow-md'
-            )
-          "
-        >
-          {{ category.label }}
-        </button>
-      </div>
+      <FilterButtons
+        :items="availableCategories.map(cat => ({ label: cat.label, value: cat.key }))"
+        :model-value="activeFilter"
+        :colors="filterButtonColors"
+        container-class="mb-12"
+        @update:model-value="handleFilterChange"
+      />
 
       <!-- Internal links for crawl and relevance -->
       <p class="mb-8 text-accent">
@@ -751,17 +756,18 @@ watchEffect(() => {
       </div>
 
       <!-- Services List -->
-      <div v-else-if="filteredServices.length > 0" class="space-y-6">
+      <div v-else-if="filteredServices.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <ServiceCard
-          v-for="service in filteredServices"
+          v-for="(service, index) in filteredServices"
           :key="service.id"
           :id="service.id"
           :title="service.title"
           :description="service.description"
           :priceFrom="service.priceFrom"
-          :icon="service.icon"
-          :iconBg="service.iconBg"
+          :icon-path="service.iconPath"
+          :icon-use-fill="service.iconUseFill"
           :slug="service.slug"
+          :index="index"
           :isClickable="true"
           @click="handleServiceClick"
         />

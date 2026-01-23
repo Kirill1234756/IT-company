@@ -6,10 +6,28 @@ import type { ClientFormData, ClientFormSubmissionResponse } from '../types/clie
  */
 
 export class ClientFormAPI {
-  private static baseURL: string = 
-    (globalThis as unknown as { API_BASE?: string }).API_BASE
-    || (import.meta as unknown as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL
-    || 'https://udevfchvbjgdalzyqbph.supabase.co/functions/v1'
+  private static getBaseURL(): string {
+    const apiBase = (globalThis as unknown as { API_BASE?: string | (() => string) }).API_BASE
+    const envUrl = (import.meta as unknown as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL
+    
+    // Handle if API_BASE is a function (shouldn't happen, but just in case)
+    if (typeof apiBase === 'function') {
+      console.warn('API_BASE is a function, this should be a string')
+      return 'http://localhost:3000/api'
+    }
+    
+    if (typeof apiBase === 'string' && apiBase) {
+      return apiBase
+    }
+    
+    if (typeof envUrl === 'string' && envUrl) {
+      return envUrl
+    }
+    
+    return 'http://localhost:3000/api'
+  }
+  
+  private static baseURL: string = ClientFormAPI.getBaseURL()
 
   /**
    * Submit client form data to backend
@@ -18,53 +36,62 @@ export class ClientFormAPI {
    */
   static async submitForm(formData: ClientFormData): Promise<ClientFormSubmissionResponse> {
     try {
-      // Edge Functions принимают JSON. Файл (если нужен) должен быть загружен в Storage заранее.
-      const payload: Record<string, unknown> = {
-        companyDescription: formData.companyDescription,
-        task: formData.task,
-        solutionVision: formData.solutionVision,
-        expectations: formData.expectations,
-        budget: formData.budget,
-        name: formData.name,
-        company: formData.company,
-        phone: formData.phone,
-        email: formData.email,
-        privacyAccepted: (formData as unknown as { privacyAccepted?: boolean }).privacyAccepted ?? true,
-        honeypot: formData.honeypot,
-        formStartedAt: formData.formStartedAt
+      // Node.js бекенд принимает multipart/form-data для загрузки файлов
+      const formDataToSend = new FormData()
+      
+      // Добавляем текстовые поля (ответы на вопросы)
+      formDataToSend.append('companyDescription', formData.companyDescription || '')
+      formDataToSend.append('task', formData.task || '')
+      formDataToSend.append('solutionVision', formData.solutionVision || '')
+      formDataToSend.append('expectations', formData.expectations || '')
+      // Budget: selected range + optional comment (store together to not require DB changes)
+      const budgetRange = (formData.budget || '').trim()
+      const budgetComment = String((formData as unknown as { budgetComment?: string }).budgetComment || '').trim()
+      const budgetToSend =
+        budgetRange && budgetComment ? `${budgetRange}\nКомментарий: ${budgetComment}` : budgetRange || budgetComment || ''
+      formDataToSend.append('budget', budgetToSend)
+      formDataToSend.append('name', formData.name)
+      formDataToSend.append('company', formData.company)
+      formDataToSend.append('phone', formData.phone)
+      formDataToSend.append('email', formData.email)
+      formDataToSend.append('privacyAccepted', String((formData as unknown as { privacyAccepted?: boolean }).privacyAccepted ?? true))
+      
+      // Only send honeypot if it has content (should be empty for legitimate users)
+      if (formData.honeypot && String(formData.honeypot).trim() !== '') {
+        formDataToSend.append('honeypot', String(formData.honeypot).trim())
+      }
+      
+      // Always send formStartedAt for timing validation
+      if (formData.formStartedAt) {
+        formDataToSend.append('formStartedAt', String(formData.formStartedAt))
       }
 
-      // Если файл присутствует, передаем только метаданные (URL должен формироваться на фронте после загрузки в Storage)
-      const meta = formData as unknown as {
-        attachedFileUrl?: string
-        attachedFileName?: string
-        attachedFileSize?: number
-        privacyAccepted?: boolean
-      }
-      if (meta.attachedFileUrl) {
-        payload.attachedFileUrl = meta.attachedFileUrl
-        payload.attachedFileName = meta.attachedFileName
-        payload.attachedFileSize = meta.attachedFileSize
-      }
+      // File upload removed - no longer needed
 
-      const anon = (globalThis as unknown as { SUPABASE_ANON?: string }).SUPABASE_ANON || (import.meta as unknown as { env?: { VITE_SUPABASE_ANON_KEY?: string } }).env?.VITE_SUPABASE_ANON_KEY
-      const isSupabaseFn = this.baseURL.includes('supabase.co/functions')
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (isSupabaseFn && anon) {
-        headers['Authorization'] = `Bearer ${anon}`
-        headers['apikey'] = anon
-      }
-      const response = await fetch(`${this.baseURL}/client-form`, {
+      // Не устанавливаем Content-Type - браузер установит его автоматически с boundary для multipart/form-data
+      const baseURL = this.baseURL
+      const response = await fetch(`${baseURL}/client-form`, {
         method: 'POST',
-        headers,
-        body: JSON.stringify(payload)
+        body: formDataToSend
       })
 
-      if (!response.ok) {
+      // Try to parse response body even if status is not OK
+      let result: any
+      try {
+        result = await response.json()
+      } catch (parseError) {
+        // If response is not JSON, throw error with status
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
-      const result = await response.json()
+      if (!response.ok) {
+        // If we have validation errors, include them in the error message
+        if (result.errors && typeof result.errors === 'object') {
+          const errorMessages = Object.values(result.errors).join(', ')
+          throw new Error(errorMessages || result.message || `HTTP error! status: ${response.status}`)
+        }
+        throw new Error(result.message || `HTTP error! status: ${response.status}`)
+      }
 
       if (!result.success) {
         throw new Error(result.message || 'Ошибка при отправке формы')
@@ -121,11 +148,11 @@ export class ClientFormAPI {
 }
 
 /**
- * Backend API endpoints that need to be implemented:
+ * Backend API endpoints (Node.js):
  *
  * POST /api/client-form
  * - Accepts multipart/form-data
- * - Fields: companyDescription, task, solutionVision, expectations, budget, name, company, phone, email, attachedFile
+ * - Fields: companyDescription, task, solutionVision, expectations, budget, name, company, phone, email, privacyAccepted, attachedFile (optional), honeypot, formStartedAt
  * - Returns: { success: boolean, clientId: string, message: string }
  *
  * POST /api/client-form/validate (optional)
@@ -135,8 +162,8 @@ export class ClientFormAPI {
  * Expected backend response format:
  * {
  *   "success": true,
- *   "clientId": "CLIENT_12345",
- *   "message": "Заявка успешно отправлена"
+ *   "clientId": "uuid-заявки",
+ *   "message": "Заявка успешно отправлена! Мы свяжемся с вами в ближайшее время."
  * }
  */
 

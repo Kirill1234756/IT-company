@@ -212,6 +212,14 @@ body {
   background-color: var(--color-info);
 }
 
+.bg-purple {
+  background-color: var(--color-purple);
+}
+
+.text-purple {
+  color: var(--color-purple);
+}
+
 /* Enhanced gradient backgrounds */
 .bg-gradient-modern {
   background: linear-gradient(135deg, var(--color-bg) 0%, var(--color-border) 50%, var(--color-bg) 100%);
@@ -366,7 +374,7 @@ body {
 
 .client-form-input {
   border: 1px solid var(--color-border);
-  color: var(--color-text);
+  color: black !important;
   -webkit-backdrop-filter: blur(5px);
   backdrop-filter: blur(5px);
 }

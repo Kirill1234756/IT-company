@@ -18,10 +18,17 @@
     <link rel="canonical" href="https://kodifyweb.ru/" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <!-- Preconnect к внешним доменам для ускорения загрузки -->
+    <link rel="preconnect" href="https://mc.yandex.ru">
+    <link rel="dns-prefetch" href="https://mc.yandex.ru">
     <!-- Preload критических шрифтов удален - шрифты загружаются через Google Fonts CSS -->
-    <!-- Шрифты загружаются асинхронно для оптимизации FCP -->
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300..800&family=IBM+Plex+Sans+Condensed:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap&subset=cyrillic" rel="stylesheet" media="print" onload="this.media='all'">
-    <noscript><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300..800&family=IBM+Plex+Sans+Condensed:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap&subset=cyrillic" rel="stylesheet"></noscript>
+    <!-- Шрифты загружаются асинхронно: swap для критических (h1), optional для остальных -->
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;600;700&display=swap&subset=cyrillic" rel="stylesheet" media="print" onload="this.media='all'">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300..800&family=IBM+Plex+Mono:wght@400;500&display=optional&subset=cyrillic" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript>
+      <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;600;700&display=swap&subset=cyrillic" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300..800&family=IBM+Plex+Mono:wght@400;500&display=optional&subset=cyrillic" rel="stylesheet">
+    </noscript>
     <!-- Preload hero image удален - изображение загружается через компоненты -->
 
     <!-- Critical CSS for minimal layout to render above-the-fold quickly -->
@@ -54,6 +61,8 @@
         font-family: 'IBM Plex Sans Condensed', sans-serif;
         max-width: 1200px;
         width: 100%;
+        opacity: 1 !important; /* LCP элемент должен быть виден сразу */
+        visibility: visible !important;
       }
       /* Reserve space for header to prevent CLS */
       header { 
@@ -74,24 +83,27 @@
         background: #0f0f23;
         color: white;
       }
-      /* Font display swap to prevent CLS - используем fallback шрифты */
+      /* Font display: swap для критических (h1), optional для остальных */
       @font-face {
         font-family: 'IBM Plex Sans Condensed';
-        font-display: swap;
+        font-display: swap; /* swap для LCP элемента (h1) */
       }
       @font-face {
         font-family: 'Manrope';
-        font-display: swap;
+        font-display: optional; /* optional для некритических элементов */
       }
-      /* Резервируем место для шрифтов чтобы предотвратить CLS */
+      /* Резервируем место для шрифтов чтобы предотвратить CLS с size-adjust */
       h1, h2, h3, h4, h5, h6 {
         font-family: 'IBM Plex Sans Condensed', 'Arial Narrow', Arial, sans-serif;
         font-weight: 700;
         line-height: 1.2;
+        /* size-adjust для fallback шрифта Arial Narrow */
+        font-size-adjust: 0.5;
       }
       body, p {
         font-family: 'Manrope', system-ui, -apple-system, sans-serif;
         line-height: 1.6;
+        font-size-adjust: 0.5;
       }
       /* Prevent layout shift during Vue hydration */
       .stack-section {
@@ -102,11 +114,14 @@
       }
       /* Prevent CLS from font loading */
       h1 {
-        font-family: 'IBM Plex Sans Condensed', sans-serif;
+        font-family: 'IBM Plex Sans Condensed', 'Arial Narrow', Arial, sans-serif;
         font-size-adjust: 0.5;
+        min-height: 1.2em;
+        line-height: 1.2;
       }
       h2, h3, p {
         font-size-adjust: 0.5;
+        min-height: 1.2em;
       }
       /* Reserve space for all dynamic content */
       img {
@@ -116,9 +131,20 @@
         box-sizing: border-box;
         object-fit: cover;
       }
-      /* Prevent CLS from images with dimensions */
+      /* Prevent CLS from images with dimensions - используем aspect-ratio */
       img[width][height] {
         height: auto;
+        aspect-ratio: attr(width) / attr(height);
+      }
+      /* Для всех изображений резервируем место через aspect-ratio */
+      picture {
+        display: block;
+        width: 100%;
+      }
+      picture img {
+        width: 100%;
+        height: auto;
+        display: block;
       }
       /* Prevent CLS from dynamic content */
       * {
@@ -271,6 +297,40 @@
         box-sizing: border-box;
         contain: layout style paint;
       }
+      /* Reserve exact space for stat cards to prevent CLS */
+      .main-section-stat-card {
+        min-height: 100px;
+        height: 100px;
+        width: 100%;
+        max-width: 200px;
+        box-sizing: border-box;
+        contain: layout style paint;
+        position: relative;
+        overflow: hidden;
+      }
+      /* Резервируем место для чисел в счетчиках */
+      .main-section-stat-card p[class*='text-2xl'],
+      .main-section-stat-card p[class*='text-3xl'] {
+        min-width: 4ch;
+        text-align: center;
+        font-variant-numeric: tabular-nums;
+      }
+      /* Reserve space for description box */
+      .main-section-description {
+        min-height: 120px;
+        height: auto;
+        box-sizing: border-box;
+        contain: layout style paint;
+        opacity: 0; /* Начальное состояние - будет показано через GSAP */
+      }
+      /* Reserve space for CTA button */
+      .main-section-cta {
+        min-height: 75px;
+        height: auto;
+        box-sizing: border-box;
+        contain: layout style paint;
+        visibility: visible;
+      }
       .main-section > div > div:nth-child(3) {
         min-height: 50px;
         box-sizing: border-box;
@@ -319,8 +379,24 @@
       </div>
     </div>
     <!-- Runtime API base override for production hosting without .env injection -->
+    <!-- 
+      Для продакшена можно задать API URL здесь вместо .env файла:
+      window.API_BASE = 'https://api.kodifyweb.ru/api'
+      
+      Или используйте переменную окружения VITE_API_URL в .env файле (рекомендуется)
+    -->
     <script>
-      window.API_BASE = window.API_BASE || 'https://udevfchvbjgdalzyqbph.supabase.co/functions/v1'
+      // Ensure API_BASE is always a string, never a function
+      if (typeof window.API_BASE !== 'string') {
+        // Продакшен: используем api.kodifyweb.ru
+        window.API_BASE = 'https://api.kodifyweb.ru/api'
+      }
+      // Double check - if it's somehow a function, override it
+      if (typeof window.API_BASE === 'function') {
+        console.warn('API_BASE was a function, fixing it to be a string')
+        // Продакшен: используем api.kodifyweb.ru
+        window.API_BASE = 'https://api.kodifyweb.ru/api'
+      }
       
       // Update pre-rendered loader progress before Vue loads
       (function() {

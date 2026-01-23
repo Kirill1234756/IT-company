@@ -1,11 +1,20 @@
 <script setup lang="ts">
-import { defineAsyncComponent, ref, onMounted } from 'vue'
+import { defineAsyncComponent, ref, onMounted, onUnmounted } from 'vue'
 
 const AdvantageCard = defineAsyncComponent(() => import('../AdvantageCard.vue'))
 const CtaButton = defineAsyncComponent(() => import('../ui/CtaButton.vue'))
 
 const rootEl = ref<HTMLElement | null>(null)
+const scrollContainerRef = ref<HTMLElement | null>(null)
 const isAnimationInitialized = ref(false)
+const isMobile = ref(false)
+
+// Функция для обновления состояния мобильного устройства
+const updateIsMobile = () => {
+  if (typeof window !== 'undefined') {
+    isMobile.value = window.innerWidth < 768
+  }
+}
 
 // Our Advantages data
 const advantages = [
@@ -53,8 +62,8 @@ onMounted(async () => {
   const initGSAP = async () => {
     try {
       // Этап 1: Дождаться idle времени или LCP
-      const isMobile = window.innerWidth < 768
-      const delay = isMobile ? 2000 : 1500
+      const isMobileDevice = window.innerWidth < 768
+      const delay = isMobileDevice ? 2000 : 1500
 
       if (window.scheduler?.postTask) {
         await window.scheduler.postTask(() => {}, { priority: 'background', delay })
@@ -222,8 +231,8 @@ onMounted(async () => {
   }
 
   // Запускаем инициализацию GSAP
-  const isMobile = window.innerWidth < 768
-  const delay = isMobile ? 2000 : 1500
+  const isMobileDevice = window.innerWidth < 768
+  const delay = isMobileDevice ? 2000 : 1500
 
   if (window.scheduler?.postTask) {
     window.scheduler.postTask(
@@ -244,6 +253,84 @@ onMounted(async () => {
       initGSAP()
     }, delay)
   }
+
+  // Инициализируем определение мобильного устройства
+  updateIsMobile()
+
+  // Отслеживаем изменения размера окна
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', updateIsMobile)
+  }
+
+  // Настраиваем обработчики скролла
+  // На мобильных используем touch события, на десктопе - wheel
+  const setupScrollHandler = () => {
+    if (!scrollContainerRef.value) {
+      setTimeout(setupScrollHandler, 100)
+      return
+    }
+
+    const scrollContainer = scrollContainerRef.value
+    if ((scrollContainer as unknown as Record<string, unknown>).__scrollHandler) return
+
+    const currentIsMobile = isMobile.value
+    if (currentIsMobile) {
+      // На мобильных не добавляем обработчики - полагаемся на CSS overscroll-behavior-y: auto
+      // который автоматически передает скролл дальше, когда достигнуты границы
+      // Это позволяет stack scroll корректно обрабатывать touch события
+      return
+    } else {
+      // На десктопе добавляем обработчик wheel
+      const handleWheel = (e: WheelEvent) => {
+        const { scrollTop, scrollHeight, clientHeight } = scrollContainer
+        const threshold = 10
+        const isAtTop = scrollTop <= threshold
+        const isAtBottom = scrollTop + clientHeight >= scrollHeight - threshold
+
+        if (e.deltaY > 0) {
+          // Скроллим вниз
+          if (!isAtBottom) {
+            e.stopPropagation()
+          }
+        } else if (e.deltaY < 0) {
+          // Скроллим вверх
+          if (!isAtTop) {
+            e.stopPropagation()
+          }
+        }
+      }
+
+      scrollContainer.addEventListener('wheel', handleWheel, { passive: false, capture: true })
+      ;(scrollContainer as unknown as Record<string, unknown>).__scrollHandler = handleWheel
+    }
+  }
+
+  // Ждем загрузки контейнера
+  setTimeout(setupScrollHandler, 500)
+  setTimeout(setupScrollHandler, 1500)
+})
+
+// Очистка обработчика при размонтировании
+onUnmounted(() => {
+  // Удаляем обработчик изменения размера окна
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', updateIsMobile)
+  }
+
+  if (scrollContainerRef.value) {
+    const scrollContainer = scrollContainerRef.value
+    const containerWithHandler = scrollContainer as unknown as Record<string, unknown>
+    const handler = containerWithHandler.__scrollHandler
+
+    if (!isMobile.value && typeof handler === 'function') {
+      // На десктопе удаляем wheel обработчик
+      scrollContainer.removeEventListener('wheel', handler as (e: WheelEvent) => void, {
+        capture: true,
+      })
+    }
+
+    delete containerWithHandler.__scrollHandler
+  }
 })
 </script>
 
@@ -251,29 +338,38 @@ onMounted(async () => {
   <section
     ref="rootEl"
     id="advantages"
-    class="stack-section no-scrollbar bg-text h-screen flex flex-col items-center justify-start rounded-t-3xl lg:py-[5rem] py-[2rem]"
+    class="stack-section no-scrollbar bg-text h-screen flex flex-col items-center justify-start rounded-t-3xl lg:py-[5rem] py-[5rem]"
     style="min-height: 800px; box-sizing: border-box; contain: layout style paint"
   >
-    <h2
-      class="title no-title-effects text-3xl md:text-4xl font-black tracking-tight mb-8 text-bg opacity-100 text-center"
+    <!-- Внутренний скроллируемый контейнер для всех устройств -->
+    <!-- Настроен так, чтобы не блокировать stack scroll на мобильных -->
+    <div
+      class="internal-scroll-container w-full h-full overflow-y-auto overflow-x-hidden flex flex-col items-center"
+      ref="scrollContainerRef"
+      :class="{ 'mobile-advantages-container': isMobile }"
+      style="padding-bottom: 0; margin-bottom: 0"
     >
-      Наши преимущества
-    </h2>
+      <h2
+        class="title no-title-effects text-3xl md:text-4xl font-black tracking-tight mb-8 text-bg opacity-100 text-center"
+      >
+        Наши преимущества
+      </h2>
 
-    <div class="w-full grid grid-cols-1 md:grid-cols-2 items-stretch">
-      <AdvantageCard
-        v-for="(a, i) in advantages"
-        :key="a.title + i"
-        :title="a.title"
-        :description="a.description"
-        :index="i"
-        :isCentral="i === 2 || i === 3"
-        class="adv-card"
-      />
-    </div>
+      <div class="w-full grid grid-cols-1 md:grid-cols-2 items-stretch">
+        <AdvantageCard
+          v-for="(a, i) in advantages"
+          :key="a.title + i"
+          :title="a.title"
+          :description="a.description"
+          :index="i"
+          :isCentral="i === 2 || i === 3"
+          class="adv-card"
+        />
+      </div>
 
-    <div class="flex justify-center">
-      <CtaButton to="/services" bgClass="bg-bg">Узнать больше</CtaButton>
+      <div class="flex justify-center">
+        <CtaButton to="/services" bgClass="bg-bg">Узнать больше</CtaButton>
+      </div>
     </div>
   </section>
 </template>
@@ -284,6 +380,27 @@ onMounted(async () => {
 /* Плавные переходы для интерактивных элементов */
 .adv-card:hover {
   transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Обеспечиваем корректную работу touch событий на мобильных устройствах */
+.internal-scroll-container {
+  /* Разрешаем вертикальный скролл */
+  touch-action: pan-y;
+  /* Улучшаем производительность скролла */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* На мобильных устройствах настраиваем контейнер так, чтобы не блокировать stack scroll */
+.mobile-advantages-container {
+  /* Разрешаем передачу скролла родительскому элементу когда достигнуты границы */
+  /* auto позволяет скроллу передаваться дальше, когда достигнуты границы */
+  overscroll-behavior-y: auto;
+  overscroll-behavior-x: contain;
+  /* Убеждаемся, что touch события не блокируются */
+  touch-action: pan-y;
+  /* Позволяем скроллу страницы работать, когда внутренний контент достиг границ */
+  -webkit-overflow-scrolling: touch;
 }
 </style>
 

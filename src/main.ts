@@ -9,6 +9,17 @@ import App from './App.vue'
 import router from './router'
 import './style.css'
 
+// Типы для scheduler API
+interface SchedulerPostTaskOptions {
+  priority?: 'user-blocking' | 'user-visible' | 'background'
+  delay?: number
+  signal?: AbortSignal
+}
+
+interface Scheduler {
+  postTask(callback: () => void, options?: SchedulerPostTaskOptions): Promise<void>
+}
+
 const app = createApp(App)
 const head = createHead()
 
@@ -16,38 +27,104 @@ app.use(createPinia())
 app.use(router)
 app.use(head)
 
-// Отложенная загрузка не критичных плагинов для мобильных
-const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
-const nonCriticalDelay = isMobile ? 12000 : 5000
+// Отложенная загрузка не критичных плагинов до после LCP
+const isMobile = typeof window !== 'undefined' && (window as Window).innerWidth < 768
 
-if (window.scheduler?.postTask) {
-  window.scheduler.postTask(() => {
-    app.use(VueLazyLoad, {
-      loading: '/favicon.ico',
-    })
-    installYandexMetrika(app, router)
-    initGlobalPerformanceMonitoring()
-  }, { priority: 'background', delay: nonCriticalDelay })
-} else if ('requestIdleCallback' in window) {
-  requestIdleCallback(() => {
-    app.use(VueLazyLoad, {
-      loading: '/favicon.ico',
-    })
-    installYandexMetrika(app, router)
-    initGlobalPerformanceMonitoring()
-  }, { timeout: nonCriticalDelay })
+// Функция для загрузки некритичных плагинов
+const loadNonCriticalPlugins = () => {
+  // Загружаем плагины с дополнительной задержкой на мобильных для лучшей производительности
+  const pluginDelay = isMobile ? 2000 : 1000
+  
+  if (window.scheduler?.postTask) {
+    window.scheduler.postTask(() => {
+      app.use(VueLazyLoad, {
+        loading: '/favicon.ico',
+      })
+      installYandexMetrika(app, router)
+      initGlobalPerformanceMonitoring()
+    }, { priority: 'background', delay: pluginDelay })
+  } else if ('requestIdleCallback' in window) {
+    requestIdleCallback(() => {
+      app.use(VueLazyLoad, {
+        loading: '/favicon.ico',
+      })
+      installYandexMetrika(app, router)
+      initGlobalPerformanceMonitoring()
+    }, { timeout: pluginDelay })
+  } else {
+    setTimeout(() => {
+      app.use(VueLazyLoad, {
+        loading: '/favicon.ico',
+      })
+      installYandexMetrika(app, router)
+      initGlobalPerformanceMonitoring()
+    }, pluginDelay)
+  }
+}
+
+// Используем PerformanceObserver для отслеживания LCP
+if (typeof window !== 'undefined' && 'PerformanceObserver' in window) {
+  let lcpObserved = false
+  const lcpObserver = new PerformanceObserver((list) => {
+    const entries = list.getEntries()
+    const lastEntry = entries[entries.length - 1] as PerformanceEntry & { renderTime?: number; loadTime?: number; startTime?: number }
+    
+    if (lastEntry && !lcpObserved) {
+      lcpObserved = true
+      lcpObserver.disconnect()
+      
+      // Загружаем некритичные плагины после LCP с большой задержкой для лучшей производительности
+      const delay = isMobile ? 3000 : 2000
+      const win = window as Window & { scheduler?: Scheduler }
+      if (win.scheduler?.postTask) {
+        win.scheduler.postTask(loadNonCriticalPlugins, { priority: 'background', delay })
+      } else if ('requestIdleCallback' in window) {
+        requestIdleCallback(loadNonCriticalPlugins, { timeout: delay })
+      } else {
+        setTimeout(loadNonCriticalPlugins, delay)
+      }
+    }
+  })
+  
+  try {
+    lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] })
+    
+    // Fallback: если LCP не произошел за 5 секунд (мобильные) или 3 секунды (десктоп)
+    const fallbackDelay = isMobile ? 5000 : 3000
+    setTimeout(() => {
+      if (!lcpObserved) {
+        lcpObserved = true
+        lcpObserver.disconnect()
+        loadNonCriticalPlugins()
+      }
+    }, fallbackDelay)
+  } catch {
+    // Fallback если PerformanceObserver не поддерживается
+    const fallbackDelay = isMobile ? 3000 : 2000
+    const win = window as Window & { scheduler?: Scheduler }
+    if (win.scheduler?.postTask) {
+      win.scheduler.postTask(loadNonCriticalPlugins, { priority: 'background', delay: fallbackDelay })
+    } else if ('requestIdleCallback' in window) {
+      requestIdleCallback(loadNonCriticalPlugins, { timeout: fallbackDelay })
+    } else {
+      setTimeout(loadNonCriticalPlugins, fallbackDelay)
+    }
+  }
 } else {
-  setTimeout(() => {
-    app.use(VueLazyLoad, {
-      loading: '/favicon.ico',
-    })
-    installYandexMetrika(app, router)
-    initGlobalPerformanceMonitoring()
-  }, nonCriticalDelay)
+  // Fallback для старых браузеров
+  const fallbackDelay = isMobile ? 3000 : 2000
+  const win = window as Window & { scheduler?: Scheduler }
+  if (win.scheduler?.postTask) {
+    win.scheduler.postTask(loadNonCriticalPlugins, { priority: 'background', delay: fallbackDelay })
+  } else if ('requestIdleCallback' in window) {
+    requestIdleCallback(loadNonCriticalPlugins, { timeout: fallbackDelay })
+  } else {
+    setTimeout(loadNonCriticalPlugins, fallbackDelay)
+  }
 }
 
 // SEO: derive head tags from vue-router meta - отложено для мобильных
-const seoDelay = isMobile ? 8000 : 3000
+const seoDelay = isMobile ? 4000 : 2000
 if (window.scheduler?.postTask) {
   window.scheduler.postTask(() => {
     router.afterEach((to) => {
@@ -132,7 +209,7 @@ if (window.scheduler?.postTask) {
 }
 
 // Global Organization / WebSite JSON-LD - отложено для мобильных
-const jsonLdDelay = isMobile ? 12000 : 5000
+const jsonLdDelay = isMobile ? 5000 : 3000
 if (window.scheduler?.postTask) {
   window.scheduler.postTask(() => {
     head.push({

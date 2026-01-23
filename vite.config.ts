@@ -48,6 +48,9 @@ export default defineConfig({
     minifyIdentifiers: true,
     minifySyntax: true,
     minifyWhitespace: true,
+    // Дополнительные опции для лучшей минификации
+    treeShaking: true,
+    target: 'es2020', // Современные браузеры для меньшего размера
   },
   build: {
     // Включаем агрессивную оптимизацию для продакшена
@@ -102,11 +105,9 @@ export default defineConfig({
               return 'vendor-pinia'
             }
             // GSAP разделяем на отдельные чанки для лучшего tree-shaking
-            if (id.includes('gsap/ScrollTrigger')) {
-              return 'vendor-gsap-scrolltrigger'
-            }
+            // Используем единый чанк для GSAP (уже загружается через useGsap)
             if (id.includes('gsap')) {
-              return 'vendor-gsap-core'
+              return 'vendor-gsap'
             }
             // Unhead отдельно
             if (id.includes('@unhead')) {

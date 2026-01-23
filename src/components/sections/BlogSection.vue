@@ -1,9 +1,18 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, shallowRef, ref, nextTick } from 'vue'
+import {
+  computed,
+  defineAsyncComponent,
+  shallowRef,
+  ref,
+  nextTick,
+  onMounted,
+  onUnmounted,
+} from 'vue'
 import { useBlogStore } from '../../stores/blog'
 import { useRoute } from 'vue-router'
 import { debounce } from '../../utils/performance'
 import type { BlogPost } from '../../types/blog'
+import FilterButtons from '../FilterButtons.vue'
 
 const BlogCard = defineAsyncComponent(() => import('../BlogCard.vue'))
 
@@ -13,6 +22,16 @@ const route = useRoute()
 // Filter state with shallowRef for better performance
 const activeTab = shallowRef('all')
 
+// Реактивное отслеживание размера экрана для определения количества карточек
+const isMobile = ref(false)
+
+// Функция для обновления состояния мобильного устройства
+const updateIsMobile = () => {
+  if (typeof window !== 'undefined') {
+    isMobile.value = window.innerWidth < 768
+  }
+}
+
 // Определяем, находимся ли мы на главной странице
 // На главной странице route.path === '/', на отдельной странице '/blog'
 const isOnHomePage = computed(() => {
@@ -20,11 +39,12 @@ const isOnHomePage = computed(() => {
   return route.path === '/' || route.path === '/home'
 })
 
-// Ограничение для главной страницы - показываем только 6 карточек
-// На десктопе: 2 ряда × 3 колонки = 6 карточек
-// На планшете: 3 ряда × 2 колонки = 6 карточек
-// На мобильных: 6 рядов × 1 колонка = 6 карточек
-const maxItemsOnHomePage = 6 // Фиксированное значение для простоты
+// Ограничение для главной страницы - показываем разное количество в зависимости от устройства
+// На десктопе: 6 карточек
+// На мобильных: 3 карточки
+const maxItemsOnHomePage = computed(() => {
+  return isMobile.value ? 3 : 6
+})
 
 const showAllItems = ref(false)
 
@@ -44,14 +64,16 @@ const displayedPosts = computed(() => {
   if (!isOnHomePage.value || showAllItems.value) {
     return filteredPosts.value
   }
-  // На главной странице показываем только первые 6 карточек
-  return filteredPosts.value.slice(0, maxItemsOnHomePage)
+  // На главной странице показываем ограниченное количество карточек (3 на мобильных, 6 на десктопе)
+  return filteredPosts.value.slice(0, maxItemsOnHomePage.value)
 })
 
 // Проверяем, есть ли скрытые посты
 const hasMoreItems = computed(() => {
   return (
-    isOnHomePage.value && filteredPosts.value.length > maxItemsOnHomePage && !showAllItems.value
+    isOnHomePage.value &&
+    filteredPosts.value.length > maxItemsOnHomePage.value &&
+    !showAllItems.value
   )
 })
 
@@ -63,7 +85,9 @@ const showMore = async () => {
   setTimeout(() => {
     const grid = document.querySelector('.blog-grid')
     if (grid) {
-      const firstNewPost = grid.querySelector(`.blog-card:nth-child(${maxItemsOnHomePage + 1})`)
+      const firstNewPost = grid.querySelector(
+        `.blog-card:nth-child(${maxItemsOnHomePage.value + 1})`
+      )
       if (firstNewPost) {
         firstNewPost.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
       }
@@ -90,10 +114,42 @@ const handlePostClick = (post: BlogPost) => {
 const setTab = (tabId: string) => {
   debouncedSetTab(tabId)
 }
+
+// Оранжевые цвета как в портфолио
+const filterButtonColors = {
+  bg: '!bg-accent',
+  border: 'border-rose-custom',
+  hover: 'hover:bg-[#ae70ac] hover:border-[#ae70ac]',
+  inner: 'bg-[#ae70ac]',
+  text: 'text-white',
+}
+
+// Обработчик изменения фильтра
+const handleFilterChange = (value: string) => {
+  debouncedSetTab(value)
+}
+
+// Инициализация и очистка обработчика изменения размера окна
+onMounted(() => {
+  // Инициализируем определение мобильного устройства
+  updateIsMobile()
+
+  // Отслеживаем изменения размера окна
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', updateIsMobile)
+  }
+})
+
+onUnmounted(() => {
+  // Удаляем обработчик изменения размера окна
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', updateIsMobile)
+  }
+})
 </script>
 
 <template>
-  <div class="max-w-7xl">
+  <div class="w-full mb-20">
     <!-- Main Title -->
     <h1
       class="title no-title-effects text-center text-3xl md:text-4xl font-black tracking-tight mb-8 text-accent opacity-100"
@@ -102,21 +158,13 @@ const setTab = (tabId: string) => {
     </h1>
 
     <!-- Category Tabs -->
-    <div class="flex flex-wrap justify-center gap-4 mb-12">
-      <button
-        v-for="tab in blogStore.tabs"
-        :key="tab.id"
-        @click="setTab(tab.id)"
-        :class="[
-          'px-6 py-3 rounded-full font-medium transition-all duration-200',
-          activeTab === tab.id
-            ? 'bg-blog-title text-white shadow-lg'
-            : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
-        ]"
-      >
-        {{ tab.name }}
-      </button>
-    </div>
+    <FilterButtons
+      :items="blogStore.tabs.map(tab => ({ label: tab.name, value: tab.id }))"
+      :model-value="activeTab"
+      :colors="filterButtonColors"
+      container-class="mb-12"
+      @update:model-value="handleFilterChange"
+    />
 
     <!-- Blog Posts Grid with v-memo optimization -->
     <div class="blog-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

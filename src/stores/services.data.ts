@@ -4,8 +4,8 @@ interface Service {
   title: string
   description: string
   priceFrom: string
-  icon: string
-  iconBg: string
+  iconPath: string
+  iconUseFill?: boolean
   category: 'Growth' | 'Strategy' | 'Development'
   slug?: string
 }
@@ -17,8 +17,8 @@ export const growthServices: Service[] = [
     description:
       'Неотъемлемый элемент развития любой компании в цифровой среде, позволяющий привлекать клиентов/покупателей для любого продукта/услуги на рынке. Качественное продвижение в интернете — ключ к успешному бизнесу для любой отрасли в современных условиях.',
     priceFrom: 'от 8 000 ₽',
-    icon: '✅',
-    iconBg: 'from-green-50 to-emerald-100',
+    iconPath: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6',
+    iconUseFill: false,
     category: 'Growth',
     slug: 'promotion',
   },
@@ -28,8 +28,8 @@ export const growthServices: Service[] = [
     description:
       'Разработка пути развития бизнеса на рынке и повышение его конкурентоспособности. Определение целевой аудитории, анализ рынка, конкурентов и трендов, каналов продвижения и метрик эффективности.',
     priceFrom: 'от 10 000 ₽',
-    icon: '📣',
-    iconBg: 'from-blue-50 to-indigo-100',
+    iconPath: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+    iconUseFill: false,
     category: 'Growth',
     slug: 'marketing-strategy',
   },
@@ -39,8 +39,8 @@ export const growthServices: Service[] = [
     description:
       'Повышение эффективности маркетинговой деятельности. Услуга включает анализ результатов настроенных кампаний, оценку эффективности маркетинговых каналов и метрик, выявление сильных и слабых сторон, корректировку маркетинговой стратегии.',
     priceFrom: 'от 10 000 ₽',
-    icon: '📄',
-    iconBg: 'from-purple-50 to-violet-100',
+    iconPath: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+    iconUseFill: false,
     category: 'Growth',
     slug: 'marketing-audit',
   },
@@ -50,8 +50,8 @@ export const growthServices: Service[] = [
     description:
       'Определяем потребности и предпочтения клиентов, выявляем особенности рынка, анализируем конкурентов. Проводим маркетинговые исследования, анализируем статистические данные и другие источники.',
     priceFrom: 'от 15 000 ₽',
-    icon: '🔬',
-    iconBg: 'from-orange-50 to-amber-100',
+    iconPath: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z',
+    iconUseFill: false,
     category: 'Growth',
     slug: 'business-research',
   },
@@ -61,8 +61,8 @@ export const growthServices: Service[] = [
     description:
       'Важный инструмент, позволяющий получить полную информацию о конкурентах, ценах, спросе и трендах рынка. На основе этой информации можем разработать эффективную стратегию продвижения бизнеса и увеличить доходы.',
     priceFrom: 'от 15 000 ₽',
-    icon: '🔍',
-    iconBg: 'from-cyan-50 to-blue-100',
+    iconPath: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+    iconUseFill: false,
     category: 'Growth',
     slug: 'market-analysis',
   },
@@ -72,8 +72,8 @@ export const growthServices: Service[] = [
     description:
       'Анализ конкурентов позволяет получить исчерпывающую информацию о конкурентах, их стратегиях и сильных сторонах. Это незаменимый инструмент для разработки эффективной стратегии продвижения продукта и повышения конкурентоспособности компании.',
     priceFrom: 'от 10 000 ₽',
-    icon: '📊',
-    iconBg: 'from-indigo-50 to-purple-100',
+    iconPath: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01',
+    iconUseFill: false,
     category: 'Growth',
     slug: 'competitor-analysis',
   },
@@ -86,8 +86,8 @@ export const strategyServices: Service[] = [
     description:
       'Создание бизнес-плана — важный процесс, позволяющий определить стратегию развития бизнеса, его цели и задачи, разработать модель, а также измерить достижение этих целей.',
     priceFrom: 'от 20 000 ₽',
-    icon: '📋',
-    iconBg: 'from-red-50 to-rose-100',
+    iconPath: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+    iconUseFill: false,
     category: 'Strategy',
     slug: 'business-plan',
   },
@@ -96,8 +96,8 @@ export const strategyServices: Service[] = [
     title: 'Разработка предварительной маркетинговой стратегии',
     description: 'План продвижения продукта/услуги на рынке.',
     priceFrom: 'от 10 000 ₽',
-    icon: '💼',
-    iconBg: 'from-blue-50 to-indigo-100',
+    iconPath: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+    iconUseFill: false,
     category: 'Strategy',
     slug: 'preliminary-marketing-strategy',
   },
@@ -107,8 +107,8 @@ export const strategyServices: Service[] = [
     description:
       'Создание и поддержание имиджа бренда, разработка уникальной концепции и позиционирования, которые привлекут и удержат клиентов, а также увеличат прибыль компании.',
     priceFrom: 'от 25 000 ₽',
-    icon: '🏷️',
-    iconBg: 'from-purple-50 to-violet-100',
+    iconPath: 'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z',
+    iconUseFill: false,
     category: 'Strategy',
     slug: 'branding',
   },
@@ -121,8 +121,8 @@ export const developmentServices: Service[] = [
     description:
       'Предлагаем полный цикл разработки сайтов любой сложности. Наша команда профессионалов создаст уникальный дизайн и функциональность, подходящие для вашего бизнеса.',
     priceFrom: 'от 25 000 ₽',
-    icon: '⚙️',
-    iconBg: 'from-indigo-50 to-blue-100',
+    iconPath: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4',
+    iconUseFill: false,
     category: 'Development',
     slug: 'site-development',
   },
@@ -132,8 +132,8 @@ export const developmentServices: Service[] = [
     description:
       'Автоматизация и упрощение обработки заказов в компании. Интеграция значительно ускорит обработку заказов и повысит удобство покупки для клиентов.',
     priceFrom: 'от 10 000 ₽',
-    icon: '🔗',
-    iconBg: 'from-cyan-50 to-teal-100',
+    iconPath: 'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1',
+    iconUseFill: false,
     category: 'Development',
     slug: 'site-integration',
   },
@@ -143,8 +143,8 @@ export const developmentServices: Service[] = [
     description:
       'Услуги, направленные на улучшение общей работы компании. Создание эффективной системы управления и контроля бизнес-процессов, автоматизация работы с документами, оптимизация управления командой.',
     priceFrom: 'от 35 000 ₽',
-    icon: '📈',
-    iconBg: 'from-green-50 to-emerald-100',
+    iconPath: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z',
+    iconUseFill: false,
     category: 'Development',
     slug: 'business-automation',
   },
@@ -154,8 +154,8 @@ export const developmentServices: Service[] = [
     description:
       'Интеграция с CRM упрощает взаимодействие с клиентами и повышает эффективность продаж. Автоматизация процессов обработки заказов, контроль уровня сервиса, управление маркетинговыми кампаниями.',
     priceFrom: 'от 15 000 ₽',
-    icon: '🚀',
-    iconBg: 'from-orange-50 to-red-100',
+    iconPath: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
+    iconUseFill: false,
     category: 'Development',
     slug: 'crm-integration',
   },

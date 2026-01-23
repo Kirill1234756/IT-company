@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref, defineAsyncComponent, markRaw } from 'vue'
+import { loadGsap } from '../../composables/useGsap'
 
 // Типы для scheduler API
 interface SchedulerPostTaskOptions {
@@ -26,7 +27,7 @@ const scrollContainerRef = ref<HTMLElement | null>(null)
 
 // Memoized stats data - используем ref для полной реактивности
 const stats = ref([
-  { title: 'Многолетний опыт веб-разработки', count: 0, target: 7 },
+  { title: 'Опыт веб-разработки', count: 0, target: 7 },
   { title: 'Лучшие специалисты', count: 0, target: 23 },
   { title: 'Успешные проекты', count: 0, target: 160 },
 ])
@@ -113,10 +114,13 @@ const animateCounters = async () => {
   isCounterAnimationStarted.value = true
 
   try {
-    const { gsap } = await import('gsap')
+    const { gsap } = await loadGsap()
 
-    // Анимируем каждый счетчик
-    stats.value.forEach((stat, index) => {
+    // Анимируем каждый счетчик (разбиваем на мелкие задачи для производительности)
+    for (let index = 0; index < stats.value.length; index++) {
+      const stat = stats.value[index]
+      if (!stat) continue // Пропускаем, если stat undefined
+
       // Создаем прокси-объект для анимации
       const proxy = { count: 0 }
 
@@ -145,7 +149,14 @@ const animateCounters = async () => {
           },
         }
       )
-    })
+
+      // Yield каждые 2 счетчика для разбиения длинной задачи
+      if (index % 2 === 1 && window.scheduler?.postTask) {
+        await window.scheduler.postTask(() => {}, { priority: 'background' })
+      } else if (index % 2 === 1) {
+        await new Promise((r) => setTimeout(r, 0))
+      }
+    }
   } catch {
     // Fallback: устанавливаем финальные значения без анимации
     stats.value.forEach((stat) => {
@@ -178,9 +189,9 @@ onMounted(async () => {
   // Defer GSAP loading - минимальная задержка для первой секции
   const initGSAP = async () => {
     try {
-      // Этап 1: Минимальная задержка для первой секции (она должна анимироваться быстро)
+      // Этап 1: Задержка для оптимизации производительности
       const isMobile = window.innerWidth < 768
-      const delay = isMobile ? 300 : 200 // Значительно уменьшена задержка
+      const delay = isMobile ? 200 : 100 // Минимальная задержка для разбиения задач
 
       if (window.scheduler?.postTask) {
         await window.scheduler.postTask(() => {}, { priority: 'user-visible', delay })
@@ -194,10 +205,8 @@ onMounted(async () => {
         await new Promise((r) => setTimeout(r, delay))
       }
 
-      // Этап 2: Загрузить GSAP
-      const { gsap } = await import('gsap')
-      const { ScrollTrigger } = await import('gsap/ScrollTrigger')
-      gsap.registerPlugin(ScrollTrigger)
+      // Этап 2: Загрузить GSAP через единый loader (loadGsap сам ждет LCP)
+      const { gsap } = await loadGsap(0, true)
 
       // Yield для разбиения длинной задачи
       await new Promise((r) => setTimeout(r, 0))
@@ -228,16 +237,19 @@ onMounted(async () => {
         })
         // Ищем wrapper div для CTA кнопки
         const ctaWrapper = mainSection.querySelector('.main-section-cta') as HTMLElement
+        // Ищем кнопку внутри wrapper (CtaButton рендерится как button)
         const ctaButton =
-          ctaWrapper || (mainSection.querySelector('a[href*="calculator"], button') as HTMLElement)
+          (ctaWrapper?.querySelector('button') as HTMLElement) ||
+          (mainSection.querySelector('.main-section-cta button') as HTMLElement) ||
+          null
 
-        return { h1, descriptionBox, statCards, ctaButton }
+        return { h1, descriptionBox, statCards, ctaButton, ctaWrapper }
       }
 
       // Ждем появления элементов (для async компонентов)
       let initAttempts = 0
       const maxAttempts = 15
-      let { h1, descriptionBox, statCards, ctaButton } = findElements()
+      let { h1, descriptionBox, statCards, ctaButton, ctaWrapper } = findElements()
 
       // Ждем появления элементов, особенно важны h1 и statCards
       while ((!h1 || statCards.length === 0) && initAttempts < maxAttempts) {
@@ -247,7 +259,13 @@ onMounted(async () => {
         descriptionBox = found.descriptionBox
         statCards = found.statCards
         ctaButton = found.ctaButton
+        ctaWrapper = found.ctaWrapper
         initAttempts++
+      }
+
+      // Если wrapper не найден, ищем его еще раз
+      if (!ctaWrapper && mainSection) {
+        ctaWrapper = mainSection.querySelector('.main-section-cta') as HTMLElement
       }
 
       if (!h1 || statCards.length === 0) {
@@ -255,27 +273,50 @@ onMounted(async () => {
         stats.value.forEach((stat) => {
           stat.count = stat.target
         })
+        // Показываем кнопку и контейнер даже если GSAP не загрузился
+        if (ctaWrapper) {
+          ctaWrapper.style.opacity = '1'
+          ctaWrapper.style.transform = 'none'
+        }
+        if (ctaButton && ctaButton !== ctaWrapper) {
+          ctaButton.style.opacity = '1'
+          ctaButton.style.transform = 'none'
+        }
         return
       }
 
       // Этап 4: Создание timeline и анимаций
       // Запускаем анимации сразу, без ScrollTrigger, чтобы не конфликтовать с stack scroll
+      // Yield перед созданием timeline для разбиения задачи
+      if (window.scheduler?.postTask) {
+        await window.scheduler.postTask(() => {}, { priority: 'background' })
+      } else {
+        await new Promise((r) => setTimeout(r, 0))
+      }
+
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
 
       // Анимация заголовка - плавное появление сверху
+      // НЕ скрываем h1, так как он является LCP элементом и должен быть виден сразу
+      // Анимируем только transform для плавного появления без влияния на LCP
       if (h1) {
-        gsap.set(h1, { opacity: 0, y: 40, scale: 0.95 })
+        // h1 уже виден (opacity: 1), анимируем только transform
+        h1.style.willChange = 'transform'
+        gsap.set(h1, { y: 20, scale: 0.98 })
         tl.to(h1, {
-          opacity: 1,
           y: 0,
           scale: 1,
-          duration: 1,
+          duration: 0.8,
           ease: 'power3.out',
+          onComplete: () => {
+            if (h1) h1.style.willChange = 'auto'
+          },
         })
       }
 
       // Анимация описания - плавное появление с небольшой задержкой
       if (descriptionBox) {
+        descriptionBox.style.willChange = 'opacity, transform'
         gsap.set(descriptionBox, { opacity: 0, y: 25, scale: 0.98 })
         tl.to(
           descriptionBox,
@@ -285,16 +326,37 @@ onMounted(async () => {
             scale: 1,
             duration: 0.8,
             ease: 'power2.out',
+            onComplete: () => {
+              if (descriptionBox) descriptionBox.style.willChange = 'auto'
+            },
           },
           '-=0.5'
         )
       }
 
       // Анимация карточек статистики - каскадное появление с эффектом масштаба
+      // Разбиваем на мелкие задачи для производительности
       if (statCards.length > 0) {
+        // Yield перед настройкой карточек
+        if (window.scheduler?.postTask) {
+          await window.scheduler.postTask(() => {}, { priority: 'background' })
+        } else {
+          await new Promise((r) => setTimeout(r, 0))
+        }
+
+        // Устанавливаем will-change только для анимации
         statCards.forEach((card) => {
+          card.style.willChange = 'opacity, transform'
           gsap.set(card, { opacity: 0, y: 40, scale: 0.85, rotationX: 10 })
         })
+
+        // Yield перед анимацией
+        if (window.scheduler?.postTask) {
+          await window.scheduler.postTask(() => {}, { priority: 'background' })
+        } else {
+          await new Promise((r) => setTimeout(r, 0))
+        }
+
         tl.to(
           statCards,
           {
@@ -309,13 +371,44 @@ onMounted(async () => {
               ease: 'power2.out',
             },
             ease: 'back.out(1.2)',
+            onComplete: () => {
+              // Убираем will-change после анимации
+              statCards.forEach((card) => {
+                card.style.willChange = 'auto'
+              })
+            },
           },
           '-=0.4'
         )
       }
 
       // Анимация кнопки - плавное появление с эффектом bounce
-      if (ctaButton) {
+      // Анимируем контейнер кнопки (важно анимировать контейнер)
+      if (ctaWrapper) {
+        ctaWrapper.style.willChange = 'opacity, transform'
+        // Устанавливаем начальное состояние через GSAP (перезаписывает inline стили)
+        gsap.set(ctaWrapper, { opacity: 0, y: 25 })
+        tl.to(
+          ctaWrapper,
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.6,
+            ease: 'back.out(1.4)',
+            onComplete: () => {
+              if (ctaWrapper) {
+                ctaWrapper.style.willChange = 'auto'
+                // Убеждаемся, что opacity установлена через inline стиль с important
+                ctaWrapper.style.setProperty('opacity', '1', 'important')
+                ctaWrapper.style.visibility = 'visible'
+              }
+            },
+          },
+          '-=0.3'
+        )
+      } else if (ctaButton) {
+        // Если wrapper не найден, анимируем кнопку напрямую
+        ctaButton.style.willChange = 'opacity, transform'
         gsap.set(ctaButton, { opacity: 0, y: 25, scale: 0.9 })
         tl.to(
           ctaButton,
@@ -325,6 +418,13 @@ onMounted(async () => {
             scale: 1,
             duration: 0.6,
             ease: 'back.out(1.4)',
+            onComplete: () => {
+              if (ctaButton) {
+                ctaButton.style.willChange = 'auto'
+                ctaButton.style.setProperty('opacity', '1', 'important')
+                ctaButton.style.visibility = 'visible'
+              }
+            },
           },
           '-=0.3'
         )
@@ -337,7 +437,7 @@ onMounted(async () => {
         () => {
           animateCounters()
         },
-        null,
+        undefined,
         '+=0.5'
       )
     } catch {
@@ -345,32 +445,60 @@ onMounted(async () => {
       stats.value.forEach((stat) => {
         stat.count = stat.target
       })
+      // Показываем все элементы без анимации
+      const mainSection = rootEl.value
+      if (mainSection) {
+        const h1 = mainSection.querySelector('h1')
+        const descriptionBox = mainSection.querySelector('.main-section-description')
+        const statCards = Array.from(mainSection.querySelectorAll('.main-section-stat-card'))
+        const ctaWrapper = mainSection.querySelector('.main-section-cta') as HTMLElement
+        const ctaButton = mainSection.querySelector('.main-section-cta button') as HTMLElement
+
+        if (h1) h1.style.opacity = '1'
+        if (descriptionBox) (descriptionBox as HTMLElement).style.opacity = '1'
+        statCards.forEach((card) => {
+          ;(card as HTMLElement).style.opacity = '1'
+        })
+        // Показываем контейнер кнопки только если GSAP не загрузился (fallback)
+        // В нормальном случае кнопка показывается через GSAP анимацию
+        if (ctaWrapper) {
+          // Используем setTimeout для небольшой задержки, чтобы дать GSAP шанс загрузиться
+          setTimeout(() => {
+            if (ctaWrapper && (ctaWrapper.style.opacity === '0' || !ctaWrapper.style.opacity)) {
+              ctaWrapper.style.opacity = '1'
+              ctaWrapper.style.transform = 'none'
+              ctaWrapper.style.visibility = 'visible'
+            }
+          }, 2000)
+        }
+      }
     }
   }
 
-  // Запускаем инициализацию GSAP с меньшей задержкой для первой секции
-  // Первая секция должна анимироваться быстро, чтобы пользователь сразу видел эффект
-  const isMobile = window.innerWidth < 768
-  const delay = isMobile ? 800 : 500 // Уменьшена задержка для быстрого старта
+  // Запускаем инициализацию GSAP после LCP для оптимизации TBT
+  // Увеличиваем задержку на мобильных для лучшей производительности
+  const isMobile = typeof window !== 'undefined' && (window as Window).innerWidth < 768
+  const gsapDelay = isMobile ? 3000 : 2000 // Большая задержка на мобильных
 
   if (window.scheduler?.postTask) {
     window.scheduler.postTask(
       () => {
         initGSAP()
       },
-      { priority: 'user-visible', delay } // Изменен приоритет на user-visible
+      { priority: 'background', delay: gsapDelay } // background приоритет с задержкой
     )
   } else if ('requestIdleCallback' in window) {
     requestIdleCallback(
       () => {
         initGSAP()
       },
-      { timeout: delay }
+      { timeout: gsapDelay }
     )
   } else {
+    // Fallback: задержка для старых браузеров
     setTimeout(() => {
       initGSAP()
-    }, delay)
+    }, gsapDelay)
   }
 
   // Настраиваем обработчик wheel для внутреннего скролла
@@ -381,7 +509,8 @@ onMounted(async () => {
     }
 
     const scrollContainer = scrollContainerRef.value
-    if ((scrollContainer as any).__scrollHandler) return
+    if (!scrollContainer) return
+    if ((scrollContainer as unknown as Record<string, unknown>).__scrollHandler) return
 
     const handleWheel = (e: WheelEvent) => {
       const { scrollTop, scrollHeight, clientHeight } = scrollContainer
@@ -389,21 +518,37 @@ onMounted(async () => {
       const isAtTop = scrollTop <= threshold
       const isAtBottom = scrollTop + clientHeight >= scrollHeight - threshold
 
+      // Проверяем, есть ли что скроллить
+      const hasScrollableContent = scrollHeight > clientHeight
+
+      if (!hasScrollableContent) {
+        // Если контент не переполняет контейнер, пропускаем событие дальше
+        return
+      }
+
       if (e.deltaY > 0) {
         // Скроллим вниз
         if (!isAtBottom) {
+          // Есть место для скролла вниз - скроллим контейнер и останавливаем propagation
+          e.preventDefault()
           e.stopPropagation()
+          scrollContainer.scrollTop += e.deltaY
         }
+        // Если достигли дна, пропускаем событие дальше для stack scroll
       } else if (e.deltaY < 0) {
         // Скроллим вверх
         if (!isAtTop) {
+          // Есть место для скролла вверх - скроллим контейнер и останавливаем propagation
+          e.preventDefault()
           e.stopPropagation()
+          scrollContainer.scrollTop += e.deltaY
         }
+        // Если достигли верха, пропускаем событие дальше для stack scroll
       }
     }
 
     scrollContainer.addEventListener('wheel', handleWheel, { passive: false, capture: true })
-    ;(scrollContainer as any).__scrollHandler = handleWheel
+    ;(scrollContainer as unknown as Record<string, unknown>).__scrollHandler = handleWheel
   }
 
   // Ждем загрузки контейнера
@@ -421,6 +566,14 @@ onBeforeUnmount(() => {
 <style scoped>
 /* Убрано will-change и transform: translateZ(0) - GSAP управляет анимациями напрямую */
 
+/* Скрываем элементы с bg-error до инициализации анимаций */
+.main-section [class*='bg-error'] {
+  opacity: 0;
+  visibility: visible; /* Оставляем visible для анимации, но opacity: 0 */
+  /* Резервируем место для предотвращения CLS */
+  contain: layout style paint;
+}
+
 /* Плавные переходы для интерактивных элементов */
 .main-section [class*='bg-error']:hover {
   transition: transform 0.3s ease, opacity 0.3s ease;
@@ -430,6 +583,45 @@ onBeforeUnmount(() => {
 .main-section [class*='bg-error'] p[class*='text-2xl'],
 .main-section [class*='bg-error'] p[class*='text-3xl'] {
   font-variant-numeric: tabular-nums; /* Предотвращает скачки при изменении чисел */
+  /* Резервируем место для максимального числа (999+) */
+  min-width: 4ch;
+  text-align: center;
+}
+
+/* Предотвращаем CLS при анимации счетчиков */
+.main-section-stat-card {
+  /* Резервируем место для контента */
+  min-height: 100px;
+  height: 100px;
+  contain: layout style paint;
+  /* Фиксируем размеры для предотвращения CLS */
+  position: relative;
+  overflow: hidden;
+  /* Используем will-change только во время анимации */
+  will-change: auto;
+}
+
+/* Фиксируем размеры текста в карточках */
+.main-section-stat-card p {
+  width: 100%;
+  text-align: center;
+  contain: layout style;
+}
+
+/* Обеспечиваем видимость кнопки калькулятора на всех устройствах после анимации */
+.main-section-cta {
+  /* Начальное состояние - скрыто, будет показано через GSAP анимацию */
+  opacity: 0;
+  visibility: visible;
+  display: flex;
+  position: relative;
+  z-index: 10;
+}
+
+.main-section-cta button {
+  opacity: 1;
+  visibility: visible;
+  display: block;
 }
 </style>
 
@@ -437,13 +629,13 @@ onBeforeUnmount(() => {
   <!-- Main Hero Section -->
   <section
     ref="rootEl"
-    class="stack-section main-section no-scrollbar h-screen flex items-start justify-center py-5 md:py-[5rem] bg-bg text-white relative px-4 md:px-[1rem] gap-6 md:gap-15"
-    style="min-height: 400px; width: 100%; box-sizing: border-box; contain: layout style paint"
+    class="stack-section main-section no-scrollbar h-screen flex items-start justify-center py-5 md:py-[5rem] bg-bg text-white relative px-4 md:px-[1rem] gap-6 md:gap-10"
+    style="width: 100%; box-sizing: border-box; contain: layout style paint"
   >
     <div
       class="internal-scroll-container w-full h-full overflow-y-auto overflow-x-hidden flex flex-col"
       ref="scrollContainerRef"
-      style="padding-bottom: 0; margin-bottom: 0"
+      style="padding-bottom: 2rem; margin-bottom: 0; align-content: flex-start; min-height: 100%"
     >
       <div
         class="flex flex-col w-full md:w-7/8 gap-6 md:gap-10"
@@ -453,6 +645,7 @@ onBeforeUnmount(() => {
           box-sizing: border-box;
           padding-bottom: 0;
           margin-bottom: 0;
+          flex-grow: 0;
         "
       >
         <div
@@ -471,7 +664,7 @@ onBeforeUnmount(() => {
               font-family: 'IBM Plex Sans Condensed', sans-serif;
               box-sizing: border-box;
               contain: layout style paint;
-              opacity: 0;
+              opacity: 1;
             "
           >
             Продажа сайтов и цифровых решений для развития бизнеса
@@ -490,6 +683,7 @@ onBeforeUnmount(() => {
                 box-sizing: border-box;
                 contain: layout style paint;
                 min-height: 80px;
+                height: auto;
                 opacity: 0;
               "
             >
@@ -498,20 +692,31 @@ onBeforeUnmount(() => {
                 маркетинговой стратегии в короткие сроки по разумной цене.
               </p>
             </div>
+            <!-- На мобильных: первые 2 карточки рядом, третья внизу по центру -->
+            <!-- На десктопе: все 3 карточки в ряд -->
             <div
-              class="flex flex-wrap md:flex-nowrap justify-center md:justify-end gap-4 md:gap-10 w-full"
-              style="box-sizing: border-box; min-height: 120px"
+              class="flex flex-row md:flex-row justify-center md:justify-end gap-2 md:gap-6 w-full"
+              style="
+                box-sizing: border-box;
+
+                width: 100%;
+                contain: layout style paint;
+              "
             >
+              <!-- Первые 2 карточки - всегда в ряд -->
               <div
-                v-for="stat in stats"
+                v-for="stat in stats.slice(0, 2)"
                 :key="stat.title"
                 class="flex flex-col items-center justify-center p-3 md:p-4 bg-error rounded-[2rem] md:rounded-[3rem] w-[calc(50%-0.5rem)] md:w-full max-w-[200px] main-section-stat-card"
                 style="
                   box-sizing: border-box;
                   contain: layout style paint;
                   min-height: 100px;
-                  width: 100%;
+                  height: 100px;
+                  width: calc(50% - 0.5rem);
+                  max-width: 200px;
                   opacity: 0;
+                  flex-shrink: 0;
                 "
               >
                 <p
@@ -523,9 +728,109 @@ onBeforeUnmount(() => {
 
                 <p
                   class="text-2xl md:text-3xl font-black text-white"
-                  style="box-sizing: border-box; margin: 0; min-height: 40px; line-height: 1.2"
+                  style="
+                    box-sizing: border-box;
+                    margin: 0;
+                    min-height: 40px;
+                    line-height: 1.2;
+                    width: 100%;
+                    text-align: center;
+                    font-variant-numeric: tabular-nums;
+                  "
                 >
-                  {{ stat.count.toString().padStart(3, '0') }}+
+                  <span style="display: inline-block; min-width: 3ch; text-align: center">{{
+                    stat.count.toString().padStart(3, '0')
+                  }}</span
+                  >+
+                </p>
+              </div>
+
+              <!-- Третья карточка - только на десктопе в ряд -->
+              <div
+                v-for="stat in stats.slice(2)"
+                :key="stat.title"
+                class="hidden md:flex flex-col items-center justify-center p-3 md:p-4 bg-error rounded-[2rem] md:rounded-[3rem] md:w-full max-w-[200px] main-section-stat-card"
+                style="
+                  box-sizing: border-box;
+                  contain: layout style paint;
+                  min-height: 100px;
+                  height: 100px;
+                  width: 100%;
+                  max-width: 200px;
+                  opacity: 0;
+                  flex-shrink: 0;
+                "
+              >
+                <p
+                  class="text-xs md:text-sm text-gray-300 text-center"
+                  style="box-sizing: border-box; margin: 0; min-height: 20px"
+                >
+                  {{ stat.title }}
+                </p>
+
+                <p
+                  class="text-2xl md:text-3xl font-black text-white"
+                  style="
+                    box-sizing: border-box;
+                    margin: 0;
+                    min-height: 40px;
+                    line-height: 1.2;
+                    width: 100%;
+                    text-align: center;
+                    font-variant-numeric: tabular-nums;
+                  "
+                >
+                  <span style="display: inline-block; min-width: 3ch; text-align: center">{{
+                    stat.count.toString().padStart(3, '0')
+                  }}</span
+                  >+
+                </p>
+              </div>
+            </div>
+
+            <!-- Третья карточка - только на мобильных внизу по центру -->
+            <div
+              class="flex md:hidden justify-center w-full"
+              style="box-sizing: border-box; min-height: 120px; margin-top: 0.5rem"
+            >
+              <div
+                v-for="stat in stats.slice(2)"
+                :key="stat.title"
+                class="flex flex-col items-center justify-center p-3 md:p-4 bg-error rounded-[2rem] md:rounded-[3rem] w-[calc(50%-0.5rem)] md:w-full max-w-[200px] main-section-stat-card"
+                style="
+                  box-sizing: border-box;
+                  contain: layout style paint;
+                  min-height: 100px;
+                  height: 100px;
+                  width: calc(50% - 0.5rem);
+                  max-width: 200px;
+                  opacity: 0;
+                  flex-shrink: 0;
+                "
+              >
+                <p
+                  class="text-xs md:text-sm text-gray-300 text-center"
+                  style="box-sizing: border-box; margin: 0; min-height: 20px"
+                >
+                  {{ stat.title }}
+                </p>
+
+                <p
+                  class="text-2xl md:text-3xl font-black text-white"
+                  style="
+                    box-sizing: border-box;
+                    margin: 0;
+                    min-height: 40px;
+                    line-height: 1.2;
+                    width: 100%;
+                    text-align: center;
+                    font-variant-numeric: tabular-nums;
+                  "
+                >
+                  <span style="display: inline-block; min-width: 3ch; text-align: center">{{
+                    stat.count.toString().padStart(3, '0')
+                  }}</span
+                  >+
                 </p>
               </div>
             </div>
@@ -536,9 +841,17 @@ onBeforeUnmount(() => {
           style="
             box-sizing: border-box;
             contain: layout style paint;
-            opacity: 0;
-            padding-bottom: 0;
+            min-height: 75px;
+            height: auto;
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+            margin-top: 1rem;
             margin-bottom: 0;
+            flex-shrink: 0;
+            visibility: visible;
+            opacity: 0;
+            position: relative;
+            z-index: 10;
           "
         >
           <CtaButton to="/calculator" bgClass="bg-accent" textClass="text-bg"
@@ -547,41 +860,5 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </div>
-    <!-- <div class="flex w-3/8 py-[5rem] h-screen overflow-hidden relative">
-      <div class="vertical-animation-container absolute inset-0 w-full">
-        <div class="first-column-container">
-          <div
-            v-for="(content, index) in 2"
-            :key="`first-content-${index}`"
-            class="vertical-content"
-          >
-            <div
-              v-for="item in firstColumnData"
-              :key="`first-${index}-${item.title}`"
-              class="animation-item rounded-[3rem] p-3 mb-8 mx-2 border border-accent/50"
-            >
-              <h3 class="text-purple text-sm font-bold mb-2 text-center">{{ item.title }}</h3>
-              <p class="text-[0.7rem] text-center text-success">{{ item.subtitle }}</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="second-column-container">
-          <div
-            v-for="(content, index) in 2"
-            :key="`second-content-${index}`"
-            class="vertical-content"
-          >
-            <div
-              v-for="item in secondColumnData"
-              :key="`second-${index}-${item.title}`"
-              class="animation-item rounded-[3rem] p-3 mb-8 mx-2 border border-accent/50"
-            >
-              <h3 class="text-purple text-sm font-bold mb-2 text-center">{{ item.title }}</h3>
-              <p class="text-[0.7rem] text-center text-success">{{ item.subtitle }}</p>
-            </div>
-          </div>
-        </div>
-      </div> -->
   </section>
 </template>

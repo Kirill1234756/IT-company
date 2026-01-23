@@ -5,6 +5,7 @@ export interface ClientFormData {
   solutionVision: string
   expectations: string
   budget: string
+  budgetComment?: string
 
   // Contact information
   name: string
@@ -19,7 +20,7 @@ export interface ClientFormData {
   // Anti-bot (client only)
   honeypot: string;
   formStartedAt: number;
-  [key: string]: string | number | File | boolean | null;
+  [key: string]: string | number | File | boolean | null | undefined;
 }
 
 export interface ClientFormErrors {
@@ -28,6 +29,7 @@ export interface ClientFormErrors {
   solutionVision?: string
   expectations?: string
   budget?: string
+  budgetComment?: string
   name?: string
   company?: string
   phone?: string

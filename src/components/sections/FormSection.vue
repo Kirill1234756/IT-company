@@ -1,7 +1,7 @@
 <template>
   <div :class="sectionClasses">
     <div class="flex justify-between items-start mb-6">
-      <h2 class="text-xl font-bold text-accent font-display">{{ title }}</h2>
+      <h2 :class="['text-xl font-bold font-display', titleColor]">{{ title }}</h2>
       <p :class="textColor" class="text-sm max-w-xs ml-8">{{ helperText }}</p>
     </div>
     <textarea
@@ -112,6 +112,7 @@ const sectionClasses = computed(() => [
   props.variant === 'blue' ? 'bg-text border border-bg' : 'bg-bg',
 ])
 const textColor = computed(() => [props.variant === 'blue' ? 'text-bg' : 'text-text'])
+const titleColor = computed(() => props.variant === 'white' ? 'text-accent' : 'text-bg')
 </script>
 <script lang="ts">
 export default {}

@@ -21,7 +21,7 @@ const updatePreRenderedLoader = () => {
   const progressFill = document.getElementById('loader-progress-fill')
   const progressText = document.getElementById('loader-progress-text')
   const loaderText = document.getElementById('loader-text')
-  
+
   if (progressFill && progressText && loaderText) {
     progressFill.style.width = progress.value + '%'
     progressText.textContent = Math.round(progress.value) + '%'
@@ -42,14 +42,18 @@ const hidePreRenderedLoader = () => {
 }
 
 // Watch progress and update pre-rendered loader
-watch([progress, isLoading, isRouteChange], () => {
-  if (isInitialLoad.value && !isRouteChange.value) {
-    updatePreRenderedLoader()
-    if (!isLoading.value) {
-      hidePreRenderedLoader()
+watch(
+  [progress, isLoading, isRouteChange],
+  () => {
+    if (isInitialLoad.value && !isRouteChange.value) {
+      updatePreRenderedLoader()
+      if (!isLoading.value) {
+        hidePreRenderedLoader()
+      }
     }
-  }
-}, { immediate: true })
+  },
+  { immediate: true }
+)
 
 // Lazy load triggers and flags
 const contactSectionTrigger = ref<HTMLElement | null>(null)
@@ -108,10 +112,10 @@ useIntersectionObserver(
 onMounted(async () => {
   // Notify that Vue is mounted (stops pre-rendered loader's own progress simulation)
   window.dispatchEvent(new Event('vue-mounted'))
-  
+
   // Initial update of pre-rendered loader
   updatePreRenderedLoader()
-  
+
   initLoader()
   initRouterLoader()
 
@@ -144,13 +148,17 @@ onMounted(async () => {
   })
 
   addLoadingPromise(waitForMainSection)
-  
+
   // Mark initial load as complete after first load
-  watch(isLoading, (newVal) => {
-    if (!newVal && isInitialLoad.value) {
-      isInitialLoad.value = false
-    }
-  }, { once: true })
+  watch(
+    isLoading,
+    (newVal) => {
+      if (!newVal && isInitialLoad.value) {
+        isInitialLoad.value = false
+      }
+    },
+    { once: true }
+  )
 })
 
 onBeforeUnmount(() => {
@@ -162,7 +170,11 @@ onBeforeUnmount(() => {
 <template>
   <main id="app">
     <!-- Show Vue loader only for route changes, not initial load (pre-rendered loader handles that) -->
-    <LoaderC v-if="isLoading && !isInitialLoad" :progress="progress" :is-route-change="isRouteChange" />
+    <LoaderC
+      v-if="isLoading && !isInitialLoad"
+      :progress="progress"
+      :is-route-change="isRouteChange"
+    />
     <header
       ref="headerRef"
       class="fixed top-[0.7rem] left-0 w-full flex justify-center items-center z-10 px-3 md:px-12 lg:px-[8rem]"
@@ -195,7 +207,7 @@ onBeforeUnmount(() => {
       href="https://t.me/ITcompany_tg"
       target="_blank"
       rel="noopener noreferrer"
-      class="fixed bottom-6 right-6 md:bottom-8 md:right-8 w-9 h-9 md:w-12 md:h-12 bg-gradient-to-br from-[#0088cc] to-[#00a8ff] rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 hover:scale-105 active:scale-95 transition-all duration-300 z-[1000] animate-pulse"
+      class="fixed bottom-6 right-6 md:bottom-8 md:right-8 w-12 h-12 md:w-12 md:h-12 bg-gradient-to-br from- [#0088cc] to-[#00a8ff] rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 hover:scale-105 active:scale-95 transition-all duration-300 z-[1000] animate-pulse"
       aria-label="Написать в Telegram"
     >
       <svg

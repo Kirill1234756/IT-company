@@ -26,7 +26,7 @@
         :alt="title"
         :width="400"
         :height="300"
-        :widths="[400, 800, 1200]"
+        :widths="[300, 600, 900, 1200]"
         format="webp"
         loading="lazy"
         decoding="async"

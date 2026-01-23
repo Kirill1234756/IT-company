@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, watchEffect } from 'vue'
+import { computed, watchEffect } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import type { ClientFormData } from '../types/client-form'
 import { useClientForm } from '../composables/useClientForm'
 import FormSection from '../components/sections/FormSection.vue'
+import BudgetRangeSection from '../components/sections/BudgetRangeSection.vue'
 import { useHead } from '@unhead/vue'
 import { useBreadcrumbSchema } from '../composables/useBreadcrumbSchema'
 
@@ -30,9 +31,6 @@ watchEffect(() => {
 
 // Use the composable for form logic
 const { formData, errors, isSubmitting, submitForm: submitFormComposable } = useClientForm()
-
-// File input ref for contact section
-const fileInput = ref<HTMLInputElement>()
 
 // Contact fields configuration
 const contactFields: Array<{ key: keyof ClientFormData; placeholder: string }> = [
@@ -62,11 +60,6 @@ const handleContactInput = (key: keyof ClientFormData, event: Event) => {
     }
   }
   formData[key] = value
-}
-
-// Handle file upload click
-const handleFileClick = () => {
-  fileInput.value?.click()
 }
 
 // Submit form with navigation
@@ -134,23 +127,44 @@ const updateFormField = (field: keyof ClientFormData, value: string) => {
         <!-- Honeypot anti-bot field (hidden) -->
         <input
           type="text"
+          name="website"
           autocomplete="off"
+          tabindex="-1"
           aria-hidden="true"
-          style="position: absolute; left: -9999px; opacity: 0"
+          style="
+            position: absolute;
+            left: -9999px;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+          "
           v-model="formData.honeypot"
         />
-        <input type="hidden" :value="formData.formStartedAt" />
+        <input type="hidden" name="formStartedAt" :value="formData.formStartedAt" />
         <!-- Dynamic Form Sections -->
-        <FormSection
-          v-for="section in formSections"
-          :key="section.field"
-          :title="section.title"
-          :helper-text="section.helperText"
-          :variant="section.variant"
-          :model-value="String(formData[section.field] || '')"
-          :error="errors[section.field]"
-          @update:model-value="(value) => updateFormField(section.field, value)"
-        />
+        <template v-for="section in formSections" :key="section.field">
+          <BudgetRangeSection
+            v-if="section.field === 'budget'"
+            :title="section.title"
+            :helper-text="section.helperText"
+            :variant="section.variant"
+            :model-value="String(formData.budget || '')"
+            :comment-value="String(formData.budgetComment || '')"
+            :comment-error="errors.budgetComment"
+            @update:model-value="(value) => updateFormField('budget', value)"
+            @update:comment-value="(value) => updateFormField('budgetComment', value)"
+          />
+          <FormSection
+            v-else
+            :title="section.title"
+            :helper-text="section.helperText"
+            :variant="section.variant"
+            :model-value="String(formData[section.field] || '')"
+            :error="errors[section.field]"
+            @update:model-value="(value) => updateFormField(section.field, value)"
+          />
+        </template>
 
         <!-- Contact Information Section -->
         <div class="bg-text border border-bg rounded-[3rem] p-6 shadow-sm mt-8">
@@ -162,57 +176,21 @@ const updateFormField = (field: keyof ClientFormData, value: string) => {
             <div v-for="field in contactFields" :key="field.key">
               <input
                 :id="`client-form-${field.key}`"
-                :name="field.key"
+                :name="String(field.key)"
                 :value="formData[field.key]"
                 @input="handleContactInput(field.key, $event)"
                 :placeholder="field.placeholder"
-                class="w-full px-4 placeholder:text-bg py-3 client-form-input rounded-[3rem] text-sm focus:outline-none"
+                class="w-full px-4 !text-black placeholder:text-bg py-3 client-form-input rounded-[3rem] text-sm focus:outline-none"
               />
               <p v-if="errors[field.key]" class="client-form-error text-sm mt-2">
                 {{ errors[field.key] }}
               </p>
             </div>
           </div>
-
-          <!-- File Upload -->
-          <div class="mb-6">
-            <button
-              type="button"
-              @click="handleFileClick"
-              class="inline-flex items-center px-6 py-3 !bg-accent rounded-[3rem] focus:outline-none"
-            >
-              <span class="text-lg mr-2">+</span>
-              Attach file
-            </button>
-            <p class="client-form-helper mt-2">Максимум 20 МБ</p>
-            <p v-if="errors.file" class="client-form-error text-sm mt-2">
-              {{ errors.file }}
-            </p>
-          </div>
         </div>
 
-        <!-- Privacy Policy and Submit -->
+        <!-- Submit Button -->
         <div class="text-center">
-          <div class="mb-8">
-            <label class="flex items-center justify-center gap-3 text-sm client-form-text">
-              <input
-                id="client-form-privacy"
-                name="privacyAccepted"
-                type="checkbox"
-                v-model="formData.privacyAccepted"
-                class="w-4 h-4 client-form-checkbox border-border rounded focus:ring-accent"
-              />
-              <span>
-                Нажимая кнопку «Отправить», вы принимаете
-                <a href="#" class="client-form-link hover:underline">Политику конфиденциальности</a
-                >.
-              </span>
-            </label>
-            <p v-if="errors.privacy" class="client-form-error text-sm mt-2">
-              {{ errors.privacy }}
-            </p>
-          </div>
-
           <button
             type="submit"
             class="!bg-accent hover:bg-purple px-8 py-3 rounded-[3rem] text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"

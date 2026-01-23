@@ -1,22 +1,34 @@
 <script setup lang="ts">
-import { defineProps, defineEmits } from 'vue'
+import { defineProps, defineEmits, onMounted, ref } from 'vue'
 import { useServicesStore } from '../stores/services'
 import type { ServiceCategory } from '../types/services'
+import IconContainer from './IconContainer.vue'
 
 export interface ServiceCardProps {
   id: number
   title: string
   description: string
   priceFrom: string
-  icon: string
-  iconBg?: string
+  iconPath: string
+  iconUseFill?: boolean
   isClickable?: boolean
   wrapperClass?: string
   slug?: string
+  index?: number
 }
 
+const isVisible = ref(false)
+
+onMounted(() => {
+  // Задержка для stagger эффекта
+  const delay = (props.index ?? 0) * 100
+  setTimeout(() => {
+    isVisible.value = true
+  }, delay)
+})
+
 const props = withDefaults(defineProps<ServiceCardProps>(), {
-  iconBg: 'from-blue-50 to-indigo-100',
+  iconUseFill: true,
   isClickable: true,
   wrapperClass: '',
 })
@@ -45,25 +57,28 @@ const handleClick = () => {
 <template>
   <div
     :class="[
-      'service-card group rounded-[3rem] services-card shadow-sm p-4 flex gap-4 transition-all duration-300',
+      'service-card group rounded-[3rem] services-card shadow-sm p-6 flex flex-col gap-4 transition-all duration-300',
       isClickable ? 'cursor-pointer hover:shadow-lg hover:scale-[1.02]' : '',
       wrapperClass,
+      isVisible ? 'animate-fade-in-up' : 'opacity-0 translate-y-4',
     ]"
     @click="handleClick"
   >
-    <div
-      :class="[
-        'w-20 h-20 shrink-0 rounded-[3rem] bg-gradient-to-br flex items-center justify-center text-4xl transition-all duration-300',
-        iconBg,
-        isClickable ? 'group-hover:scale-110 group-hover:rotate-3' : '',
-      ]"
-    >
-      <span>{{ icon }}</span>
+    <div class="flex justify-center">
+      <IconContainer
+        :icon-path="iconPath"
+        bg-color="bg-accent"
+        hover-bg-color="group-hover:bg-[var(--color-purple)]"
+        icon-color="text-white"
+        :hover-scale="isClickable"
+        :use-fill="iconUseFill"
+        container-class="w-16 h-16 md:w-20 md:h-20 rounded-xl"
+      />
     </div>
-    <div class="flex-1">
+    <div class="flex-1 flex flex-col">
       <h3
         :class="[
-          'text-xl font-bold services-card-title leading-snug transition-colors duration-300',
+          'text-lg md:text-xl font-bold services-card-title leading-snug transition-colors duration-300 text-center',
           isClickable ? 'group-hover:text-accent' : '',
         ]"
       >
@@ -71,16 +86,16 @@ const handleClick = () => {
       </h3>
       <p
         :class="[
-          'services-card-description mt-4 text-[0.7rem] leading-relaxed max-w-3xl transition-colors duration-300',
+          'services-card-description mt-3 text-[0.7rem] leading-relaxed transition-colors duration-300 text-center',
           isClickable ? 'group-hover:text-text' : '',
         ]"
       >
         {{ description }}
       </p>
-      <div class="mt-6">
+      <div class="mt-auto pt-4">
         <span
           :class="[
-            'text-xl font-semibold services-card-price transition-colors duration-300',
+            'text-lg md:text-xl font-semibold services-card-price transition-colors duration-300 block text-center',
             isClickable ? 'group-hover:text-purple' : '',
           ]"
         >
@@ -98,5 +113,20 @@ const handleClick = () => {
 
 .service-card:hover {
   transform: translateY(-2px);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
 }
 </style>

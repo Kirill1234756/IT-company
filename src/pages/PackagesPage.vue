@@ -28,8 +28,8 @@ const packages = ref<PackageCardProps[]>([
       'Обучение работе с сайтом',
       'Техподдержка 1 месяц',
     ],
-    icon: '🚀',
-    iconBg: 'from-blue-50 to-indigo-100',
+    iconPath:
+      'm15 14 2.045-1.533C19.469 10.648 20.542 6.98 20 4c-2.981-.542-6.649.531-8.467 2.955L10 9m5 5-3.5 2.5-4-4L10 9m5 5v2.667a4 4 0 0 1-.8 2.4l-.7.933-1-1M10 9H7.333a4 4 0 0 0-2.4.8L4 10.5l1 1M8.5 18 5 19l1.166-3.5m9.334-6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z',
     slug: 'starter',
   },
   {
@@ -48,38 +48,18 @@ const packages = ref<PackageCardProps[]>([
       'Техподдержка 3 месяца',
       'Ежемесячные отчеты',
     ],
-    icon: '💼',
-    iconBg: 'from-purple-50 to-pink-100',
+    iconPath:
+      'M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z',
     isPopular: true,
     slug: 'business',
-  },
-  {
-    id: 3,
-    title: 'E-commerce пакет',
-    description:
-      'Полноценный интернет-магазин с интеграциями, продвижением и автоматизацией продаж.',
-    price: 'от 350 000 ₽',
-    originalPrice: 'от 420 000 ₽',
-    features: [
-      'Интернет-магазин с каталогом',
-      'Интеграция платежных систем',
-      'CRM и автоматизация',
-      'SEO-продвижение 6 месяцев',
-      'Контекстная реклама (настройка)',
-      'Мобильное приложение (опционально)',
-      'Техподдержка 6 месяцев',
-    ],
-    icon: '🛒',
-    iconBg: 'from-green-50 to-emerald-100',
-    slug: 'ecommerce',
   },
   {
     id: 4,
     title: 'Премиум пакет',
     description:
       'Максимальное решение для крупного бизнеса. Полный цикл разработки, продвижения и поддержки.',
-    price: 'от 600 000 ₽',
-    originalPrice: 'от 750 000 ₽',
+    price: 'от 540 000 ₽',
+    originalPrice: 'от 650 000 ₽',
     features: [
       'Корпоративный сайт или SaaS-платформа',
       'Индивидуальный дизайн',
@@ -91,8 +71,8 @@ const packages = ref<PackageCardProps[]>([
       'Техподдержка 12 месяцев',
       'Персональный менеджер',
     ],
-    icon: '⭐',
-    iconBg: 'from-yellow-50 to-orange-100',
+    iconPath:
+      'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
     slug: 'premium',
   },
 ])
@@ -117,21 +97,18 @@ const handlePackageClick = (packageData: PackageCardProps) => {
 </script>
 
 <template>
-  <div class="min-h-screen py-[5rem] px-4 md:px-8 lg:px-[8rem] bg-text">
-    <main class="max-w-7xl mx-auto">
+  <div class="min-h-screen py-[5rem] px-4 md:px-8 lg:px-[3rem] bg-text">
+    <main class="mx-auto">
       <!-- Breadcrumbs -->
       <Breadcrumbs
-        :items="[
-          { label: 'Главная', to: '/' },
-          { label: 'Пакеты услуг' },
-        ]"
+        :items="[{ label: 'Главная', to: '/' }, { label: 'Пакеты услуг' }]"
         class="mb-8"
       />
 
       <!-- Header Section -->
       <div class="mb-12 text-center">
         <h1
-          class="text-3xl md:text-5xl font-bold text-purple mb-4 font-display"
+          class="text-3xl md:text-5xl font-bold !text-accent mb-4 font-display"
           style="font-family: 'IBM Plex Sans Condensed', sans-serif"
         >
           Готовые пакеты услуг
@@ -143,7 +120,7 @@ const handlePackageClick = (packageData: PackageCardProps) => {
       </div>
 
       <!-- Packages Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-12">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-12">
         <PackageCard
           v-for="pkg in packages"
           :key="pkg.id"
@@ -153,8 +130,7 @@ const handlePackageClick = (packageData: PackageCardProps) => {
           :price="pkg.price"
           :original-price="pkg.originalPrice"
           :features="pkg.features"
-          :icon="pkg.icon"
-          :icon-bg="pkg.iconBg"
+          :icon-path="pkg.iconPath"
           :is-popular="pkg.isPopular"
           :slug="pkg.slug"
           @click="handlePackageClick"
@@ -162,7 +138,7 @@ const handlePackageClick = (packageData: PackageCardProps) => {
       </div>
 
       <!-- Benefits Section -->
-      <div class="mb-12 p-8 md:p-12 rounded-3xl border border-border bg-bg/50">
+      <div class="mb-12 p-8 md:p-12 rounded-3xl border border-border bg-bg">
         <h2 class="text-2xl md:text-3xl font-bold mb-6 text-center font-display">
           Преимущества пакетных решений
         </h2>

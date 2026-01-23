@@ -3,12 +3,12 @@
  * Версия: 2.0.0 - Исправлена проблема с кэшированием 404 страниц
  */
 
-const CACHE_VERSION = '2.0.0'
-const CACHE_NAME = 'kodifyweb-v2'
-const STATIC_CACHE_NAME = 'kodifyweb-static-v2'
-const DYNAMIC_CACHE_NAME = 'kodifyweb-dynamic-v2'
+const CACHE_VERSION = '2.2.0'
+const CACHE_NAME = 'kodifyweb-v2.2'
+const STATIC_CACHE_NAME = 'kodifyweb-static-v2.2'
+const DYNAMIC_CACHE_NAME = 'kodifyweb-dynamic-v2.2'
 
-// Ресурсы для предварительного кэширования
+// Ресурсы для предварительного кэширования (критические ресурсы)
 const STATIC_ASSETS = [
     '/',
     '/index.html',
@@ -17,6 +17,8 @@ const STATIC_ASSETS = [
     '/stratige.svg',
     '/robots.txt',
     '/sitemap.xml',
+    // Критические шрифты (если self-hosted)
+    // '/fonts/ibm-plex-sans-condensed.woff2',
 ]
 
 // Ресурсы, которые кэшируются навсегда (с хэшами)
@@ -30,6 +32,7 @@ const IMMUTABLE_PATTERNS = [
 const NO_CACHE_PATTERNS = [
     /\/api\//,
     /\/functions\/v1\//,
+    /supabase\.co/,  // Не кэшируем запросы к Supabase
     /\/stats/,
     /\/stats\.html/,
 ]
@@ -73,7 +76,10 @@ self.addEventListener('activate', (event) => {
                             cacheName.startsWith('kodifyweb-')
                         )
                     })
-                    .map((cacheName) => caches.delete(cacheName))
+                    .map((cacheName) => {
+                        console.log('Deleting old cache:', cacheName)
+                        return caches.delete(cacheName)
+                    })
             ).then(() => {
                 // Очищаем кэш от 404 страниц
                 return Promise.all([

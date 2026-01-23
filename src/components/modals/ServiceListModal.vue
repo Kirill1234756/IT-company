@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { defineProps, defineEmits, defineAsyncComponent } from 'vue'
+import { defineProps, defineEmits } from 'vue'
+import { Teleport } from 'vue'
 import type { ServiceCategory, ServiceItem } from '../../types/services'
-
-const Breadcrumbs = defineAsyncComponent(() => import('../ui/Breadcrumbs.vue'))
 
 const props = defineProps<{
   category: ServiceCategory
@@ -13,132 +12,111 @@ const emit = defineEmits<{
   (e: 'serviceClick', service: ServiceItem): void
 }>()
 
+const handleClose = () => {
+  emit('close')
+}
+
 const handleServiceClick = (service: ServiceItem) => {
   emit('serviceClick', service)
 }
 
-const handleBackClick = () => {
-  emit('close')
+const handleBackdropClick = (event: MouseEvent) => {
+  if (event.target === event.currentTarget) {
+    handleClose()
+  }
 }
 </script>
 
 <template>
-  <div class="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
-    <div class="min-h-screen services-modal">
-      <!-- Header -->
-      <div class="sticky top-0 services-modal-header z-10">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <button
-            @click="handleBackClick"
-            class="flex items-center gap-2 text-text-muted hover:text-text transition-colors"
+  <Teleport to="body">
+    <div
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm"
+      @click="handleBackdropClick"
+    >
+      <div
+        class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+        @click.stop
+      >
+        <!-- Close Button -->
+        <button
+          @click="handleClose"
+          class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
+          aria-label="Close modal"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6 text-gray-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-            Назад
-          </button>
-        </div>
-      </div>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
 
-      <div class="max-w-6xl mx-auto px-5 md:px-[17rem] py-[5rem]">
-        <!-- Breadcrumbs -->
-        <Breadcrumbs
-          :items="[
-            { label: 'Главная', to: '/' },
-            { label: 'Услуги', to: '/services' },
-            { label: category.title },
-          ]"
-          class="mb-8"
-        />
+        <!-- Modal Content -->
+        <div class="p-6 md:p-8">
+          <!-- Title -->
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6 font-display">
+            {{ category.title }}
+          </h2>
 
-        <!-- Main Title -->
-        <h1 class="text-5xl md:text-6xl font-extrabold services-modal-title mb-8 font-display">
-          {{ category.title }}
-        </h1>
-
-        <!-- Description -->
-        <p class="text-lg services-modal-description mb-12 max-w-4xl">
-          <span v-if="category.title === 'Рост'">
-            Комплексные решения для роста вашего бизнеса в цифровой среде. Мы помогаем привлекать
-            клиентов, разрабатывать эффективные маркетинговые стратегии и анализировать рынок для
-            достижения ваших целей.
-          </span>
-          <span v-else-if="category.title === 'Стратегия'">
-            Стратегическое планирование и развитие вашего бизнеса. Мы создаем индивидуальные
-            стратегии, разрабатываем бизнес-планы и помогаем сформировать сильный бренд для
-            долгосрочного успеха.
-          </span>
-          <span v-else-if="category.title === 'Разработка сайта'">
-            Предлагаем полный цикл разработки сайтов любой сложности. Наша команда профессионалов
-            создаст уникальный дизайн и функциональность, подходящие для вашего бизнеса.
-          </span>
-          <span v-else-if="category.title === 'Разработка'">
-            Технические решения для автоматизации и оптимизации бизнес-процессов. Мы интегрируем
-            различные системы, автоматизируем процессы и повышаем эффективность работы вашей
-            компании.
-          </span>
-          <span v-else>
-            Предлагаем полный цикл разработки сайтов любой сложности. Наша команда профессионалов
-            создаст уникальный дизайн и функциональность, подходящие для вашего бизнеса.
-          </span>
-        </p>
-
-        <!-- Services List -->
-        <div class="space-y-6">
-          <div
-            v-for="service in category.items"
-            :key="service.id"
-            @click="handleServiceClick(service)"
-            class="services-modal-item rounded-[3rem] p-8 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group"
-          >
-            <div class="flex items-center justify-between">
-              <div class="flex-1">
-                <div class="flex items-center gap-4 mb-4">
-                  <h3
-                    class="text-2xl font-bold services-modal-item-title group-hover:text-accent transition-colors"
-                  >
+          <!-- Services List -->
+          <div v-if="category.items && category.items.length > 0" class="space-y-4">
+            <div
+              v-for="service in category.items"
+              :key="service.id"
+              @click="handleServiceClick(service)"
+              class="p-6 border border-gray-200 rounded-2xl hover:border-blue-500 hover:shadow-lg cursor-pointer transition-all"
+            >
+              <div class="flex justify-between items-start">
+                <div class="flex-1">
+                  <h3 class="text-xl font-bold text-gray-900 mb-2 font-display">
                     {{ service.title }}
                   </h3>
-                  <span class="text-2xl font-bold services-modal-item-price">
-                    {{ service.price }}
-                  </span>
+                  <p class="text-gray-600 mb-4">{{ service.description }}</p>
+                  <div class="text-lg font-semibold text-blue-600">{{ service.price }}</div>
                 </div>
-                <p class="services-modal-item-description leading-relaxed">
-                  {{ service.description }}
-                </p>
-              </div>
-              <div class="ml-6">
-                <div
-                  class="w-8 h-8 bg-border rounded-full flex items-center justify-center group-hover:bg-accent transition-colors"
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-6 w-6 text-gray-400 ml-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="2"
                 >
-                  <svg
-                    class="w-4 h-4 text-text-muted group-hover:text-bg"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </div>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
               </div>
             </div>
+          </div>
+
+          <div v-else class="text-center py-12 text-gray-500">
+            Услуги в этой категории пока не добавлены
           </div>
         </div>
       </div>
     </div>
-  </div>
+  </Teleport>
 </template>
 
 <style scoped>
-/* Additional styles if needed */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 8px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
 </style>

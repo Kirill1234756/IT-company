@@ -199,38 +199,6 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- Scroll to Top Button -->
-    <Transition
-      enter-active-class="transition-all duration-300 ease-out"
-      enter-from-class="opacity-0 scale-75 translate-y-4"
-      enter-to-class="opacity-100 scale-100 translate-y-0"
-      leave-active-class="transition-all duration-200 ease-in"
-      leave-from-class="opacity-100 scale-100 translate-y-0"
-      leave-to-class="opacity-0 scale-75 translate-y-4"
-    >
-      <button
-        v-if="showScrollButton"
-        @click="scrollToTop"
-        class="fixed bottom-6 right-6 md:bottom-8 md:right-8 w-12 h-12 bg-[var(--color-accent)] hover:bg-[var(--color-accent)]/90 text-[var(--color-bg)] rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:-translate-y-1 hover:scale-105 active:scale-95 transition-all duration-300 z-[1000] group"
-        aria-label="Scroll to top"
-      >
-        <svg
-          class="w-5 h-5 transform group-hover:-translate-y-0.5 transition-transform duration-200"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M5 10l7-7m0 0l7 7m-7-7v18"
-          />
-        </svg>
-      </button>
-    </Transition>
-
     <!-- Debug: Always visible button for testing -->
     <button
       @click="scrollToTop"

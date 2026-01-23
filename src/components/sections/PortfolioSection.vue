@@ -63,21 +63,21 @@ onMounted(() => {
       ref="scrollContainerRef"
     >
       <Suspense>
-      <template #default>
-        <CasesPage />
-      </template>
-      <template #fallback>
-        <div
-          class="flex flex-col items-center justify-center w-full h-full text-center text-white/60"
-        >
-          <p class="text-xl font-semibold mb-4">Загружаем портфолио...</p>
-          <p class="text-sm max-w-md">
-            Раздел появится, как только вы прокрутите страницу — это помогает ускорить начальную
-            загрузку сайта.
-          </p>
-        </div>
-      </template>
-    </Suspense>
+        <template #default>
+          <CasesPage />
+        </template>
+        <template #fallback>
+          <div
+            class="flex flex-col items-center justify-center w-full h-full text-center text-white/60"
+          >
+            <p class="text-xl font-semibold mb-4">Загружаем портфолио...</p>
+            <p class="text-sm max-w-md">
+              Раздел появится, как только вы прокрутите страницу — это помогает ускорить начальную
+              загрузку сайта.
+            </p>
+          </div>
+        </template>
+      </Suspense>
     </div>
   </section>
 </template>

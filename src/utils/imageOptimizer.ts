@@ -94,7 +94,7 @@ export function createOptimizedImage(
     const {
         width,
         height,
-        widths = [400, 800, 1200],
+        widths = [400, 800, 1200, 1600],
         sizes,
         loading = 'lazy',
         decoding = 'async',

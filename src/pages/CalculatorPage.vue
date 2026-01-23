@@ -6,6 +6,7 @@ const SEOContent = defineAsyncComponent(() => import('../components/seo/SEOConte
 import { useBreadcrumbSchema } from '../composables/useBreadcrumbSchema'
 import { useHead } from '@unhead/vue'
 import { watchEffect } from 'vue'
+import IconContainer from '../components/IconContainer.vue'
 import {
   siteTypes,
   designOptions,
@@ -96,6 +97,9 @@ const contactForm = ref({
   phone: '',
   email: '',
 })
+
+// Время начала заполнения формы (для антибот-защиты)
+const formStartedAt = ref<number>(Date.now())
 
 // ШАГ 2: Количество страниц
 const pagesOptions = computed(() => {
@@ -244,23 +248,73 @@ const progress = computed(() => {
 // Состояние отправки
 const isSubmitting = ref(false)
 const submitError = ref<string | null>(null)
+const fieldErrors = ref<Record<string, string>>({})
 
-// Отправка формы
-const submitContactForm = async () => {
-  // Валидация
-  if (!contactForm.value.name || !contactForm.value.phone) {
-    submitError.value = 'Пожалуйста, заполните имя и телефон'
-    return
+// Валидация полей (как в ContactSection)
+const validateName = (name: string): string | undefined => {
+  if (!name || !name.trim()) {
+    return 'Имя обязательно для заполнения'
   }
+  if (name.trim().length < 2) {
+    return 'Имя должно содержать минимум 2 символа'
+  }
+  return undefined
+}
+
+const validatePhone = (phone: string): string | undefined => {
+  if (!phone || !phone.trim()) {
+    return 'Телефон обязателен для заполнения'
+  }
+  const digits = phone.replace(/\D/g, '')
+  if (digits.length < 10 || digits.length > 15) {
+    return 'Введите корректный номер телефона'
+  }
+  return undefined
+}
+
+const validateEmail = (email: string): string | undefined => {
+  if (email && email.trim()) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return 'Введите корректный email адрес'
+    }
+  }
+  return undefined
+}
+
+// Валидация всей формы
+const validateForm = (): boolean => {
+  fieldErrors.value = {}
+
+  const nameError = validateName(contactForm.value.name)
+  if (nameError) fieldErrors.value.name = nameError
+
+  const phoneError = validatePhone(contactForm.value.phone)
+  if (phoneError) fieldErrors.value.phone = phoneError
+
+  const emailError = validateEmail(contactForm.value.email)
+  if (emailError) fieldErrors.value.email = emailError
 
   // Проверка, что есть хотя бы базовые данные калькулятора
   if (!answers.value.siteType) {
     submitError.value = 'Пожалуйста, заполните калькулятор'
+    return false
+  }
+
+  return Object.keys(fieldErrors.value).length === 0
+}
+
+// Отправка формы
+const submitContactForm = async () => {
+  // Валидация
+  if (!validateForm()) {
+    submitError.value = 'Пожалуйста, исправьте ошибки в форме'
     return
   }
 
   isSubmitting.value = true
   submitError.value = null
+  fieldErrors.value = {}
 
   try {
     const formData = {
@@ -280,7 +334,7 @@ const submitContactForm = async () => {
       minPrice: priceBreakdown.value.minPrice,
       maxPrice: priceBreakdown.value.maxPrice,
       timeline: priceBreakdown.value.timeline,
-      formStartedAt: Date.now(),
+      formStartedAt: formStartedAt.value,
     }
 
     const result = await CalculatorFormAPI.submitForm(formData)
@@ -296,9 +350,14 @@ const submitContactForm = async () => {
     } else {
       submitError.value = result.message || 'Произошла ошибка при отправке формы'
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Ошибка отправки формы:', error)
-    submitError.value = 'Произошла ошибка при отправке формы. Попробуйте еще раз.'
+    // Обработка ошибок валидации с бэкенда
+    if (error.message && error.message.includes('Ошибка валидации')) {
+      submitError.value = error.message
+    } else {
+      submitError.value = 'Произошла ошибка при отправке формы. Попробуйте еще раз.'
+    }
   } finally {
     isSubmitting.value = false
   }
@@ -336,82 +395,41 @@ const submitContactForm = async () => {
         </div>
       </div>
 
-      <!-- SEO Content -->
-      <div class="mb-8">
-        <SEOContent>
-          <!-- Шаги section -->
-          <template #section-шаги>
-            <div class="mb-8 text-purple">
-              <p class="text-sm text-accent leading-relaxed mb-4">
-                Калькулятор стоимости сайта поможет вам быстро оценить бюджет проекта. Выберите тип
-                сайта, количество страниц, дизайн и дополнительные функции.
-              </p>
-              <ol class="list-decimal list-inside space-y-2 text-sm">
-                <li>Выберите тип сайта (лендинг, визитка, магазин и т.д.)</li>
-                <li>Укажите количество страниц (для лендинга этот шаг пропускается)</li>
-                <li>Выберите вариант дизайна</li>
-                <li>Добавьте необходимый функционал</li>
-                <li>Настройте контент и SEO</li>
-                <li>Выберите срочность и поддержку</li>
-                <li>Получите итоговую оценку</li>
-              </ol>
-            </div>
-          </template>
-
-          <!-- Результат section -->
-          <template #section-результат>
-            <div class="mb-8">
-              <p class="text-sm text-accent leading-relaxed">
-                После заполнения всех шагов вы получите детальную оценку стоимости проекта с
-                разбивкой по категориям. Вы можете отправить заявку для получения коммерческого
-                предложения или связаться с нами для консультации.
-              </p>
-            </div>
-          </template>
-
-          <!-- Что дальше section -->
-          <template #section-что-дальше>
-            <div class="mb-8 text-purple">
-              <p class="text-sm text-accent leading-relaxed mb-4">
-                После получения оценки вы можете:
-              </p>
-              <ul class="list-disc list-inside space-y-2 text-sm">
-                <li>Отправить заявку для получения детального коммерческого предложения</li>
-                <li>Связаться с нами для консультации по телефону или Telegram</li>
-                <li>Посмотреть примеры наших работ в разделе кейсов</li>
-                <li>Изучить подробности услуг в разделе услуг</li>
-              </ul>
-            </div>
-          </template>
-        </SEOContent>
-      </div>
-
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Левая колонка: Вопросы -->
         <div class="lg:col-span-2">
           <div class="bg-bg rounded-[3rem] p-6 md:p-8">
             <!-- ШАГ 1: Тип сайта -->
             <div v-if="currentStep === 0">
-              <h2 class="text-2xl md:text-3xl font-bold text-text mb-4">
+              <h2 class="text-xl md:text-2xl lg:text-3xl font-bold text-text mb-3 md:mb-6 text-center">
                 1. Какой тип сайта вам нужен?
               </h2>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
                 <button
                   v-for="type in siteTypes"
                   :key="type.id"
                   @click="answers.siteType = type.id"
                   :aria-label="`Выбрать тип сайта: ${type.label}`"
                   :class="[
-                    'p-3 rounded-[3rem] border-2 text-left transition-all duration-300',
+                    'p-3 md:p-6 rounded-2xl md:rounded-[3rem] border-2 flex flex-col items-center gap-2 md:gap-4 transition-all duration-300 bg-bg/30 backdrop-blur-sm',
                     answers.siteType === type.id
-                      ? 'border-accent bg-accent/20'
-                      : 'border-border hover:border-accent/50 bg-bg/50',
+                      ? 'border-accent bg-accent/20 shadow-lg shadow-accent/20 scale-[1.02]'
+                      : 'border-border/60 hover:border-accent/70 bg-bg/30 hover:bg-bg/50 hover:shadow-lg',
                   ]"
                 >
-                  <div class="text-4xl mb-2">{{ type.icon }}</div>
-                  <div class="text-xl font-bold text-text mb-1">{{ type.label }}</div>
-                  <div class="text-sm text-text-muted mb-2">{{ type.description }}</div>
-                  <div class="text-sm font-semibold text-accent">{{ type.price }}</div>
+                  <IconContainer
+                    :icon-path="type.iconPath"
+                    bg-color="bg-accent"
+                    hover-bg-color="group-hover:bg-[var(--color-purple)]"
+                    icon-color="text-white"
+                    :use-fill="type.iconUseFill !== false"
+                    container-class="w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 rounded-xl"
+                  />
+                  <div class="text-center">
+                    <div class="text-sm md:text-lg lg:text-xl font-bold text-text mb-0.5 md:mb-1">{{ type.label }}</div>
+                    <div class="text-xs md:text-sm text-text-muted mb-1.5 md:mb-3">{{ type.description }}</div>
+                    <div class="text-sm md:text-base lg:text-lg font-semibold text-accent">{{ type.price }}</div>
+                  </div>
                 </button>
               </div>
             </div>
@@ -755,24 +773,51 @@ const submitContactForm = async () => {
                 🎯 Хотите точный расчет? Оставьте контакты:
               </p>
               <div class="space-y-3">
-                <input
-                  v-model="contactForm.name"
-                  type="text"
-                  placeholder="Ваше имя"
-                  class="w-full px-4 py-3 rounded-[3rem] bg-bg/50 border border-border text-text placeholder:text-text-muted focus:outline-none focus:border-accent"
-                />
-                <input
-                  v-model="contactForm.phone"
-                  type="tel"
-                  placeholder="Телефон"
-                  class="w-full px-4 py-3 rounded-[3rem] bg-bg/50 border border-border text-text placeholder:text-text-muted focus:outline-none focus:border-accent"
-                />
-                <input
-                  v-model="contactForm.email"
-                  type="email"
-                  placeholder="Email (опционально)"
-                  class="w-full px-4 py-3 rounded-[3rem] bg-bg/50 border border-border text-text placeholder:text-text-muted focus:outline-none focus:border-accent"
-                />
+                <div>
+                  <input
+                    v-model="contactForm.name"
+                    type="text"
+                    placeholder="Ваше имя"
+                    @input="fieldErrors.name = ''"
+                    :class="[
+                      'w-full px-4 py-3 rounded-[3rem] bg-bg/50 border text-text placeholder:text-text-muted focus:outline-none transition-colors',
+                      fieldErrors.name ? 'border-error' : 'border-border focus:border-accent',
+                    ]"
+                  />
+                  <p v-if="fieldErrors.name" class="text-sm text-error mt-1">
+                    {{ fieldErrors.name }}
+                  </p>
+                </div>
+                <div>
+                  <input
+                    v-model="contactForm.phone"
+                    type="tel"
+                    placeholder="Телефон"
+                    @input="fieldErrors.phone = ''"
+                    :class="[
+                      'w-full px-4 py-3 rounded-[3rem] bg-bg/50 border text-text placeholder:text-text-muted focus:outline-none transition-colors',
+                      fieldErrors.phone ? 'border-error' : 'border-border focus:border-accent',
+                    ]"
+                  />
+                  <p v-if="fieldErrors.phone" class="text-sm text-error mt-1">
+                    {{ fieldErrors.phone }}
+                  </p>
+                </div>
+                <div>
+                  <input
+                    v-model="contactForm.email"
+                    type="email"
+                    placeholder="Email (опционально)"
+                    @input="fieldErrors.email = ''"
+                    :class="[
+                      'w-full px-4 py-3 rounded-[3rem] bg-bg/50 border text-text placeholder:text-text-muted focus:outline-none transition-colors',
+                      fieldErrors.email ? 'border-error' : 'border-border focus:border-accent',
+                    ]"
+                  />
+                  <p v-if="fieldErrors.email" class="text-sm text-error mt-1">
+                    {{ fieldErrors.email }}
+                  </p>
+                </div>
                 <div v-if="submitError" class="text-sm text-error mb-2">
                   {{ submitError }}
                 </div>
@@ -791,6 +836,55 @@ const submitContactForm = async () => {
             </div>
           </div>
         </div>
+      </div>
+      <!-- SEO Content -->
+      <div class="mb-8">
+        <SEOContent>
+          <!-- Шаги section -->
+          <template #section-шаги>
+            <div class="mb-8 text-purple">
+              <p class="text-sm text-accent leading-relaxed mb-4">
+                Калькулятор стоимости сайта поможет вам быстро оценить бюджет проекта. Выберите тип
+                сайта, количество страниц, дизайн и дополнительные функции.
+              </p>
+              <ol class="list-decimal list-inside space-y-2 text-sm">
+                <li>Выберите тип сайта (лендинг, визитка, магазин и т.д.)</li>
+                <li>Укажите количество страниц (для лендинга этот шаг пропускается)</li>
+                <li>Выберите вариант дизайна</li>
+                <li>Добавьте необходимый функционал</li>
+                <li>Настройте контент и SEO</li>
+                <li>Выберите срочность и поддержку</li>
+                <li>Получите итоговую оценку</li>
+              </ol>
+            </div>
+          </template>
+
+          <!-- Результат section -->
+          <template #section-результат>
+            <div class="mb-8">
+              <p class="text-sm text-accent leading-relaxed">
+                После заполнения всех шагов вы получите детальную оценку стоимости проекта с
+                разбивкой по категориям. Вы можете отправить заявку для получения коммерческого
+                предложения или связаться с нами для консультации.
+              </p>
+            </div>
+          </template>
+
+          <!-- Что дальше section -->
+          <template #section-что-дальше>
+            <div class="mb-8 text-purple">
+              <p class="text-sm text-accent leading-relaxed mb-4">
+                После получения оценки вы можете:
+              </p>
+              <ul class="list-disc list-inside space-y-2 text-sm">
+                <li>Отправить заявку для получения детального коммерческого предложения</li>
+                <li>Связаться с нами для консультации по телефону или Telegram</li>
+                <li>Посмотреть примеры наших работ в разделе кейсов</li>
+                <li>Изучить подробности услуг в разделе услуг</li>
+              </ul>
+            </div>
+          </template>
+        </SEOContent>
       </div>
     </div>
   </div>

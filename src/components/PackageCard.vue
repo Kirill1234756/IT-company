@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import IconContainer from './IconContainer.vue'
+
 export interface PackageCardProps {
   id: number
   title: string
@@ -6,15 +8,14 @@ export interface PackageCardProps {
   price: string
   originalPrice?: string
   features: string[]
-  icon: string
-  iconBg?: string
+  iconPath: string
+  iconUseFill?: boolean
   isPopular?: boolean
   isClickable?: boolean
   slug?: string
 }
 
 const props = withDefaults(defineProps<PackageCardProps>(), {
-  iconBg: 'from-blue-50 to-indigo-100',
   isClickable: true,
   isPopular: false,
 })
@@ -48,14 +49,16 @@ const handleClick = () => {
     </div>
 
     <!-- Icon -->
-    <div
-      :class="[
-        'w-16 h-16 md:w-20 md:h-20 shrink-0 rounded-[3rem] bg-gradient-to-br flex items-center justify-center text-3xl md:text-4xl transition-all duration-300 mb-4',
-        iconBg,
-        isClickable ? 'group-hover:scale-110 group-hover:rotate-3' : '',
-      ]"
-    >
-      <span>{{ icon }}</span>
+    <div class="mb-4">
+      <IconContainer
+        :icon-path="iconPath"
+        bg-color="bg-accent"
+        hover-bg-color="group-hover:bg-[var(--color-purple)]"
+        icon-color="text-white"
+        :hover-scale="isClickable"
+        :use-fill="iconUseFill !== false"
+        container-class="w-12 h-12 md:w-16 md:h-16 rounded-xl"
+      />
     </div>
 
     <!-- Content -->

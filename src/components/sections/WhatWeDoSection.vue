@@ -339,7 +339,7 @@ onBeforeUnmount(() => {
 <template>
   <section
     ref="rootEl"
-    class="stack-section no-scrollbar bg-text h-screen flex flex-col items-center justify-start rounded-t-3xl lg:py-[5rem] py-[2rem] lg:px-[15rem] md:px-[6rem] px-[1rem]"
+    class="stack-section no-scrollbar bg-text h-screen flex flex-col items-center justify-start rounded-t-3xl  lg:px-[15rem] md:px-[6rem] px-[1rem] py-[5rem]"
     style="box-sizing: border-box; contain: layout style paint"
   >
     <div
@@ -347,43 +347,43 @@ onBeforeUnmount(() => {
       ref="scrollContainerRef"
     >
       <h2
-        class="title no-title-effects text-3xl md:text-4xl font-black tracking-tight mb-8 text-bg opacity-100"
+        class="title text-center no-title-effects text-3xl md:text-4xl font-black tracking-tight mb-8 text-bg opacity-100"
       >
         Что мы делаем
       </h2>
 
       <div class="grid grid-cols-1 md:grid-cols-12 gap-8 max-w-6xl w-full mb-8">
-      <template v-if="visible">
-        <WhatWeDoCard
-          v-for="card in whatWeDoCards"
-          :key="card.title"
-          :title="card.title"
-          :description="card.description"
-          :iconPath="card.icon"
-          :wrapperClass="card.wrapperClass"
-          @click="handleCardClick(card.title)"
-        />
+        <template v-if="visible">
+          <WhatWeDoCard
+            v-for="card in whatWeDoCards"
+            :key="card.title"
+            :title="card.title"
+            :description="card.description"
+            :iconPath="card.icon"
+            :wrapperClass="card.wrapperClass"
+            @click="handleCardClick(card.title)"
+          />
 
-        <div
-          class="wwd-cta group rounded-[3rem] p-6 sm:p-4 flex flex-col justify-center items-center text-center cursor-pointer text-white w-full md:col-span-4 bg-[var(--color-purple)] hover:bg-[var(--color-accent)] transition-colors border border-[color-mix(in_oklab,var(--color-border)_40%,transparent)] hover:border-[var(--color-accent)] hover:ring-2 hover:ring-[var(--color-accent)]"
-          @click="router.push('/services')"
-          role="button"
-          tabindex="0"
-          aria-label="Перейти к услугам"
-          @keydown.enter="router.push('/services')"
-          @keydown.space.prevent="router.push('/services')"
-        >
-          <h3
-            class="text-base text-[0.8rem] md:text-sm px-2 sm:px-2 font-bold transition-transform duration-300 group-hover:translate-y-[-2px] group-hover:text-white"
+          <div
+            class="wwd-cta group rounded-[3rem] p-6 sm:p-4 flex flex-col justify-center items-center text-center cursor-pointer text-white w-full md:col-span-4 bg-[var(--color-purple)] hover:bg-[var(--color-accent)] transition-colors border border-[color-mix(in_oklab,var(--color-border)_40%,transparent)] hover:border-[var(--color-accent)] hover:ring-2 hover:ring-[var(--color-accent)]"
+            @click="router.push('/services')"
+            role="button"
+            tabindex="0"
+            aria-label="Перейти к услугам"
+            @keydown.enter="router.push('/services')"
+            @keydown.space.prevent="router.push('/services')"
           >
-            Мы предлагаем полный спектр готовых цифровых решений для вашего бизнеса
-          </h3>
+            <h3
+              class="text-base text-[0.8rem] md:text-sm px-2 sm:px-2 font-bold transition-transform duration-300 group-hover:translate-y-[-2px] group-hover:text-white"
+            >
+              Мы предлагаем полный спектр готовых цифровых решений для вашего бизнеса
+            </h3>
+          </div>
+        </template>
+        <div v-else class="text-center text-white col-span-12">
+          Loading WhatWeDo cards... visible={{ visible }}
         </div>
-      </template>
-      <div v-else class="text-center text-white col-span-12">
-        Loading WhatWeDo cards... visible={{ visible }}
       </div>
-    </div>
 
       <div class="flex justify-center">
         <CtaButton to="/services">Узнать больше</CtaButton>

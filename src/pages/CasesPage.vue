@@ -17,6 +17,7 @@ import { usePortfolioStore } from '../stores/portfolio'
 import type { FilterType, PortfolioProject } from '../types/portfolio'
 import { useHead } from '@unhead/vue'
 import { useBreadcrumbSchema } from '../composables/useBreadcrumbSchema'
+import FilterButtons from '../components/FilterButtons.vue'
 // import { cn } from '@/utils/cn'
 
 // Ленивая загрузка компонентов с оптимизацией
@@ -111,10 +112,22 @@ const {
 const router = useRouter()
 const route = useRoute()
 
-// Ограничение для главной страницы - показываем только 3 ряда
-// На десктопе: 3 ряда × 2 колонки = 6 карточек
-// На мобильных: 3 ряда × 1 колонка = 3 карточки
-const maxItemsOnHomePage = 6 // Фиксированное значение для простоты
+// Реактивное отслеживание размера экрана для определения количества карточек
+const isMobile = ref(false)
+
+// Функция для обновления состояния мобильного устройства
+const updateIsMobile = () => {
+  if (typeof window !== 'undefined') {
+    isMobile.value = window.innerWidth < 768
+  }
+}
+
+// Ограничение для главной страницы - показываем разное количество в зависимости от устройства
+// На десктопе: 6 карточек
+// На мобильных: 4 карточки
+const maxItemsOnHomePage = computed(() => {
+  return isMobile.value ? 4 : 6
+})
 
 // Определяем, находимся ли мы на главной странице
 // На главной странице route.path === '/', на отдельной странице '/cases'
@@ -132,13 +145,17 @@ const displayedItems = computed(() => {
   if (!isOnHomePage.value || showAllItems.value) {
     return filteredItems.value
   }
-  // На главной странице показываем только первые 6 карточек
-  return filteredItems.value.slice(0, maxItemsOnHomePage)
+  // На главной странице показываем ограниченное количество карточек (4 на мобильных, 6 на десктопе)
+  return filteredItems.value.slice(0, maxItemsOnHomePage.value)
 })
 
 // Проверяем, есть ли скрытые карточки
 const hasMoreItems = computed(() => {
-  return isOnHomePage.value && filteredItems.value.length > maxItemsOnHomePage && !showAllItems.value
+  return (
+    isOnHomePage.value &&
+    filteredItems.value.length > maxItemsOnHomePage.value &&
+    !showAllItems.value
+  )
 })
 
 // Функция для показа всех карточек
@@ -149,7 +166,9 @@ const showMore = async () => {
   setTimeout(() => {
     const grid = portfolioEl.value
     if (grid) {
-      const firstNewCard = grid.querySelector(`.portfolio-card:nth-child(${maxItemsOnHomePage + 1})`)
+      const firstNewCard = grid.querySelector(
+        `.portfolio-card:nth-child(${maxItemsOnHomePage.value + 1})`
+      )
       if (firstNewCard) {
         firstNewCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
       }
@@ -174,25 +193,20 @@ const filterButtonStyles = {
   border: 'border-rose-custom',
   hover: 'hover:bg-[#ae70ac] hover:border-[#ae70ac]',
   inner: 'bg-[#ae70ac]',
-}
-
-// Мемоизированные функции для работы с цветами
-const getFilterColor = () => {
-  // Все кнопки имеют одинаковые стили
-  return `${filterButtonStyles.bg} ${filterButtonStyles.border} ${filterButtonStyles.hover}`
-}
-
-// Функция больше не нужна, так как все стили в CSS классах
-
-// Мемоизированная функция для внутренних цветов
-const getInnerColor = () => {
-  return filterButtonStyles.inner
+  text: 'text-white',
 }
 
 // Мемоизированная функция обработки фильтров
 const handleFilterChange = (filter: string) => {
   const storeFilter = filterMap.value[filter as keyof typeof filterMap.value] ?? 'all'
   setActiveFilter(storeFilter as FilterType)
+  // Сбрасываем показ всех элементов при смене фильтра
+  showAllItems.value = false
+}
+
+// Обработчик для нового компонента FilterButtons
+const handleFilterValueChange = (value: string) => {
+  setActiveFilter(value as FilterType)
   // Сбрасываем показ всех элементов при смене фильтра
   showAllItems.value = false
 }
@@ -262,6 +276,14 @@ let fallbackTimeout: ReturnType<typeof setTimeout> | null = null
 
 // Load projects and initialize GSAP animations on mount
 onMounted(async () => {
+  // Инициализируем определение мобильного устройства
+  updateIsMobile()
+
+  // Отслеживаем изменения размера окна
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', updateIsMobile)
+  }
+
   fetchProjects()
 
   // Обработка URL параметров для прямых ссылок на проекты
@@ -637,6 +659,11 @@ onMounted(async () => {
 
 // Cleanup ScrollTrigger on unmount
 onUnmounted(() => {
+  // Удаляем обработчик изменения размера окна
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', updateIsMobile)
+  }
+
   // Сбрасываем флаг
   isAnimationInitialized.value = false
 
@@ -718,7 +745,7 @@ watchEffect(() => {
 
 <template>
   <div class="relative w-full" ref="portfolioContainer">
-    <div class="w-full max-w-7xl px-10 py-[5rem] md:[5rem] lg:px-[15rem]">
+    <div class="w-full max-w-7xl px-10 py-[1rem] md:[3rem] lg:px-[12rem]">
       <h1
         class="title no-title-effects text-3xl sm:text-4xl md:text-4xl font-black text-[var(--color-accent)] tracking-tight mb-4 md:mb-6 lg:mb-8 text-center"
       >
@@ -726,37 +753,14 @@ watchEffect(() => {
       </h1>
 
       <!-- Filter Buttons -->
-      <div
-        class="flex flex-wrap justify-center gap-2 md:gap-3 lg:gap-4 mb-8 md:mb-10 lg:mb-12 w-full"
-      >
-        <button
-          v-for="filter in filters"
-          :key="filter"
-          @click="handleFilterChange(filter)"
-          :class="
-            'px-3 py-1.5 sm:px-4 sm:py-2 md:px-5 md:py-2.5 lg:px-6 lg:py-3 rounded-full transition-all duration-300 text-xs sm:text-sm font-semibold font-display relative overflow-hidden group shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-white border-2 ' +
-            getFilterColor()
-          "
-        >
-          <span class="relative z-10">{{ filter }}</span>
-          <div
-            v-if="
-              (activeFilter === 'all' && filter === 'Все') ||
-              (activeFilter === 'ecommerce' && filter === 'Интернет-магазины') ||
-              (activeFilter === 'corporate' && filter === 'Корпоративные сайты') ||
-              (activeFilter === 'landing' && filter === 'Лендинги') ||
-              (activeFilter === 'promo' && filter === 'Промо-сайты') ||
-              (activeFilter === 'mobile' && filter === 'Мобильные приложения') ||
-              (activeFilter === 'tech-support' && filter === 'Техническая поддержка')
-            "
-            :class="
-              'absolute inset-0 ' +
-              getInnerColor() +
-              ' opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-full'
-            "
-          ></div>
-        </button>
-      </div>
+      <FilterButtons
+        :items="filters"
+        :model-value="activeFilter"
+        :filter-map="filterMap"
+        :colors="filterButtonStyles"
+        container-class="mb-8 md:mb-10 lg:mb-12"
+        @update:model-value="handleFilterValueChange"
+      />
 
       <!-- Portfolio Grid -->
       <div ref="portfolioEl" class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 w-full">
@@ -825,62 +829,38 @@ watchEffect(() => {
         <p class="text-gray-600">Попробуйте выбрать другую категорию</p>
       </div>
 
-      <!-- Popular Services Block -->
-      <div class="mt-12 mb-12 p-8 rounded-3xl border border-border">
-        <h2 class="text-2xl font-bold mb-6 text-center">Популярные услуги</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <a
-            href="/services/development/corporate-website"
-            class="p-4 rounded-[3rem] text-center border border-border hover:border-accent transition-colors"
-          >
-            <h3 class="font-semibold mb-2">Корпоративный сайт</h3>
-            <p class="text-sm text-text-muted">Создание корпоративных сайтов под ключ</p>
-          </a>
-          <a
-            href="/services/development/online-store"
-            class="p-4 rounded-[3rem] text-center border border-border hover:border-accent transition-colors"
-          >
-            <h3 class="font-semibold mb-2">Интернет-магазин</h3>
-            <p class="text-sm text-text-muted">Полнофункциональные интернет-магазины</p>
-          </a>
-          <a
-            href="/services/development/landing-page"
-            class="p-4 rounded-[3rem] text-center border border-border hover:border-accent transition-colors"
-          >
-            <h3 class="font-semibold mb-2">Лендинг</h3>
-            <p class="text-sm text-text-muted">Конверсионные одностраничные сайты</p>
-          </a>
-        </div>
-      </div>
-
       <!-- CTA Section -->
-      <div class="mt-12 text-center p-12 rounded-3xl border border-border bg-bg">
-        <h3 class="text-2xl text-accent font-bold mb-4">Готовы начать свой проект?</h3>
-        <p class="text-text-muted mb-6">
+      <div
+        class="mt-6 md:mt-12 text-center p-6 md:p-12 rounded-2xl md:rounded-3xl border border-border bg-bg"
+      >
+        <h3 class="text-xl md:text-2xl text-accent font-bold mb-3 md:mb-4">
+          Готовы начать свой проект?
+        </h3>
+        <p class="text-text-muted text-sm md:text-base mb-4 md:mb-6">
           Посмотрите похожие проекты и свяжитесь с нами для обсуждения вашей задачи
         </p>
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <div class="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
           <a
             href="/calculator"
-            class="px-8 py-4 rounded-full text-sm bg-accent text-bg hover:bg-accent/90 transition-colors"
+            class="px-4 py-3 md:px-8 md:py-4 rounded-full text-xs md:text-sm bg-accent text-bg hover:bg-accent/90 transition-colors"
           >
             Рассчитать стоимость
           </a>
           <a
             href="/services"
-            class="px-8 py-4 rounded-full text-sm border-2 border-accent text-accent hover:bg-accent/10 transition-colors"
+            class="px-4 py-3 md:px-8 md:py-4 rounded-full text-xs md:text-sm border-2 border-accent text-accent hover:bg-accent/10 transition-colors"
           >
             Наши услуги
           </a>
           <a
             href="/blog"
-            class="px-8 py-4 rounded-full text-sm border-2 border-border text-text hover:border-accent transition-colors"
+            class="px-4 py-3 md:px-8 md:py-4 rounded-full text-xs md:text-sm border-2 border-border text-text hover:border-accent transition-colors"
           >
             Читать блог
           </a>
           <a
             href="/client-form"
-            class="px-8 py-4 rounded-full text-sm border-2 border-border text-text hover:border-accent transition-colors"
+            class="px-4 py-3 md:px-8 md:py-4 rounded-full text-xs md:text-sm border-2 border-border text-text hover:border-accent transition-colors"
           >
             Оставить заявку
           </a>

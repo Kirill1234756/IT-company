@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { onMounted, onUnmounted, nextTick, type Ref } from 'vue'
+import { loadGsap } from './useGsap'
 
 // Типы для scheduler API
 interface SchedulerPostTaskOptions {
@@ -55,14 +56,14 @@ export function useStackScroll(
       await nextTick()
       await nextTick()
 
-      // Увеличиваем начальную задержку для async компонентов
+      // Оптимизированная задержка для async компонентов
       if (window.scheduler?.postTask) {
-        await window.scheduler.postTask(() => { }, { priority: 'background', delay: 1200 })
+        await window.scheduler.postTask(() => { }, { priority: 'background', delay: 500 })
       } else if ('requestIdleCallback' in window) {
-        await new Promise((resolve) => window.requestIdleCallback(() => resolve(null), { timeout: 3000 }))
-        await new Promise((resolve) => setTimeout(resolve, 1200))
+        await new Promise((resolve) => window.requestIdleCallback(() => resolve(null), { timeout: 1000 }))
+        await new Promise((resolve) => setTimeout(resolve, 500))
       } else {
-        await new Promise((resolve) => setTimeout(resolve, 2000))
+        await new Promise((resolve) => setTimeout(resolve, 800))
       }
 
       const root = stackContainer.value
@@ -119,25 +120,24 @@ export function useStackScroll(
 
       console.log('[useStackScroll] Found', sections.length, 'sections after', attempts, 'attempts')
 
-      // Загрузить GSAP после того, как секции найдены
-      const { gsap } = await import('gsap')
-
+      // Загрузить GSAP через единый loader (разбиваем на мелкие задачи)
+      // loadGsap теперь сам ждет LCP, поэтому не добавляем дополнительную задержку
       if (window.scheduler?.postTask) {
         await window.scheduler.postTask(() => { }, { priority: 'background' })
       } else {
         await new Promise((resolve) => setTimeout(resolve, 0))
       }
 
-      const { ScrollTrigger } = await import('gsap/ScrollTrigger')
-
-      if (window.scheduler?.postTask) {
-        await window.scheduler.postTask(() => { }, { priority: 'background' })
-      } else {
-        await new Promise((resolve) => setTimeout(resolve, 0))
-      }
-
-      gsap.registerPlugin(ScrollTrigger)
+      // loadGsap по умолчанию ждет LCP для оптимизации TBT
+      const { gsap, ScrollTrigger } = await loadGsap(0, true)
       scrollTriggerRef = ScrollTrigger
+
+      // Yield для разбиения длинной задачи
+      if (window.scheduler?.postTask) {
+        await window.scheduler.postTask(() => { }, { priority: 'background' })
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 0))
+      }
 
       // Очистка существующих триггеров
       ScrollTrigger.getAll().forEach((trigger) => trigger.kill())
@@ -173,10 +173,12 @@ export function useStackScroll(
         await new Promise((resolve) => setTimeout(resolve, 0))
       }
 
-      // Настройка секций через GSAP
+      // Настройка секций через GSAP (разбиваем на мелкие задачи)
       // Используем force3D для аппаратного ускорения
       // Важно: overflowY должен быть 'visible' или 'hidden', чтобы не блокировать скролл страницы
-      sections.forEach((section, index) => {
+      for (let i = 0; i < sections.length; i++) {
+        const section = sections[i]
+        if (!section) continue
         gsap.set(section, {
           position: 'absolute',
           top: 0,
@@ -186,11 +188,17 @@ export function useStackScroll(
           overflowY: 'visible', // Изменено с 'auto' - не блокируем скролл страницы
           overflowX: 'hidden',
           force3D: true,
-          zIndex: index + 1
+          zIndex: i + 1
         })
-      })
+        // Yield каждые 2 секции для разбиения длинной задачи
+        if (i % 2 === 1 && window.scheduler?.postTask) {
+          await window.scheduler.postTask(() => { }, { priority: 'background' })
+        } else if (i % 2 === 1) {
+          await new Promise((resolve) => setTimeout(resolve, 0))
+        }
+      }
 
-      // Начальное состояние секций
+      // Начальное состояние секций (разбиваем на мелкие задачи)
       if (sections[0]) {
         gsap.set(sections[0], {
           zIndex: sections.length,
@@ -199,14 +207,31 @@ export function useStackScroll(
           force3D: true
         })
       }
-      sections.slice(1).forEach((s, i) => {
+
+      // Yield перед обработкой остальных секций
+      if (window.scheduler?.postTask) {
+        await window.scheduler.postTask(() => { }, { priority: 'background' })
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 0))
+      }
+
+      const remainingSections = sections.slice(1)
+      for (let i = 0; i < remainingSections.length; i++) {
+        const s = remainingSections[i]
+        if (!s) continue
         gsap.set(s, {
           zIndex: sections.length - i - 1,
           autoAlpha: 0,
           yPercent: 100,
           force3D: true
         })
-      })
+        // Yield каждые 2 секции
+        if (i % 2 === 1 && window.scheduler?.postTask) {
+          await window.scheduler.postTask(() => { }, { priority: 'background' })
+        } else if (i % 2 === 1) {
+          await new Promise((resolve) => setTimeout(resolve, 0))
+        }
+      }
 
       // Дополнительное ожидание для применения стилей
       await nextTick()
@@ -289,7 +314,7 @@ export function useStackScroll(
         await new Promise((resolve) => setTimeout(resolve, 0))
       }
 
-      // Настройка анимаций секций
+      // Настройка анимаций секций (разбиваем на мелкие задачи)
       // Важно: анимации должны быть синхронизированы правильно
       // Позиции в timeline должны быть равномерно распределены от 0 до sections.length - 1
       for (let i = 1; i < sections.length; i++) {
@@ -328,6 +353,13 @@ export function useStackScroll(
             },
             position
           )
+        }
+
+        // Yield каждые 2 секции для разбиения длинной задачи
+        if (i % 2 === 0 && window.scheduler?.postTask) {
+          await window.scheduler.postTask(() => { }, { priority: 'background' })
+        } else if (i % 2 === 0) {
+          await new Promise((resolve) => setTimeout(resolve, 0))
         }
       }
 
@@ -390,7 +422,7 @@ export function useStackScroll(
     const root = stackContainer.value
     if (root) {
       try {
-        const { gsap } = await import('gsap')
+        const { gsap } = await loadGsap()
         gsap.set(root, { clearProps: 'all' })
       } catch {
         // GSAP не загружен, просто очищаем стили вручную

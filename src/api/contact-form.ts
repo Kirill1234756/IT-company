@@ -6,10 +6,28 @@ import type { ContactFormData, ContactFormSubmissionResponse } from '../types/co
  */
 
 export class ContactFormAPI {
-  private static baseURL: string =
-    (globalThis as unknown as { API_BASE?: string }).API_BASE
-    || (import.meta as unknown as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL
-    || 'https://udevfchvbjgdalzyqbph.supabase.co/functions/v1'
+  private static getBaseURL(): string {
+    const apiBase = (globalThis as unknown as { API_BASE?: string | (() => string) }).API_BASE
+    const envUrl = (import.meta as unknown as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL
+    
+    // Handle if API_BASE is a function (shouldn't happen, but just in case)
+    if (typeof apiBase === 'function') {
+      console.warn('API_BASE is a function, this should be a string')
+      return 'http://localhost:3000/api'
+    }
+    
+    if (typeof apiBase === 'string' && apiBase) {
+      return apiBase
+    }
+    
+    if (typeof envUrl === 'string' && envUrl) {
+      return envUrl
+    }
+    
+    return 'http://localhost:3000/api'
+  }
+  
+  private static baseURL: string = ContactFormAPI.getBaseURL()
 
   /**
    * Submit contact form data to backend
@@ -24,22 +42,14 @@ export class ContactFormAPI {
       }
 
       const payload = { ...formData }
-      const anon = (globalThis as unknown as { SUPABASE_ANON?: string }).SUPABASE_ANON
-        || (import.meta as unknown as { env?: { VITE_SUPABASE_ANON_KEY?: string } }).env?.VITE_SUPABASE_ANON_KEY
-
-      const isSupabaseFn = typeof this.baseURL === 'string' && this.baseURL.includes('supabase.co/functions')
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
 
-      if (isSupabaseFn && anon) {
-        headers['Authorization'] = `Bearer ${anon}`
-        headers['apikey'] = anon
-      }
-
-      const url = `${this.baseURL}/contact-form`
+      const baseURL = this.baseURL
+      const url = `${baseURL}/contact-form`
 
       // Log for debugging (only in development)
       if (import.meta.env.DEV) {
-        console.log('Contact form API call:', { url, hasAnonKey: !!anon, baseURL: this.baseURL })
+        console.log('Contact form API call:', { url, baseURL: this.baseURL })
       }
 
       const response = await fetch(url, {
@@ -72,12 +82,9 @@ export class ContactFormAPI {
       if (error instanceof TypeError) {
         // Network error (CORS, connection refused, etc.)
         if (error.message.includes('fetch') || error.message.includes('Failed to fetch')) {
-          const isSupabase = this.baseURL.includes('supabase.co')
           return {
             success: false,
-            message: isSupabase
-              ? 'Не удалось подключиться к Supabase Edge Functions. Убедитесь, что функции развернуты и доступны.'
-              : 'Ошибка подключения к серверу. Проверьте интернет-соединение и попробуйте еще раз.'
+            message: 'Ошибка подключения к серверу. Проверьте интернет-соединение и попробуйте еще раз.'
           }
         }
       }

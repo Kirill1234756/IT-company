@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { defineProps, defineEmits } from 'vue'
+import IconContainer from './IconContainer.vue'
 
 const props = defineProps<{
   title: string
   iconPath: string
   description: string
   wrapperClass?: string
+  iconBgColor?: string
+  iconHoverBgColor?: string
+  iconColor?: string
 }>()
 
 const emit = defineEmits<{ (e: 'click'): void }>()
@@ -19,13 +23,12 @@ const emit = defineEmits<{ (e: 'click'): void }>()
     ]"
     @click="emit('click')"
   >
-    <div
-      class="w-12 h-12 md:w-16 md:h-16 rounded-xl flex items-center justify-center icon-container shrink-0 bg-accent transition-transform duration-300 group-hover:scale-110 group-hover:bg-[var(--color-purple)]"
-    >
-      <svg class="w-6 h-6 md:w-8 md:h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-        <path :d="iconPath" />
-      </svg>
-    </div>
+    <IconContainer
+      :icon-path="iconPath"
+      :bg-color="iconBgColor || 'bg-accent'"
+      :hover-bg-color="iconHoverBgColor || 'group-hover:bg-[var(--color-purple)]'"
+      :icon-color="iconColor || 'text-white'"
+    />
     <div class="pt-1 px-3 sm:px-5">
       <h3
         class="text-xl sm:text-2xl md:text-md font-bold text-white group-hover:text-white transition-colors mb-2 md:mb-3 font-display"

@@ -1890,9 +1890,9 @@ export const useServicesStore = defineStore('services', {
     } as ServiceDetail,
 
     // Cached services data (lazy-loaded on first use)
-    growthServices: [] as Array<{ id: number; title: string; description: string; priceFrom: string; icon: string; iconBg: string }>,
-    strategyServices: [] as Array<{ id: number; title: string; description: string; priceFrom: string; icon: string; iconBg: string }>,
-    developmentServices: [] as Array<{ id: number; title: string; description: string; priceFrom: string; icon: string; iconBg: string }>,
+    growthServices: [] as Array<{ id: number; title: string; description: string; priceFrom: string; iconPath: string; iconUseFill?: boolean }>,
+    strategyServices: [] as Array<{ id: number; title: string; description: string; priceFrom: string; iconPath: string; iconUseFill?: boolean }>,
+    developmentServices: [] as Array<{ id: number; title: string; description: string; priceFrom: string; iconPath: string; iconUseFill?: boolean }>,
     servicesDataLoaded: false,
   }),
 
@@ -1982,9 +1982,9 @@ export const useServicesStore = defineStore('services', {
     async loadDataIfNeeded() {
       if (this.servicesDataLoaded) return
       const dataModule: {
-        growthServices: Array<{ id: number; title: string; description: string; priceFrom: string; icon: string; iconBg: string }>
-        strategyServices: Array<{ id: number; title: string; description: string; priceFrom: string; icon: string; iconBg: string }>
-        developmentServices: Array<{ id: number; title: string; description: string; priceFrom: string; icon: string; iconBg: string }>
+        growthServices: Array<{ id: number; title: string; description: string; priceFrom: string; iconPath: string; iconUseFill?: boolean }>
+        strategyServices: Array<{ id: number; title: string; description: string; priceFrom: string; iconPath: string; iconUseFill?: boolean }>
+        developmentServices: Array<{ id: number; title: string; description: string; priceFrom: string; iconPath: string; iconUseFill?: boolean }>
       } = await import('./services.data')
       this.growthServices = dataModule.growthServices
       this.strategyServices = dataModule.strategyServices

@@ -28,7 +28,7 @@ const handleClick = () => {
         :alt="post.title"
         :width="400"
         :height="225"
-        :widths="[400, 800, 1200]"
+        :widths="[300, 600, 900, 1200]"
         format="webp"
         loading="lazy"
         decoding="async"

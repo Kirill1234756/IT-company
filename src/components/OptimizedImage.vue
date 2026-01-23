@@ -22,7 +22,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  widths: () => [400, 800, 1200],
+  widths: () => [400, 800, 1200, 1600],
   format: 'webp',
   loading: 'lazy',
   decoding: 'async',
