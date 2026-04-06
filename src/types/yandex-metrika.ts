@@ -9,7 +9,7 @@ declare global {
   }
 }
 
-// Конфигурация счётчика
+// Конфигурация счётчика (для SPA: referrer и url задаются при init)
 export interface YandexMetrikaConfig {
   id: number;
   clickmap?: boolean;
@@ -18,6 +18,8 @@ export interface YandexMetrikaConfig {
   webvisor?: boolean;
   ecommerce?: string | boolean;
   ssr?: boolean;
+  referrer?: string;
+  url?: string;
 }
 
 // Параметры для отслеживания событий
@@ -80,7 +82,7 @@ export interface GoalParams {
   callback?: () => void;
 }
 
-// Конфигурация по умолчанию
+// Конфигурация по умолчанию (оптимизирована для SPA)
 export const DEFAULT_METRIKA_CONFIG: YandexMetrikaConfig = {
   id: 0,
   clickmap: true,
@@ -88,7 +90,37 @@ export const DEFAULT_METRIKA_CONFIG: YandexMetrikaConfig = {
   accurateTrackBounce: true,
   webvisor: true,
   ecommerce: 'dataLayer',
-  ssr: false
+  ssr: true
+};
+
+/**
+ * Единая точка получения ID счётчика Яндекс.Метрики.
+ *
+ * Логика:
+ * - В первую очередь читаем VITE_YANDEX_METRIKA_ID из переменных окружения.
+ * - В non-production режимах (dev/preview) можем использовать безопасный fallback ID,
+ *   чтобы разработка и тестирование не ломали инициализацию.
+ * - В production при отсутствии ID возвращаем null и не инициализируем счётчик.
+ */
+export const getYandexMetrikaId = (): number | null => {
+  const rawFromEnv = import.meta.env.VITE_YANDEX_METRIKA_ID;
+
+  if (rawFromEnv) {
+    const parsed = Number(rawFromEnv);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return parsed;
+    }
+  }
+
+  // В dev/preview оставляем возможность использовать fallback,
+  // чтобы не ломать локальную разработку, даже если .env ещё не настроен.
+  if (import.meta.env.MODE !== 'production') {
+    const fallback = 106861768;
+    return fallback;
+  }
+
+  // В production без явного ID счётчик не инициализируем
+  return null;
 };
 
 // Константы для событий

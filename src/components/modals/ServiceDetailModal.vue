@@ -1,14 +1,25 @@
 <script setup lang="ts">
-import { defineProps, defineEmits, ref } from 'vue'
+import { defineProps, defineEmits, ref, onMounted, defineAsyncComponent } from 'vue'
 import type { ServiceDetail } from '../../types/services'
+import { useYandexMetrika } from '../../composables/useYandexMetrika'
 
-defineProps<{
+const SectionHeading = defineAsyncComponent(() => import('../ui/SectionHeading.vue'))
+const ContactSection = defineAsyncComponent(() => import('../sections/ContactSection.vue'))
+const Footer = defineAsyncComponent(() => import('../../pages/Footer.vue'))
+
+const props = defineProps<{
   service: ServiceDetail
 }>()
 
 const emit = defineEmits<{
   (e: 'close'): void
 }>()
+
+const { trackModalOpen } = useYandexMetrika()
+
+onMounted(() => {
+  trackModalOpen('service-detail', { service: props.service?.title ?? '' })
+})
 
 // FAQ accordion state
 const openFaqIndex = ref<number | null>(null)
@@ -21,25 +32,20 @@ const handleBackClick = () => {
   emit('close')
 }
 
-const handleBreadcrumbClick = (index: number) => {
-  if (index === 0) {
-    // Home - закрыть все модальные окна
-    emit('close')
-  } else if (index === 1) {
-    // Services - закрыть все модальные окна
-    emit('close')
-  } else if (index === 2) {
-    // Development - вернуться к списку услуг
-    emit('close')
-  }
+// Пока модалка открыта поверх страницы, клик по хлебным крошкам
+// просто закрывает модальное окно и возвращает к предыдущему состоянию.
+const handleBreadcrumbClick = (_index?: number) => {
+  handleBackClick()
 }
 </script>
 
 <template>
-  <div class="fixed inset-0 bg-opacity-50 z-50 overflow-y-auto">
-    <div class="min-h-screen services-modal">
+  <div class="fixed inset-0 bg-opacity-50 z-50 overflow-y-auto ios-modal-fix">
+    <div class="min-h-screen  bg-[var(--color-bg)] text-[var(--color-text)]">
       <!-- Header -->
-      <div class="sticky top-0 services-modal-header z-10">
+      <div
+        class="sticky top-0 z-10 bg-[rgba(3,18,47,0.95)] border-b border-[var(--color-border)] backdrop-blur-[10px]"
+      >
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <button
             @click="handleBackClick"
@@ -58,13 +64,13 @@ const handleBreadcrumbClick = (index: number) => {
         </div>
       </div>
 
-      <div class="mx-auto px-5 md:px-[5rem] py-[5rem]">
+      <div class="max-w-7xl mx-auto px-[1rem] md:px-[3rem]">
         <!-- Breadcrumbs -->
-        <div class="text-sm services-modal-breadcrumb mb-4">
+        <div class="text-sm mb-4 text-[var(--color-text-muted)]">
           <span
             v-for="(breadcrumb, index) in service.breadcrumbs"
             :key="index"
-            class="cursor-pointer services-modal-breadcrumb"
+            class="cursor-pointer text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
             @click="handleBreadcrumbClick(index)"
           >
             {{ breadcrumb }}
@@ -73,65 +79,403 @@ const handleBreadcrumbClick = (index: number) => {
         </div>
 
         <!-- Main Title -->
-        <h1 class="text-4xl font-mono services-modal-title mb-8 font-display">
+        <SectionHeading
+          :level="1"
+          size="lg"
+          color="accent"
+          align="left"
+          weight="black"
+          class="font-display text-condense"
+          :class="service.tagline || service.subtitle || service.primaryCta ? 'mb-4' : 'mb-8'"
+        >
           {{ service.title }}
-        </h1>
+        </SectionHeading>
+
+        <div
+          v-if="service.tagline || service.subtitle || service.primaryCta"
+          class="mb-10 space-y-4"
+        >
+          <p
+            v-if="service.tagline"
+            class="text-lg md:text-xl font-bold text-[var(--color-accent)] leading-snug"
+          >
+            {{ service.tagline }}
+          </p>
+          <p
+            v-if="service.subtitle"
+            class="text-sm md:text-base text-[var(--color-text)] leading-relaxed max-w-3xl"
+          >
+            {{ service.subtitle }}
+          </p>
+          <a
+            v-if="service.primaryCta"
+            :href="service.primaryCta.href || '/client-form'"
+            class="inline-flex items-center justify-center px-6 py-3 rounded-[3rem] bg-[var(--color-accent)] text-[var(--color-bg)] font-semibold text-sm hover:opacity-95 transition-opacity"
+          >
+            {{ service.primaryCta.label }}
+          </a>
+        </div>
+
+        <div
+          v-if="service.painHighlight"
+          class="mb-12 rounded-[3rem] p-6 md:p-8 border border-[var(--color-accent)]/35 bg-[var(--color-accent)]/10"
+        >
+          <p class="text-sm md:text-base leading-relaxed text-[var(--color-text)] font-medium">
+            {{ service.painHighlight }}
+          </p>
+        </div>
 
         <!-- About Section -->
-        <div class="mb-12 flex gap-10">
-          <h2 class="text-xl font-bold services-modal-title mb-6 font-display">
+        <div class="mb-12 flex flex-col gap-6">
+          <h2 class="text-xl font-bold font-display text-[var(--color-accent)]">
             {{ service.about.title }}
           </h2>
           <div class="space-y-4">
             <p
               v-for="(paragraph, index) in service.about.description"
               :key="index"
-              class="text-sm services-modal-description leading-relaxed"
+              class="text-sm leading-relaxed text-[var(--color-text)]"
             >
               {{ paragraph }}
             </p>
           </div>
         </div>
 
-        <!-- Metrics -->
-        <div class="flex gap-6 mb-12">
-          <div
-            v-for="(metric, index) in [
-              { label: 'Стоимость работ от', value: service.metrics.cost },
-              { label: 'рабочих дней на сдачу', value: service.metrics.workingDays },
-            ]"
-            :key="index"
-            class="services-detail-metric px-6 py-3 rounded-[3rem] flex-1 text-center"
+        <div v-if="service.problemBlock" class="mb-12">
+          <h2 class="text-xl font-bold mb-4 font-display text-[var(--color-accent)]">
+            {{ service.problemBlock.title }}
+          </h2>
+          <p
+            v-if="service.problemBlock.intro"
+            class="text-sm text-[var(--color-text-muted)] mb-3"
           >
-            <div class="opacity-80">{{ metric.label }}</div>
-            <div class="text-3xl font-bold">{{ metric.value }}</div>
+            {{ service.problemBlock.intro }}
+          </p>
+          <ul class="list-disc pl-5 space-y-2 text-sm leading-relaxed text-[var(--color-text)]">
+            <li v-for="(line, i) in service.problemBlock.items" :key="i">{{ line }}</li>
+          </ul>
+          <p
+            v-if="service.problemBlock.footnote"
+            class="mt-4 text-sm font-medium text-[var(--color-accent)]"
+          >
+            {{ service.problemBlock.footnote }}
+          </p>
+        </div>
+
+        <div v-if="service.receiveAfter" class="mb-12">
+          <h2 class="text-xl font-bold mb-4 font-display text-[var(--color-accent)]">
+            {{ service.receiveAfter.title }}
+          </h2>
+          <p
+            v-if="service.receiveAfter.intro"
+            class="text-sm text-[var(--color-text-muted)] mb-3"
+          >
+            {{ service.receiveAfter.intro }}
+          </p>
+          <ul class="list-disc pl-5 space-y-2 text-sm leading-relaxed text-[var(--color-text)]">
+            <li v-for="(line, i) in service.receiveAfter.items" :key="i">{{ line }}</li>
+          </ul>
+        </div>
+
+        <div
+          v-if="service.foundationBlock"
+          class="mb-12 rounded-[3rem] p-8 border border-[var(--color-accent)]/40 bg-[var(--color-accent)]/10"
+        >
+          <h2 class="text-xl font-bold mb-4 font-display text-[var(--color-accent)]">
+            {{ service.foundationBlock.title }}
+          </h2>
+          <p
+            class="text-sm leading-relaxed text-[var(--color-text)] whitespace-pre-line"
+          >
+            {{ service.foundationBlock.description }}
+          </p>
+        </div>
+
+        <!-- Когда нужна услуга -->
+        <div v-if="service.whenNeeded?.length" class="mb-12">
+          <h2 class="text-xl font-bold mb-6 font-display text-[var(--color-accent)]">
+            {{ service.whenNeededTitle || 'Когда нужна эта услуга' }}
+          </h2>
+          <p v-if="service.whenNeededIntro" class="text-sm text-[var(--color-text-muted)] mb-4">
+            {{ service.whenNeededIntro }}
+          </p>
+          <ul class="list-disc pl-5 space-y-2 text-sm leading-relaxed text-[var(--color-text)]">
+            <li v-for="(line, i) in service.whenNeeded" :key="i">{{ line }}</li>
+          </ul>
+          <p
+            v-if="service.whenNeededNote"
+            class="mt-4 text-sm font-medium text-[var(--color-accent)]"
+          >
+            {{ service.whenNeededNote }}
+          </p>
+        </div>
+
+        <!-- Metrics -->
+        <div class="flex flex-col sm:flex-row gap-6 mb-12">
+          <div
+            class="px-6 py-3 rounded-[3rem] flex-1 text-center bg-[var(--color-accent)] text-[var(--color-bg)]"
+          >
+            <div class="opacity-80">
+              {{ service.metrics.costMetricCaption || 'Стоимость работ от' }}
+            </div>
+            <div class="text-3xl font-bold">{{ service.metrics.cost }}</div>
+          </div>
+          <div
+            class="px-6 py-3 rounded-[3rem] flex-1 text-center bg-[var(--color-accent)] text-[var(--color-bg)]"
+          >
+            <div class="opacity-80">
+              {{ service.metrics.workingDaysCaption || 'рабочих дней на сдачу' }}
+            </div>
+            <div class="text-3xl font-bold">
+              {{ service.metrics.workingDaysLabel ?? service.metrics.workingDays }}
+            </div>
           </div>
         </div>
 
-        <!-- Features -->
-        <div class="mb-12">
+        <!-- Features: что делаем / что анализируем -->
+        <div v-if="service.features.length" class="mb-12">
+          <h2 class="text-xl font-bold mb-8 font-display text-[var(--color-accent)]">
+            {{ service.featuresSectionTitle || 'Что именно мы анализируем' }}
+          </h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div
               v-for="(feature, index) in service.features"
               :key="feature.id"
-              class="services-detail-feature rounded-[3rem] p-8 relative overflow-hidden"
+              class="rounded-[3rem] p-8 relative overflow-hidden bg-[rgba(3,18,47,0.8)] border border-[var(--color-border)]"
             >
-              <div class="absolute top-4 right-4 text-7xl font-bold services-detail-feature-number">
+              <div
+                class="absolute top-4 right-4 text-7xl font-bold text-[var(--color-accent)] opacity-30 select-none"
+              >
                 {{ index + 1 }}
               </div>
-              <p class="services-modal-description text-sm leading-relaxed relative z-10">
+              <h3 class="text-base font-bold relative z-10 text-[var(--color-accent)] mb-3 pr-12">
                 {{ feature.title }}
+              </h3>
+              <p
+                class="text-sm leading-relaxed relative z-10 text-[var(--color-text)] whitespace-pre-line"
+              >
+                {{ feature.description || '' }}
               </p>
             </div>
           </div>
         </div>
 
+        <div v-if="service.additionalList" class="mb-12">
+          <h2 class="text-xl font-bold mb-6 font-display text-[var(--color-accent)]">
+            {{ service.additionalList.title }}
+          </h2>
+          <ul class="list-disc pl-5 space-y-2 text-sm leading-relaxed text-[var(--color-text)]">
+            <li v-for="(line, i) in service.additionalList.items" :key="i">{{ line }}</li>
+          </ul>
+        </div>
+
+        <div v-if="service.outputPackage?.length" class="mb-12">
+          <h2 class="text-xl font-bold mb-8 font-display text-[var(--color-accent)]">
+            {{ service.outputPackageSectionTitle || 'Что вы получаете на выходе' }}
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div
+              v-for="(block, i) in service.outputPackage"
+              :key="i"
+              class="rounded-[3rem] p-6 border border-[var(--color-border)] bg-[rgba(3,18,47,0.8)]"
+            >
+              <h3 class="text-sm font-bold text-[var(--color-accent)] mb-3">{{ block.title }}</h3>
+              <ul class="list-disc pl-5 space-y-1 text-sm text-[var(--color-text)]">
+                <li v-for="(item, j) in block.items" :key="j">{{ item }}</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Что получаете -->
+        <div v-if="service.deliverables" class="mb-12 space-y-8">
+          <h2 class="text-xl font-bold font-display text-[var(--color-accent)]">
+            Что вы получаете в итоге
+          </h2>
+          <div
+            class="rounded-[3rem] p-8 bg-[rgba(3,18,47,0.8)] border border-[var(--color-border)]"
+          >
+            <h3 class="text-base font-bold text-[var(--color-accent)] mb-3">Структурированный отчёт</h3>
+            <ul class="list-disc pl-5 space-y-1 text-sm text-[var(--color-text)]">
+              <li v-for="(x, i) in service.deliverables.report" :key="i">{{ x }}</li>
+            </ul>
+          </div>
+          <div
+            class="rounded-[3rem] p-8 bg-[rgba(3,18,47,0.8)] border border-[var(--color-border)]"
+          >
+            <h3 class="text-base font-bold text-[var(--color-accent)] mb-3">Практические выводы</h3>
+            <ul class="list-disc pl-5 space-y-1 text-sm text-[var(--color-text)]">
+              <li v-for="(x, i) in service.deliverables.conclusions" :key="i">{{ x }}</li>
+            </ul>
+          </div>
+          <div
+            class="rounded-[3rem] p-8 border-2 border-[var(--color-accent)]/50 bg-[rgba(3,18,47,0.6)]"
+          >
+            <h3 class="text-base font-bold text-[var(--color-accent)] mb-3">
+              Готовая основа стратегии
+            </h3>
+            <p class="text-sm leading-relaxed text-[var(--color-text)]">
+              {{ service.deliverables.strategy }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Почему важно -->
+        <div v-if="service.whyImportant?.length" class="mb-12">
+          <h2 class="text-xl font-bold mb-8 font-display text-[var(--color-accent)]">
+            {{ service.whyImportantSectionTitle || 'Почему это критически важно' }}
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div
+              v-for="block in service.whyImportant"
+              :key="block.id"
+              class="rounded-[3rem] p-6 border border-[var(--color-border)] bg-[rgba(3,18,47,0.8)]"
+            >
+              <h3 class="text-sm font-bold text-[var(--color-accent)] mb-3">{{ block.title }}</h3>
+              <p
+                class="text-sm leading-relaxed text-[var(--color-text)] whitespace-pre-line"
+              >
+                {{ block.description }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Главная ценность -->
+        <div
+          v-if="service.mainValue"
+          class="mb-12 rounded-[3rem] p-8 bg-[var(--color-accent)]/15 border border-[var(--color-accent)]/40"
+        >
+          <h2 class="text-xl font-bold mb-4 font-display text-[var(--color-accent)]">
+            Главная ценность услуги
+          </h2>
+          <p class="text-sm leading-relaxed text-[var(--color-text)] whitespace-pre-line">
+            {{ service.mainValue }}
+          </p>
+        </div>
+
+        <div
+          v-if="service.impactBlock"
+          class="mb-12 rounded-[3rem] p-8 border border-[var(--color-border)] bg-[rgba(3,18,47,0.85)]"
+        >
+          <h2 class="text-xl font-bold mb-4 font-display text-[var(--color-accent)]">
+            {{ service.impactBlock.title }}
+          </h2>
+          <p
+            class="text-sm leading-relaxed text-[var(--color-text)] whitespace-pre-line"
+          >
+            {{ service.impactBlock.description }}
+          </p>
+        </div>
+
+        <!-- Стоимость и сроки (текст) -->
+        <div
+          v-if="service.pricingFactors?.length || service.timelineNote"
+          class="mb-12 grid grid-cols-1 md:grid-cols-2 gap-6"
+        >
+          <div
+            v-if="service.pricingFactors?.length"
+            class="rounded-[3rem] p-8 border border-[var(--color-border)] bg-[rgba(3,18,47,0.8)]"
+          >
+            <h2 class="text-lg font-bold mb-4 font-display text-[var(--color-accent)]">
+              Что влияет на стоимость
+            </h2>
+            <ul class="list-disc pl-5 space-y-2 text-sm text-[var(--color-text)]">
+              <li v-for="(x, i) in service.pricingFactors" :key="i">{{ x }}</li>
+            </ul>
+          </div>
+          <div
+            v-if="service.timelineNote"
+            class="rounded-[3rem] p-8 border border-[var(--color-border)] bg-[rgba(3,18,47,0.8)]"
+          >
+            <h2 class="text-lg font-bold mb-4 font-display text-[var(--color-accent)]">Сроки</h2>
+            <p class="text-sm leading-relaxed text-[var(--color-text)]">{{ service.timelineNote }}</p>
+          </div>
+        </div>
+
+        <!-- Пример инсайта -->
+        <div
+          v-if="service.insightExample"
+          class="mb-12 rounded-[3rem] p-8 border-l-4 border-[var(--color-accent)] bg-[rgba(3,18,47,0.9)]"
+        >
+          <h2 class="text-lg font-bold mb-3 font-display text-[var(--color-accent)]">
+            Пример инсайта
+          </h2>
+          <p class="text-sm leading-relaxed text-[var(--color-text)] italic">
+            {{ service.insightExample }}
+          </p>
+        </div>
+
+        <!-- Без анализа -->
+        <div
+          v-if="service.withoutAnalysis?.length"
+          class="mb-12 rounded-[3rem] p-8 border border-rose-500/40 bg-rose-950/20"
+        >
+          <h2 class="text-xl font-bold mb-4 font-display text-rose-300">
+            {{ service.withoutAnalysisTitle || 'Риски без анализа' }}
+          </h2>
+          <ul class="list-disc pl-5 space-y-2 text-sm text-[var(--color-text)]">
+            <li v-for="(x, i) in service.withoutAnalysis" :key="i">{{ x }}</li>
+          </ul>
+        </div>
+
+        <div v-if="service.beforeAfter" class="mb-12">
+          <h2 class="text-xl font-bold mb-6 font-display text-[var(--color-accent)]">
+            {{ service.beforeAfter.title || 'До и после' }}
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div
+              class="rounded-[3rem] p-6 border border-[var(--color-border)] bg-[rgba(3,18,47,0.6)]"
+            >
+              <h3 class="text-sm font-bold text-rose-300/90 mb-3">
+                {{ service.beforeAfter.beforeTitle || 'До' }}
+              </h3>
+              <ul class="list-disc pl-5 space-y-2 text-sm text-[var(--color-text)]">
+                <li v-for="(x, i) in service.beforeAfter.before" :key="i">{{ x }}</li>
+              </ul>
+            </div>
+            <div
+              class="rounded-[3rem] p-6 border border-[var(--color-accent)]/40 bg-[rgba(3,18,47,0.85)]"
+            >
+              <h3 class="text-sm font-bold text-[var(--color-accent)] mb-3">
+                {{ service.beforeAfter.afterTitle || 'После' }}
+              </h3>
+              <ul class="list-disc pl-5 space-y-2 text-sm text-[var(--color-text)]">
+                <li v-for="(x, i) in service.beforeAfter.after" :key="i">{{ x }}</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Мини-кейс -->
+        <div
+          v-if="service.miniCase"
+          class="mb-12 rounded-[3rem] p-8 border border-[var(--color-border)] bg-[rgba(3,18,47,0.8)]"
+        >
+          <h2 class="text-xl font-bold mb-4 font-display text-[var(--color-accent)]">
+            {{ service.miniCase.title }}
+          </h2>
+          <div class="space-y-3">
+            <p
+              v-for="(para, i) in service.miniCase.description"
+              :key="i"
+              class="text-sm leading-relaxed text-[var(--color-text)]"
+            >
+              {{ para }}
+            </p>
+          </div>
+        </div>
+
         <!-- Development Stages -->
         <div v-if="service.stages" class="mb-12">
-          <h2 class="text-xl font-bold services-modal-title mb-8 font-display">Этапы разработки</h2>
+          <h2
+            class="text-xl font-bold mb-8 font-display text-[var(--color-accent)]"
+          >
+            Этапы разработки
+          </h2>
           <div class="relative">
             <!-- Timeline line -->
-            <div class="absolute left-8 top-0 bottom-0 w-0.5 services-detail-stage-line"></div>
+            <div class="absolute left-8 top-0 bottom-0 w-0.5 bg-[var(--color-border)]"></div>
 
             <div class="space-y-8">
               <div
@@ -141,17 +485,19 @@ const handleBreadcrumbClick = (index: number) => {
               >
                 <!-- Stage number -->
                 <div
-                  class="w-16 h-16 services-detail-stage rounded-full flex items-center justify-center font-bold text-lg relative z-1"
+                  class="w-16 h-16 rounded-full flex items-center justify-center font-bold text-lg relative z-1 bg-[var(--color-accent)] text-[var(--color-bg)]"
                 >
                   {{ stage.number }}
                 </div>
 
                 <!-- Stage content -->
                 <div class="flex-1 border border-accent/40 rounded-[3rem] p-6 shadow-sm">
-                  <h3 class="text-xl font-bold services-modal-title mb-3 font-display">
+                  <h3
+                    class="text-xl font-bold mb-3 font-display text-[var(--color-accent)]"
+                  >
                     {{ stage.title }}
                   </h3>
-                  <p class="services-modal-description text-sm leading-relaxed">
+                  <p class="text-sm leading-relaxed text-[var(--color-text)]">
                     {{ stage.description }}
                   </p>
                 </div>
@@ -162,20 +508,24 @@ const handleBreadcrumbClick = (index: number) => {
 
         <!-- FAQ Section -->
         <div v-if="service.faq" class="mb-12">
-          <h2 class="text-xl font-bold services-modal-title mb-8 font-display">
+          <h2
+            class="text-xl font-bold mb-8 font-display text-[var(--color-accent)]"
+          >
             Часто задаваемые вопросы
           </h2>
           <div class="space-y-2">
             <div
               v-for="(faq, index) in service.faq"
               :key="faq.id"
-              class="services-detail-faq-item rounded-[3rem] overflow-hidden"
+              class="rounded-[3rem] overflow-hidden bg-[rgba(3,18,47,0.8)] border border-[var(--color-border)]"
             >
               <button
                 @click="toggleFaq(index)"
                 class="w-full p-6 text-left flex items-center justify-between hover:bg-accent/5 transition-colors duration-200"
-              >
-                <h3 class="text-lg font-bold services-detail-faq-question font-display pr-4">
+                >
+                <h3
+                  class="text-lg font-bold font-display pr-4 text-[var(--color-text)]"
+                >
                   {{ faq.question }}
                 </h3>
                 <div
@@ -202,27 +552,55 @@ const handleBreadcrumbClick = (index: number) => {
                 :class="openFaqIndex === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'"
               >
                 <div class="px-6 pb-6">
-                  <p class="services-detail-faq-answer text-sm leading-relaxed">{{ faq.answer }}</p>
+                  <p class="text-sm leading-relaxed text-[var(--color-text-muted)]">
+                    {{ faq.answer }}
+                  </p>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- CTA Section -->
-        <div class="text-center services-detail-cta rounded-3xl p-12 shadow-sm">
-          <button
-            class="services-detail-cta-button px-12 py-4 rounded-full text-lg font-semibold transition-colors mb-4"
-          >
-            Получить консультацию
-          </button>
-          <p class="services-modal-description">Или оставьте заявку на бесплатный расчет</p>
-        </div>
+
       </div>
+
+      <!-- Contact Section -->
+      <ContactSection />
+
+      <!-- Footer Section -->
+      <Footer />
     </div>
   </div>
 </template>
 
 <style scoped>
 /* Additional styles if needed */
+</style>
+
+<style>
+/* iOS fix для модальных окон */
+.ios-modal-fix {
+  /* Исправляем проблему с fixed positioning на iOS */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* Используем динамический viewport height для iOS */
+  min-height: -webkit-fill-available; /* Fallback for older iOS */
+  height: 100vh;
+  height: 100dvh;
+  /* Улучшаем прокрутку на iOS (устаревшее, но все еще работает) */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Исправление для iOS Safari - предотвращаем "прыжки" при открытии модального окна */
+@supports (-webkit-touch-callout: none) {
+  body:has(.ios-modal-fix) {
+    position: fixed;
+    width: 100%;
+    overflow: hidden;
+  }
+}
 </style>

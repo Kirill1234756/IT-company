@@ -20,6 +20,7 @@ const performanceMetrics = shallowReactive({
 
 import type { ContactFormData } from '../../types/contact-form'
 import { ContactFormAPI } from '../../api/contact-form'
+import { useYandexMetrika } from '../../composables/useYandexMetrika'
 
 // Validation cache for performance
 const validationCache = new Map<string, string | undefined>()
@@ -65,6 +66,8 @@ const errors = ref<Record<string, string | undefined>>({})
 
 // Form submission state
 const isSubmitting = ref(false)
+
+const { trackFormSubmit } = useYandexMetrika()
 
 // Lazy loading state
 const isVisible = ref(false)
@@ -276,6 +279,7 @@ const submitForm = async () => {
     const apiEnd = performance.now()
 
     if (result.success) {
+      trackFormSubmit('contact-form')
       // Success - reset form
       formData.value.name = ''
       formData.value.phone = ''
@@ -361,8 +365,8 @@ const getFieldError = (key: keyof ContactFormData): string | undefined =>
 <template>
   <section
     ref="sectionRef"
-    class="no-scrollbar bg-text px-4 sm:px-6 md:px-8 lg:px-12 xl:px-[12rem] py-4 sm:py-6 md:py-8 lg:py-[2rem] overflow-y-auto"
-    style="box-sizing: border-box; contain: layout style paint"
+    class="stack-section no-scrollbar bg-text px-4 sm:px-6 md:px-8 lg:px-12 xl:px-[12rem] py-4 sm:py-6 md:py-8 lg:py-[2rem]"
+    style="box-sizing: border-box; contain: layout style paint; height: auto;"
   >
     <!-- Loading placeholder with optimized animation -->
     <div v-if="!isVisible" class="flex items-center justify-center py-20">
@@ -375,7 +379,7 @@ const getFieldError = (key: keyof ContactFormData): string | undefined =>
     <div
       v-else
       v-memo="[isVisible, isSubmitting]"
-      class="flex flex-col border border-accent rounded-[3rem] p-4 sm:p-5 md:p-6"
+      class="max-w-7xl mx-auto flex flex-col border border-accent rounded-[3rem] p-4 sm:p-5 md:p-6"
     >
       <h3 class="text-bg text-xl sm:text-2xl md:text-3xl font-bold text-center mb-3 sm:mb-4">
         Станьте нашим новым партнером

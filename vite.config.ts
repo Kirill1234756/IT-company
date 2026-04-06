@@ -158,7 +158,6 @@ export default defineConfig({
           if (id.includes('node_modules')) {
             // Некоторые библиотеки требуют side effects
             if (
-              id.includes('gsap') ||
               id.includes('vue-router') ||
               id.includes('pinia') ||
               id.includes('@unhead') ||
@@ -193,10 +192,20 @@ export default defineConfig({
     // Target для современных браузеров (уменьшает размер бандла)
     target: ['es2020', 'edge88', 'firefox78', 'chrome87', 'safari14'],
   },
-  // Оптимизация для разработки
+  // Оптимизация для разработки + прокси API на бэкенд (избегаем CORS и ERR_CONNECTION_RESET)
   server: {
     headers: {
       'Cache-Control': 'no-cache',
+    },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+      '/health': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
     },
   },
 })

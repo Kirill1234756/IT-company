@@ -7,20 +7,30 @@ import {
   nextTick,
   onMounted,
   onUnmounted,
+  watch,
 } from 'vue'
 import { useBlogStore } from '../../stores/blog'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { debounce } from '../../utils/performance'
 import type { BlogPost } from '../../types/blog'
 import FilterButtons from '../FilterButtons.vue'
+import TapeSwiper from '../TapeSwiper.vue'
 
 const BlogCard = defineAsyncComponent(() => import('../BlogCard.vue'))
+const SectionHeading = defineAsyncComponent(() => import('../ui/SectionHeading.vue'))
 
 const blogStore = useBlogStore()
 const route = useRoute()
+const router = useRouter()
+
+// Define props
+const props = defineProps<{
+  useSwiper?: boolean
+}>()
 
 // Filter state with shallowRef for better performance
-const activeTab = shallowRef('all')
+const DEFAULT_TAB_ID = 'website-development'
+const activeTab = shallowRef<string>(DEFAULT_TAB_ID)
 
 // Реактивное отслеживание размера экрана для определения количества карточек
 const isMobile = ref(false)
@@ -33,10 +43,15 @@ const updateIsMobile = () => {
 }
 
 // Определяем, находимся ли мы на главной странице
-// На главной странице route.path === '/', на отдельной странице '/blog'
+// Главная: route.path === '/'
 const isOnHomePage = computed(() => {
   if (typeof window === 'undefined') return false
   return route.path === '/' || route.path === '/home'
+})
+
+// Используем Swiper только когда явно передали use-swiper (на главной через BlogWrapperSection)
+const shouldUseSwiper = computed(() => {
+  return props.useSwiper === true
 })
 
 // Ограничение для главной страницы - показываем разное количество в зависимости от устройства
@@ -110,11 +125,6 @@ const handlePostClick = (post: BlogPost) => {
   emit('postClick', post)
 }
 
-// Set tab with debouncing
-const setTab = (tabId: string) => {
-  debouncedSetTab(tabId)
-}
-
 // Оранжевые цвета как в портфолио
 const filterButtonColors = {
   bg: '!bg-accent',
@@ -127,10 +137,27 @@ const filterButtonColors = {
 // Обработчик изменения фильтра
 const handleFilterChange = (value: string) => {
   debouncedSetTab(value)
+  // На главной странице не меняем URL (там блог — часть лендинга)
+  if (isOnHomePage.value) return
+  router.push(`/blog/${value}`)
 }
 
 // Инициализация и очистка обработчика изменения размера окна
 onMounted(() => {
+  // Синхронизируем активную вкладку с URL
+  // /blog -> редиректим на /blog/website-development, чтобы сразу показать нужную вкладку
+  if (!isOnHomePage.value) {
+    const category = route.params.category
+    if (typeof category === 'string' && category.length > 0) {
+      activeTab.value = category
+    } else if (route.path === '/blog') {
+      activeTab.value = DEFAULT_TAB_ID
+      router.replace(`/blog/${DEFAULT_TAB_ID}`)
+    } else {
+      activeTab.value = DEFAULT_TAB_ID
+    }
+  }
+
   // Инициализируем определение мобильного устройства
   updateIsMobile()
 
@@ -139,6 +166,21 @@ onMounted(() => {
     window.addEventListener('resize', updateIsMobile)
   }
 })
+
+// Синхронизация activeTab при навигации (back/forward или прямой переход по ссылке)
+watch(
+  () => route.params.category,
+  (category) => {
+    if (isOnHomePage.value) return
+    if (typeof category === 'string' && category.length > 0) {
+      activeTab.value = category
+      showAllItems.value = false
+    } else if (route.path === '/blog') {
+      activeTab.value = DEFAULT_TAB_ID
+      showAllItems.value = false
+    }
+  }
+)
 
 onUnmounted(() => {
   // Удаляем обработчик изменения размера окна
@@ -149,13 +191,18 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="w-full mb-20">
+  <div class="w-full max-w-7xl mx-auto">
     <!-- Main Title -->
-    <h1
-      class="title no-title-effects text-center text-3xl md:text-4xl font-black tracking-tight mb-8 text-accent opacity-100"
+    <SectionHeading
+      :level="1"
+      size="lg"
+      color="accent"
+      align="center"
+      weight="black"
+      class="mb-8 opacity-100"
     >
       Блог
-    </h1>
+    </SectionHeading>
 
     <!-- Category Tabs -->
     <FilterButtons
@@ -167,7 +214,25 @@ onUnmounted(() => {
     />
 
     <!-- Blog Posts Grid with v-memo optimization -->
-    <div class="blog-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <!-- Swiper для главной страницы с эффектом ленты -->
+    <TapeSwiper
+      v-if="shouldUseSwiper"
+      :items="displayedPosts"
+      unique-key="id"
+      button-class-prefix="blog"
+      @item-click="handlePostClick"
+    >
+      <template #default="{ item }">
+        <BlogCard
+          class="blog-card h-full"
+          :post="item"
+          @click="handlePostClick"
+        />
+      </template>
+    </TapeSwiper>
+
+    <!-- Обычная сетка для отдельной страницы -->
+    <div v-else class="blog-grid grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
       <BlogCard
         v-for="post in displayedPosts"
         :key="post.id"
@@ -178,8 +243,8 @@ onUnmounted(() => {
       />
     </div>
 
-    <!-- Show More Button (только на главной странице) -->
-    <div v-if="hasMoreItems" class="flex justify-center mt-8 md:mt-12">
+    <!-- Show More Button (только на главной странице, но не при использовании Swiper) -->
+    <div v-if="hasMoreItems && !shouldUseSwiper" class="flex justify-center mt-8 md:mt-12">
       <button
         @click="showMore"
         class="group flex items-center gap-3 px-6 py-3 md:px-8 md:py-4 rounded-full bg-accent text-bg font-semibold text-sm md:text-base hover:bg-accent/90 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
@@ -217,6 +282,4 @@ onUnmounted(() => {
 .grid {
   contain: layout;
 }
-
-/* will-change удален - не нужен для статических элементов */
 </style>

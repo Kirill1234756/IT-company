@@ -1,69 +1,69 @@
 <script setup lang="ts">
-import { ref, computed, defineAsyncComponent, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, defineAsyncComponent, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useBlogStore } from '../stores/blog'
 import type { BlogPost } from '../types/blog'
 
-// Extend window interface for global functions
-declare global {
-  interface Window {
-    stackSections?: HTMLElement[]
-    scrollToSection?: (sectionIndex: number) => void
-  }
-}
+// MainSection - синхронный импорт для быстрого LCP на мобильных
+import MainSection from '../components/sections/MainSection.vue'
 
-import { useStackScroll } from '../composables/useStackScroll'
-
-// MainSection - async без задержки для баланса FCP и размера бандла
-// Pre-rendered контент в index.html обеспечивает мгновенный LCP
-// Async для уменьшения начального бандла, но без задержки для быстрого FCP
-const MainSection = defineAsyncComponent({
-  loader: () => import('../components/sections/MainSection.vue'),
-  delay: 0,
-  timeout: 2000,
-})
-
-// Ленивая загрузка секций - без задержки для быстрого FCP
-const sectionDelay = 0
+// Ленивая загрузка секций - с задержками для снижения TBT на мобильных
+// Задержки между секциями: 100ms каждая для разбиения нагрузки на main thread
+const isMobileDevice = typeof window !== 'undefined' && window.innerWidth < 768
+const baseDelay = isMobileDevice ? 100 : 0
 
 const WhatWeDoSection = defineAsyncComponent({
   loader: () => import('../components/sections/WhatWeDoSection.vue'),
-  delay: sectionDelay,
+  delay: baseDelay,
   timeout: 5000,
-  loadingComponent: defineAsyncComponent(() => import('../components/LoadingFallback.vue')),
 })
 
 const PortfolioSection = defineAsyncComponent({
   loader: () => import('../components/sections/PortfolioSection.vue'),
-  delay: sectionDelay,
+  delay: baseDelay + (isMobileDevice ? 100 : 0),
   timeout: 5000,
-  loadingComponent: defineAsyncComponent(() => import('../components/LoadingFallback.vue')),
 })
 
 const AdvantagesSection = defineAsyncComponent({
   loader: () => import('../components/sections/AdvantagesSection.vue'),
-  delay: sectionDelay,
+  delay: baseDelay + (isMobileDevice ? 200 : 0),
   timeout: 5000,
-  loadingComponent: defineAsyncComponent(() => import('../components/LoadingFallback.vue')),
 })
 
 const BlogWrapperSection = defineAsyncComponent({
   loader: () => import('../components/sections/BlogWrapperSection.vue'),
-  delay: sectionDelay,
+  delay: baseDelay + (isMobileDevice ? 300 : 0),
   timeout: 5000,
-  loadingComponent: defineAsyncComponent(() => import('../components/LoadingFallback.vue')),
+})
+
+const WelcomePackageSection = defineAsyncComponent({
+  loader: () => import('../components/sections/WelcomePackageSection.vue'),
+  delay: baseDelay + (isMobileDevice ? 350 : 0),
+  timeout: 5000,
+})
+
+const ContactSection = defineAsyncComponent({
+  loader: () => import('../components/sections/ContactSection.vue'),
+  delay: baseDelay + (isMobileDevice ? 400 : 0),
+  timeout: 5000,
+})
+
+const Footer = defineAsyncComponent({
+  loader: () => import('../pages/Footer.vue'),
+  delay: baseDelay + (isMobileDevice ? 500 : 0),
+  timeout: 5000,
 })
 
 const BlogModal = defineAsyncComponent({
   loader: () => import('../components/modals/BlogModal.vue'),
   delay: 0,
   timeout: 5000,
-  loadingComponent: defineAsyncComponent(() => import('../components/LoadingFallback.vue')),
 })
 
-// ContactSection and Footer are now global in App.vue
+defineProps<{
+  dataVInspector?: string
+}>()
 
-const stackRoot = ref<HTMLElement | null>(null)
 const router = useRouter()
 const route = useRoute()
 const blogStore = useBlogStore()
@@ -88,57 +88,16 @@ const handleBlogPostClick = (post: BlogPost) => {
 // Function to scroll to blog section
 const scrollToBlogSection = () => {
   const blogSection = document.getElementById('blog')
-  // Removed console.log for production performance
-  if (blogSection) {
-    // Find the blog section index in the stack
-    const stackContainer = document.getElementById('stack')
-    if (stackContainer) {
-      const sections = stackContainer.querySelectorAll('.stack-section')
-      // Removed console.log for production performance
-
-      // Removed debug logging for production performance
-
-      const blogSectionIndex = Array.from(sections).findIndex((section) => {
-        // Check if this section has id="blog"
-        return section.id === 'blog'
-      })
-
-      if (blogSectionIndex !== -1) {
-        // Removed console.log for production performance
-
-        // Try to use global scrollToSection function if available
-        if (window.scrollToSection) {
-          // Removed console.log for production performance
-          window.scrollToSection(blogSectionIndex)
-        } else {
-          // Fallback to native scrollTo
-          const scrollPosition = blogSectionIndex * window.innerHeight
-          // Removed console.log for production performance
-          window.scrollTo({
-            top: scrollPosition,
-            behavior: 'smooth',
-          })
-        }
-      } else {
-        // Removed console.log for production performance
-        // Alternative: try to scroll to the blog section directly
-        import('gsap')
-          .then(({ gsap }) => {
-            try {
-              gsap.to(window, {
-                duration: 1,
-                scrollTo: blogSection,
-                ease: 'power2.inOut',
-              })
-            } catch {
-              // Removed console.log for production performance
-            }
-          })
-          .catch(() => {
-            // Removed console.log for production performance
-          })
-      }
-    }
+  const stackContainer = document.getElementById('stack')
+  if (blogSection && stackContainer) {
+    // Скроллим контейнер #stack к секции блога
+    const stackRect = stackContainer.getBoundingClientRect()
+    const sectionRect = blogSection.getBoundingClientRect()
+    const scrollTop = stackContainer.scrollTop + (sectionRect.top - stackRect.top)
+    stackContainer.scrollTo({
+      top: scrollTop,
+      behavior: 'smooth',
+    })
   }
 }
 
@@ -198,31 +157,26 @@ const relatedPosts = computed(() => {
 
 // intersection/lazy logic moved into corresponding section components
 
-useStackScroll(stackRoot, {
-  snap: false,
-  onAfterGsapReady: ({ sections }) => {
-    // Removed console.log for production performance
-
-    // Store reference to sections for later use
-    window.stackSections = sections
-
-    // Create a global function to scroll to specific section
-    window.scrollToSection = (sectionIndex: number) => {
-      // Removed console.log for production performance
-      const scrollPosition = sectionIndex * window.innerHeight
-      window.scrollTo({
-        top: scrollPosition,
-        behavior: 'smooth',
-      })
-    }
-  },
-})
-
 // Initialize blog modal handling
 onMounted(() => {
-  // Removed console.log for production performance
-
   handleRouteParams()
+
+  // Главная всегда загружается с main section: прокручиваем #stack в начало
+  nextTick(() => {
+    const stack = document.getElementById('stack')
+    if (stack && window.location.hash !== '#blog') {
+      // Жёстко сбрасываем scrollTop несколько раз, чтобы scroll-snap не "прилип"
+      // к другой секции на первом кадре.
+      stack.scrollTop = 0
+      stack.scrollTo(0, 0)
+      requestAnimationFrame(() => {
+        stack.scrollTop = 0
+      })
+      setTimeout(() => {
+        stack.scrollTop = 0
+      }, 0)
+    }
+  })
 
   // Handle hash navigation on page load
   if (window.location.hash === '#blog') {
@@ -269,8 +223,6 @@ watch(
   }
 )
 
-// cleanup handled in useStackScroll
-
 // Form data for contact section
 // contact form lives in ContactSection
 
@@ -278,8 +230,8 @@ watch(
 </script>
 
 <template>
-  <div id="stack" class="relative" ref="stackRoot">
-    <!-- Main Hero Section -->
+  <div id="stack">
+    <!-- Main Hero Section - синхронная загрузка для быстрого LCP -->
     <MainSection />
 
     <!-- what we do -->
@@ -293,6 +245,15 @@ watch(
 
     <!-- blog -->
     <BlogWrapperSection id="blog" @post-click="handleBlogPostClick" />
+
+    <!-- welcome package -->
+    <WelcomePackageSection />
+
+    <!-- contact -->
+    <ContactSection />
+
+    <!-- footer -->
+    <Footer />
   </div>
   <!-- Blog Modal with Teleport -->
   <Teleport to="body">

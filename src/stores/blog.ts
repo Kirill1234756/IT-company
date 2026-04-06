@@ -51,9 +51,14 @@ export const useBlogStore = defineStore('blog', {
 
       const map = new Map<string, BlogPost[]>()
       for (const post of state.posts) {
-        const arr = map.get(post.category) || []
-        arr.push(post)
-        map.set(post.category, arr)
+        const categories = [post.category, ...(post.additionalCategories || [])]
+        for (const category of categories) {
+          const arr = map.get(category) || []
+          if (!arr.some((p) => p.id === post.id)) {
+            arr.push(post)
+            map.set(category, arr)
+          }
+        }
       }
 
       state._cache.set(cacheKey, map)

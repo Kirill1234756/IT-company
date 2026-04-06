@@ -9,7 +9,7 @@ import type {
     YandexMetrikaGoal,
     UserEventType
 } from '@/types/yandex-metrika'
-import { DEFAULT_METRIKA_CONFIG, METRIKA_EVENTS, METRIKA_GOALS } from '@/types/yandex-metrika'
+import { DEFAULT_METRIKA_CONFIG, METRIKA_EVENTS, METRIKA_GOALS, getYandexMetrikaId } from '@/types/yandex-metrika'
 
 /**
  * Композабл для работы с Яндекс.Метрикой
@@ -24,13 +24,9 @@ export function useYandexMetrika() {
      * Инициализация Яндекс.Метрики
      */
     const init = (config?: Partial<YandexMetrikaConfig>) => {
-        // Проверяем, что мы в production режиме
-        if (import.meta.env.MODE !== 'production') {
-            return
-        }
-
-        // Получаем ID из переменных окружения или конфигурации
-        const metrikaId = import.meta.env.VITE_YANDEX_METRIKA_ID || config?.id
+        // Единая точка получения ID счётчика:
+        // сначала явно переданный id, затем helper, который читает .env и fallback-и
+        const metrikaId = config?.id ?? getYandexMetrikaId()
         if (!metrikaId) {
             return
         }
@@ -52,14 +48,16 @@ export function useYandexMetrika() {
         // Загружаем скрипт Яндекс.Метрики
         loadScript(() => {
             if (window.ym) {
-                // Инициализируем счётчик
+                // Инициализируем счётчик (для SPA: referrer и url для корректной первой страницы)
                 window.ym(finalConfig.id, 'init', {
                     clickmap: finalConfig.clickmap,
                     trackLinks: finalConfig.trackLinks,
                     accurateTrackBounce: finalConfig.accurateTrackBounce,
                     webvisor: finalConfig.webvisor,
                     ecommerce: finalConfig.ecommerce,
-                    ssr: finalConfig.ssr
+                    ssr: finalConfig.ssr,
+                    referrer: finalConfig.referrer ?? (document.referrer || undefined),
+                    url: finalConfig.url ?? window.location.href
                 })
 
                 isInitialized.value = true
@@ -171,10 +169,11 @@ export function useYandexMetrika() {
     /**
      * Удобные методы для частых событий
      */
-    const trackPageView = (url?: string, title?: string) => {
+    const trackPageView = (url?: string, title?: string, routeName?: string) => {
         trackEvent({
             type: METRIKA_EVENTS.PAGE_VIEW,
             params: {
+                page_name: routeName || document.title,
                 page_title: title || document.title,
                 page_url: url || window.location.href
             }

@@ -7,6 +7,8 @@ import FormSection from '../components/sections/FormSection.vue'
 import BudgetRangeSection from '../components/sections/BudgetRangeSection.vue'
 import { useHead } from '@unhead/vue'
 import { useBreadcrumbSchema } from '../composables/useBreadcrumbSchema'
+import SectionHeading from '../components/ui/SectionHeading.vue'
+import Breadcrumbs from '../components/ui/Breadcrumbs.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -112,14 +114,31 @@ const updateFormField = (field: keyof ClientFormData, value: string) => {
 
 <template>
   <div class="min-h-screen bg-text">
-    <div class="mx-auto px-5 md:px-[5rem] py-[5rem]">
+    <div class="max-w-7xl mx-auto px-5 md:px-[5rem]">
+      <Breadcrumbs
+        :items="[
+          { label: 'Главная', to: '/' },
+          { label: 'Стать клиентом' },
+        ]"
+        class="mb-6"
+      />
       <!-- Header Section -->
       <div class="text-center mb-16">
-        <h1 class="text-3xl md:text-5xl font-bold text-accent mb-6 font-display">Стать клиентом</h1>
-        <p class="text-lg client-form-text max-w-3xl mx-auto leading-relaxed">
+         <SectionHeading
+        :level="2"
+        size="lg"
+        color="bg"
+        align="center"
+        weight="black"
+        animation-class="animate-section-title"
+        class="mb-8"
+      >
+       Стать клиентом
+      </SectionHeading>
+        <p class="text-sm md: text-md text-[var(--color-text-muted)] max-w-3xl mx-auto leading-relaxed">
           Ответьте на пару вопросов. На основе ответов мы поймем, как можем быть полезны, соберем
           информацию и подготовимся к встрече. Если не сможем помочь — порекомендуем подходящих
-          партнеров. Приоритетно отвечаем на email, считаем ответы лучшей заявкой.
+          партнеров.
         </p>
       </div>
 
@@ -180,9 +199,9 @@ const updateFormField = (field: keyof ClientFormData, value: string) => {
                 :value="formData[field.key]"
                 @input="handleContactInput(field.key, $event)"
                 :placeholder="field.placeholder"
-                class="w-full px-4 !text-black placeholder:text-bg py-3 client-form-input rounded-[3rem] text-sm focus:outline-none"
+                class="w-full px-4 !text-black placeholder:text-bg py-3 rounded-[3rem] text-sm focus:outline-none border border-[var(--color-border)] backdrop-blur-[5px]"
               />
-              <p v-if="errors[field.key]" class="client-form-error text-sm mt-2">
+              <p v-if="errors[field.key]" class="text-[var(--color-error)] text-sm mt-2">
                 {{ errors[field.key] }}
               </p>
             </div>

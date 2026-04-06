@@ -46,8 +46,14 @@ export function useServices() {
     })
 
     const popularServices = computed<FlattenedService[]>(() => {
-        const popularIds = new Set([1, 7, 10])
-        return allServiceItems.value.filter((s) => popularIds.has((s as ServiceItem).id))
+        const popularSlugs = new Set([
+            'marketing-strategy',
+            'site-development',
+            'market-analysis',
+        ])
+        return allServiceItems.value.filter((s) =>
+            popularSlugs.has((s as ServiceItem).slug ?? '')
+        )
     })
 
     // Helper functions (memo-friendly)
@@ -59,11 +65,18 @@ export function useServices() {
 
     const formatPrice = (price: number) => `€${(price || 0).toLocaleString()}`
     const getServiceIcon = (service: Partial<ServiceItem>) => (('icon' in service && service.icon) ? (service.icon as string) : '🔧')
-    const getServiceCategoryColor = (category: string) => ({
-        Growth: 'text-green-600 bg-green-100',
-        Strategy: 'text-blue-600 bg-blue-100',
-        Development: 'text-purple-600 bg-purple-100'
-    } as const)[category as 'Growth' | 'Strategy' | 'Development'] || 'text-gray-600 bg-gray-100'
+    type StageKey =
+        | 'AnalyticsResearch'
+        | 'StrategyPositioning'
+        | 'DevelopmentLaunch'
+        | 'AutomationGrowth'
+    const getServiceCategoryColor = (category: string) =>
+        ({
+            AnalyticsResearch: 'text-emerald-700 bg-emerald-100',
+            StrategyPositioning: 'text-blue-700 bg-blue-100',
+            DevelopmentLaunch: 'text-purple-700 bg-purple-100',
+            AutomationGrowth: 'text-amber-800 bg-amber-100',
+        } as const)[category as StageKey] || 'text-gray-600 bg-gray-100'
 
     const getServiceUrl = (serviceId: number) => `/services/${serviceId}`
     const getCategoryUrl = (category: string) => `/services?category=${category.toLowerCase()}`

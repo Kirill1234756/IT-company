@@ -1,15 +1,29 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { defineAsyncComponent } from 'vue'
+import { ref, computed, defineAsyncComponent } from 'vue'
+import { useRoute } from 'vue-router'
 import type { PackageCardProps } from '../components/PackageCard.vue'
 import { useYandexMetrika } from '../composables/useYandexMetrika'
+import { getPackageDetail } from '../stores/packages.detail.data'
 
 const PackageCard = defineAsyncComponent(() => import('../components/PackageCard.vue'))
+const PackageDetailModal = defineAsyncComponent(
+  () => import('../components/modals/PackageDetailModal.vue')
+)
+const SectionHeading = defineAsyncComponent(() => import('../components/ui/SectionHeading.vue'))
 const Breadcrumbs = defineAsyncComponent(() => import('../components/ui/Breadcrumbs.vue'))
+const SEOContent = defineAsyncComponent(() => import('../components/seo/SEOContent.vue'))
 const { trackButtonClick } = useYandexMetrika()
 
-const router = useRouter()
+const route = useRoute()
+const openPackageSlug = ref<string | null>(null)
+
+const activePackageDetail = computed(() => {
+  const slug = openPackageSlug.value
+  return slug ? getPackageDetail(slug) : undefined
+})
+
+const pageH1 = computed(() => (route.meta.h1 as string) || 'От запуска сайта до стабильного потока клиентов')
+const pageDescription = computed(() => (route.meta.description as string) || '')
 
 // Пакеты услуг
 const packages = ref<PackageCardProps[]>([
@@ -19,7 +33,7 @@ const packages = ref<PackageCardProps[]>([
     description:
       'Идеальное решение для старта бизнеса. Сайт-визитка с базовой SEO-оптимизацией для быстрого запуска.',
     price: 'от 80 000 ₽',
-    originalPrice: 'от 100 000 ₽',
+    originalPrice: 'от 180 000 ₽',
     features: [
       'Сайт-визитка до 5 страниц',
       'Адаптивный дизайн',
@@ -36,9 +50,12 @@ const packages = ref<PackageCardProps[]>([
     id: 2,
     title: 'Бизнес пакет',
     description:
-      'Комплексное решение для развития бизнеса. Корпоративный сайт с продвижением и поддержкой.',
+      'Система привлечения клиентов: продающий сайт, SEO, контент, CRM и отчёты — не разовые действия, а рост.',
     price: 'от 180 000 ₽',
-    originalPrice: 'от 220 000 ₽',
+    originalPrice: 'от 320 000 ₽',
+    popularBadgeText: 'Популярный',
+    offerLine: 'Запуск системы привлечения клиентов за 30 дней',
+    resultHook: 'Первые заявки уже в процессе разработки',
     features: [
       'Корпоративный сайт до 10 страниц',
       'Уникальный дизайн',
@@ -57,9 +74,13 @@ const packages = ref<PackageCardProps[]>([
     id: 4,
     title: 'Премиум пакет',
     description:
-      'Максимальное решение для крупного бизнеса. Полный цикл разработки, продвижения и поддержки.',
+      'Единая экосистема роста: продукт, стратегия, SEO на год, интеграции и внешний digital-уровень — не набор подрядчиков.',
     price: 'от 540 000 ₽',
-    originalPrice: 'от 650 000 ₽',
+    originalPrice: 'от 1 190 000 ₽',
+
+    offerLineViolet: true,
+    offerLine: 'Система роста бизнеса под ключ за 60–90 дней',
+    resultHook: 'От стратегии до первых масштабируемых продаж',
     features: [
       'Корпоративный сайт или SaaS-платформа',
       'Индивидуальный дизайн',
@@ -78,26 +99,28 @@ const packages = ref<PackageCardProps[]>([
 ])
 
 const handlePackageClick = (packageData: PackageCardProps) => {
-  // Отслеживаем клик по пакету
-  trackButtonClick(`package-${packageData.slug}`, {
+  trackButtonClick(`package-open-detail-${packageData.slug}`, {
     package_id: packageData.id,
     package_title: packageData.title,
     package_price: packageData.price,
   })
+  if (packageData.slug) {
+    openPackageSlug.value = packageData.slug
+  }
+}
 
-  // Переход на форму клиента с предзаполненными данными
-  router.push({
-    path: '/client-form',
-    query: {
-      package: packageData.slug,
-      packageTitle: packageData.title,
-    },
-  })
+const closePackageModal = () => {
+  openPackageSlug.value = null
 }
 </script>
 
 <template>
-  <div class="min-h-screen py-[5rem] px-4 md:px-8 lg:px-[3rem] bg-text">
+  <div class="min-h-screen px-4 md:px-8 lg:px-[3rem] bg-text">
+    <PackageDetailModal
+      v-if="activePackageDetail"
+      :package-detail="activePackageDetail"
+      @close="closePackageModal"
+    />
     <main class="mx-auto">
       <!-- Breadcrumbs -->
       <Breadcrumbs
@@ -107,15 +130,21 @@ const handlePackageClick = (packageData: PackageCardProps) => {
 
       <!-- Header Section -->
       <div class="mb-12 text-center">
-        <h1
-          class="text-3xl md:text-5xl font-bold !text-accent mb-4 font-display"
-          style="font-family: 'IBM Plex Sans Condensed', sans-serif"
+        <SectionHeading
+          :level="1"
+          size="lg"
+          color="bg"
+          align="center"
+          weight="black"
+          class="mb-4"
         >
-          Готовые пакеты услуг
-        </h1>
-        <p class="text-lg md:text-xl text-text-muted max-w-3xl mx-auto">
-          Выберите готовое решение для вашего бизнеса. Каждый пакет включает комплекс услуг с
-          выгодной экономией.
+          {{ pageH1 }}
+        </SectionHeading>
+        <p class="text-lg md:text-xl text-accent max-w-3xl mx-auto">
+          {{
+            pageDescription ||
+            'Выберите готовое решение для вашего бизнеса. Каждый пакет включает комплекс услуг с выгодной экономией.'
+          }}
         </p>
       </div>
 
@@ -132,69 +161,81 @@ const handlePackageClick = (packageData: PackageCardProps) => {
           :features="pkg.features"
           :icon-path="pkg.iconPath"
           :is-popular="pkg.isPopular"
+          :popular-badge-text="pkg.popularBadgeText"
+          :anchor-badge-text="pkg.anchorBadgeText"
+          :offer-line-violet="pkg.offerLineViolet"
+          :offer-line="pkg.offerLine"
+          :result-hook="pkg.resultHook"
           :slug="pkg.slug"
           @click="handlePackageClick"
         />
       </div>
 
-      <!-- Benefits Section -->
-      <div class="mb-12 p-8 md:p-12 rounded-3xl border border-border bg-bg">
-        <h2 class="text-2xl md:text-3xl font-bold mb-6 text-center font-display">
-          Преимущества пакетных решений
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="text-center">
-            <div class="text-4xl mb-4">💰</div>
-            <h3 class="text-lg font-semibold mb-2">Экономия до 20%</h3>
-            <p class="text-sm text-text-muted">
-              При покупке пакета вы экономите по сравнению с заказом услуг отдельно
-            </p>
-          </div>
-          <div class="text-center">
-            <div class="text-4xl mb-4">⚡</div>
-            <h3 class="text-lg font-semibold mb-2">Быстрый старт</h3>
-            <p class="text-sm text-text-muted">
-              Все услуги согласованы и готовы к работе. Запуск проекта без задержек
-            </p>
-          </div>
-          <div class="text-center">
-            <div class="text-4xl mb-4">🎯</div>
-            <h3 class="text-lg font-semibold mb-2">Комплексный подход</h3>
-            <p class="text-sm text-text-muted">
-              Все компоненты работают вместе для достижения максимального результата
-            </p>
-          </div>
-        </div>
-      </div>
 
-      <!-- CTA Section -->
-      <div class="text-center p-8 md:p-12 rounded-3xl border border-border bg-gradient-accent">
-        <h3 class="text-2xl md:text-3xl font-bold mb-4 text-bg font-display">
-          Нужен индивидуальный пакет?
-        </h3>
-        <p class="text-lg mb-6 text-bg/90">
-          Мы можем составить персональный пакет услуг специально для вашего бизнеса
-        </p>
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <a
-            href="/calculator"
-            class="px-8 py-4 rounded-full font-semibold bg-bg text-accent hover:bg-bg/90 transition-colors"
-          >
-            Рассчитать стоимость
-          </a>
-          <a
-            href="/client-form"
-            class="px-8 py-4 rounded-full font-semibold border-2 border-bg text-bg hover:bg-bg/10 transition-colors"
-          >
-            Оставить заявку
-          </a>
-          <a
-            href="/contacts"
-            class="px-8 py-4 rounded-full font-semibold border-2 border-bg text-bg hover:bg-bg/10 transition-colors"
-          >
-            Связаться с нами
-          </a>
-        </div>
+
+      <!-- SEO Content (семантическое ядро / h2_outline из БД для /packages) -->
+      <div class="mb-8">
+        <SEOContent>
+          <template #section-преимущества-пакетных-решений>
+            <!-- Секция уже есть выше, повторяем кратко для SEO-блока -->
+            <p class="text-sm text-text-muted leading-relaxed">
+              Пакетные решения позволяют запустить проект быстрее и дешевле: мы заранее собрали
+              набор работ, которые чаще всего нужны бизнесу, и оптимизировали стоимость за счёт
+              комплексного подхода.
+            </p>
+          </template>
+
+          <template #section-стартовый-пакет>
+            <p class="text-sm text-text-muted leading-relaxed">
+              Стартовый пакет подходит для быстрого запуска: сайт-визитка, базовая SEO-оптимизация и
+              подключение аналитики.
+            </p>
+          </template>
+
+          <template #section-бизнес-пакет>
+            <p class="text-sm text-text-muted leading-relaxed">
+              Бизнес пакет — для компаний, которым важны доверие, структура и рост: корпоративный
+              сайт, контент и SEO-продвижение.
+            </p>
+          </template>
+
+          <template #section-e-commerce-пакет>
+            <p class="text-sm text-text-muted leading-relaxed">
+              E-commerce пакет — для продаж: интернет-магазин, корзина, оплата/доставка и подготовка
+              к SEO-продвижению.
+            </p>
+          </template>
+
+          <template #section-премиум-пакет>
+            <p class="text-sm text-text-muted leading-relaxed">
+              Премиум пакет — максимальный охват: индивидуальный дизайн, стратегия, интеграции и
+              длительное продвижение.
+            </p>
+          </template>
+
+          <template #section-сравнение-пакетов>
+            <p class="text-sm text-text-muted leading-relaxed">
+              Если вы сомневаетесь, начните с базового: мы поможем выбрать пакет по целям
+              (лиды/продажи/имидж) и бюджету.
+            </p>
+          </template>
+
+          <template #section-как-выбрать-пакет>
+            <ul class="list-disc list-inside space-y-2 text-sm text-text-muted">
+              <li>Определите цель: заявки, продажи или презентация компании.</li>
+              <li>Оцените объём контента и количество страниц.</li>
+              <li>Проверьте необходимость интеграций (CRM, платежи, каталоги).</li>
+              <li>Выберите скорость запуска и уровень поддержки.</li>
+            </ul>
+          </template>
+
+          <template #section-faq>
+            <p class="text-sm text-text-muted leading-relaxed">
+              Ответы на частые вопросы отображаются в метаданных страницы и используются для
+              разметки. При необходимости добавим расширенный FAQ.
+            </p>
+          </template>
+        </SEOContent>
       </div>
     </main>
   </div>
@@ -206,4 +247,3 @@ const handlePackageClick = (packageData: PackageCardProps) => {
   min-height: 100%;
 }
 </style>
-

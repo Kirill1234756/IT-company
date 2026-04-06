@@ -3,6 +3,8 @@ import { ref, computed, defineAsyncComponent } from 'vue'
 import { useRoute } from 'vue-router'
 import { CalculatorFormAPI } from '../api/calculator-form'
 const SEOContent = defineAsyncComponent(() => import('../components/seo/SEOContent.vue'))
+const SectionHeading = defineAsyncComponent(() => import('../components/ui/SectionHeading.vue'))
+const Breadcrumbs = defineAsyncComponent(() => import('../components/ui/Breadcrumbs.vue'))
 import { useBreadcrumbSchema } from '../composables/useBreadcrumbSchema'
 import { useHead } from '@unhead/vue'
 import { watchEffect } from 'vue'
@@ -365,12 +367,18 @@ const submitContactForm = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-text py-[5rem] px-4">
+  <div class="min-h-screen bg-text px-4">
     <div class="max-w-7xl mx-auto">
+      <Breadcrumbs
+        :items="[{ label: 'Главная', to: '/' }, { label: 'Калькулятор стоимости' }]"
+        class="mb-8 !text-bg/70 [&_a]:!text-bg/80 [&_a:hover]:!text-bg"
+      />
       <!-- Заголовок -->
       <div class="text-center !text-bg mb-8">
-        <h1 class="text-4xl md:text-5xl font-black text-bg mb-4">💰 КАЛЬКУЛЯТОР СТОИМОСТИ САЙТА</h1>
-        <p class="text-lg text-bg/80 mb-2">
+        <SectionHeading :level="1" size="lg" color="bg" align="center" weight="black" class="mb-4">
+          Сколько будет стоить ваш сайт?
+        </SectionHeading>
+        <p class="text-lg text-accent mb-2">
           Узнайте примерную стоимость вашего проекта за 60 секунд
         </p>
         <div class="flex justify-center gap-4 text-sm text-bg/70">
@@ -401,7 +409,9 @@ const submitContactForm = async () => {
           <div class="bg-bg rounded-[3rem] p-6 md:p-8">
             <!-- ШАГ 1: Тип сайта -->
             <div v-if="currentStep === 0">
-              <h2 class="text-xl md:text-2xl lg:text-3xl font-bold text-text mb-3 md:mb-6 text-center">
+              <h2
+                class="text-xl md:text-2xl lg:text-3xl font-bold text-text mb-3 md:mb-6 text-center"
+              >
                 1. Какой тип сайта вам нужен?
               </h2>
               <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
@@ -426,9 +436,15 @@ const submitContactForm = async () => {
                     container-class="w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 rounded-xl"
                   />
                   <div class="text-center">
-                    <div class="text-sm md:text-lg lg:text-xl font-bold text-text mb-0.5 md:mb-1">{{ type.label }}</div>
-                    <div class="text-xs md:text-sm text-text-muted mb-1.5 md:mb-3">{{ type.description }}</div>
-                    <div class="text-sm md:text-base lg:text-lg font-semibold text-accent">{{ type.price }}</div>
+                    <div class="text-sm md:text-lg lg:text-xl font-bold text-text mb-0.5 md:mb-1">
+                      {{ type.label }}
+                    </div>
+                    <div class="text-xs md:text-sm text-text-muted mb-1.5 md:mb-3">
+                      {{ type.description }}
+                    </div>
+                    <div class="text-sm md:text-base lg:text-lg font-semibold text-accent">
+                      {{ type.price }}
+                    </div>
                   </div>
                 </button>
               </div>
@@ -837,17 +853,17 @@ const submitContactForm = async () => {
           </div>
         </div>
       </div>
-      <!-- SEO Content -->
-      <div class="mb-8">
+      <!-- SEO Content: h2Outline задан в meta маршрута /calculator, иначе SEOContent не рендерится -->
+      <div class="mb-8 text-bg">
         <SEOContent>
           <!-- Шаги section -->
           <template #section-шаги>
-            <div class="mb-8 text-purple">
+            <div class="mb-8">
               <p class="text-sm text-accent leading-relaxed mb-4">
                 Калькулятор стоимости сайта поможет вам быстро оценить бюджет проекта. Выберите тип
                 сайта, количество страниц, дизайн и дополнительные функции.
               </p>
-              <ol class="list-decimal list-inside space-y-2 text-sm">
+              <ol class="list-decimal list-inside space-y-2 text-sm text-bg/90">
                 <li>Выберите тип сайта (лендинг, визитка, магазин и т.д.)</li>
                 <li>Укажите количество страниц (для лендинга этот шаг пропускается)</li>
                 <li>Выберите вариант дизайна</li>
@@ -872,11 +888,11 @@ const submitContactForm = async () => {
 
           <!-- Что дальше section -->
           <template #section-что-дальше>
-            <div class="mb-8 text-purple">
+            <div class="mb-8">
               <p class="text-sm text-accent leading-relaxed mb-4">
                 После получения оценки вы можете:
               </p>
-              <ul class="list-disc list-inside space-y-2 text-sm">
+              <ul class="list-disc list-inside space-y-2 text-sm text-bg/90">
                 <li>Отправить заявку для получения детального коммерческого предложения</li>
                 <li>Связаться с нами для консультации по телефону или Telegram</li>
                 <li>Посмотреть примеры наших работ в разделе кейсов</li>

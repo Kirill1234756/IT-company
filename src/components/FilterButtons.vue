@@ -1,16 +1,11 @@
 <template>
-  <div
-    :class="[
-      'flex flex-wrap justify-center gap-2 md:gap-3 lg:gap-4 w-full',
-      containerClass,
-    ]"
-  >
+  <div :class="['flex flex-wrap justify-center gap-2 md:gap-3 lg:gap-4 w-full', containerClass]">
     <button
       v-for="item in items"
       :key="getItemKey(item)"
       @click="handleClick(item)"
       :class="[
-        'px-3 py-1.5 sm:px-4 sm:py-2 md:px-5 md:py-2.5 lg:px-6 lg:py-3 rounded-full transition-all duration-300 text-xs sm:text-sm font-semibold font-display relative overflow-hidden group shadow-lg hover:shadow-xl hover:-translate-y-0.5 border-2',
+        'border-none px-3 py-1.5 sm:px-4 sm:py-2 md:px-5 md:py-2.5 lg:px-6 lg:py-3 rounded-full transition-all duration-300 text-xs sm:text-sm font-semibold font-display relative overflow-hidden group shadow-lg hover:shadow-xl hover:-translate-y-0.5 border-2',
         isActive(item) ? activeTextColor : textColor,
         getButtonClasses(item),
       ]"
@@ -75,26 +70,35 @@ const emit = defineEmits<{
 
 // Computed functions that use props after they're defined
 const getItemKeyFn = computed(() => {
-  return props.getItemKey || ((item: FilterItem) => {
-    if (typeof item === 'string') return item
-    return item.value
-  })
+  return (
+    props.getItemKey ||
+    ((item: FilterItem) => {
+      if (typeof item === 'string') return item
+      return item.value
+    })
+  )
 })
 
 const getItemLabelFn = computed(() => {
-  return props.getItemLabel || ((item: FilterItem) => {
-    if (typeof item === 'string') return item
-    return item.label
-  })
+  return (
+    props.getItemLabel ||
+    ((item: FilterItem) => {
+      if (typeof item === 'string') return item
+      return item.label
+    })
+  )
 })
 
 const getItemValueFn = computed(() => {
-  return props.getItemValue || ((item: FilterItem) => {
-    if (typeof item === 'string') {
-      return props.filterMap[item] || item
-    }
-    return item.value
-  })
+  return (
+    props.getItemValue ||
+    ((item: FilterItem) => {
+      if (typeof item === 'string') {
+        return props.filterMap[item] || item
+      }
+      return item.value
+    })
+  )
 })
 
 const getItemKey = (item: FilterItem) => getItemKeyFn.value(item)

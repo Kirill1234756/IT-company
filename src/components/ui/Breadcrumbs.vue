@@ -60,8 +60,12 @@ function titleFromRecord(record: any): string {
   }
   if (name === 'service-detail') {
     const slug = String(route.params.service || '')
-    const svc = servicesStore.getServiceDetailBySlug(slug)
-    if (svc?.title) return svc.title
+    const bySlug = servicesStore.getCatalogItemBySlug(slug)
+    if (bySlug?.title) return bySlug.title
+    if (/^\d+$/.test(slug)) {
+      const byId = servicesStore.getCatalogItemById(Number(slug))
+      if (byId?.title) return byId.title
+    }
   }
   if (name === 'blog-category') {
     const cat = String(route.params.category || '')

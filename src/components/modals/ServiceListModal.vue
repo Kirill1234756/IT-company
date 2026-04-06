@@ -1,7 +1,12 @@
 <script setup lang="ts">
-import { defineProps, defineEmits } from 'vue'
-import { Teleport } from 'vue'
+import { defineProps, defineEmits, onMounted, defineAsyncComponent, computed } from 'vue'
 import type { ServiceCategory, ServiceItem } from '../../types/services'
+import { useYandexMetrika } from '../../composables/useYandexMetrika'
+
+const Breadcrumbs = defineAsyncComponent(() => import('../ui/Breadcrumbs.vue'))
+const SectionHeading = defineAsyncComponent(() => import('../ui/SectionHeading.vue'))
+const ContactSection = defineAsyncComponent(() => import('../sections/ContactSection.vue'))
+const Footer = defineAsyncComponent(() => import('../../pages/Footer.vue'))
 
 const props = defineProps<{
   category: ServiceCategory
@@ -11,6 +16,12 @@ const emit = defineEmits<{
   (e: 'close'): void
   (e: 'serviceClick', service: ServiceItem): void
 }>()
+
+const { trackModalOpen } = useYandexMetrika()
+
+onMounted(() => {
+  trackModalOpen('service-list', { category: props.category?.title ?? props.category?.slug ?? '' })
+})
 
 const handleClose = () => {
   emit('close')
@@ -25,62 +36,91 @@ const handleBackdropClick = (event: MouseEvent) => {
     handleClose()
   }
 }
+
+const breadcrumbItems = computed(() => [
+  { label: 'Главная', to: '/' },
+  { label: 'Услуги', to: '/services' },
+  { label: props.category?.title ?? '' },
+])
 </script>
 
 <template>
   <Teleport to="body">
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
       @click="handleBackdropClick"
     >
       <div
-        class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+        class="w-full h-full flex flex-col bg-[var(--color-bg)] text-[var(--color-text)] border border-[var(--color-border)]"
         @click.stop
       >
-        <!-- Close Button -->
-        <button
-          @click="handleClose"
-          class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
-          aria-label="Close modal"
+        <div
+          class="service-list-modal flex-1 min-h-0 overflow-y-auto"
+          style="-webkit-overflow-scrolling: touch;"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-6 w-6 text-gray-600"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+        <!-- Header -->
+        <div
+          class="sticky top-0 z-10 bg-[rgba(3,18,47,0.95)] border-b border-[var(--color-border)] backdrop-blur-[10px] rounded-t-3xl"
+        >
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <button
+              @click="handleClose"
+              class="flex items-center gap-2 text-text-muted hover:text-text transition-colors"
+              aria-label="Закрыть"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+              Назад
+            </button>
+          </div>
+        </div>
 
-        <!-- Modal Content -->
-        <div class="p-6 md:p-8">
-          <!-- Title -->
-          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6 font-display">
+        <!-- Content -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ">
+          <Breadcrumbs
+            :items="breadcrumbItems"
+            class="mb-6"
+          />
+
+          <SectionHeading
+            :level="2"
+            size="lg"
+            color="accent"
+            align="left"
+            weight="black"
+            class="mb-8 font-display text-condense"
+          >
             {{ category.title }}
-          </h2>
+          </SectionHeading>
 
           <!-- Services List -->
           <div v-if="category.items && category.items.length > 0" class="space-y-4">
-            <div
+            <button
               v-for="service in category.items"
               :key="service.id"
+              type="button"
               @click="handleServiceClick(service)"
-              class="p-6 border border-gray-200 rounded-2xl hover:border-blue-500 hover:shadow-lg cursor-pointer transition-all"
+              class="w-full text-left p-6 rounded-[3rem] border border-[var(--color-border)] bg-[var(--color-border)]/50 backdrop-blur-[10px] hover:border-[var(--color-accent)] hover:shadow-[0_20px_40px_-10px_rgba(255,136,99,0.2)] cursor-pointer transition-all duration-300 group"
             >
-              <div class="flex justify-between items-start">
-                <div class="flex-1">
-                  <h3 class="text-xl font-bold text-gray-900 mb-2 font-display">
+              <div class="flex justify-between items-start gap-4">
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-xl font-bold font-display text-[var(--color-text)] mb-2 group-hover:text-[var(--color-accent)] transition-colors">
                     {{ service.title }}
                   </h3>
-                  <p class="text-gray-600 mb-4">{{ service.description }}</p>
-                  <div class="text-lg font-semibold text-blue-600">{{ service.price }}</div>
+                  <p class="text-[var(--color-text-muted)] text-sm leading-relaxed mb-4 line-clamp-2">
+                    {{ service.description }}
+                  </p>
+                  <span class="text-lg font-semibold text-[var(--color-accent)]">{{ service.price }}</span>
                 </div>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  class="h-6 w-6 text-gray-400 ml-4"
+                  class="w-6 h-6 text-text-muted flex-shrink-0 group-hover:text-[var(--color-accent)] transition-colors"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -89,12 +129,16 @@ const handleBackdropClick = (event: MouseEvent) => {
                   <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
               </div>
-            </div>
+            </button>
           </div>
 
-          <div v-else class="text-center py-12 text-gray-500">
+          <div v-else class="text-center py-12 text-text-muted">
             Услуги в этой категории пока не добавлены
           </div>
+        </div>
+
+        <ContactSection />
+        <Footer />
         </div>
       </div>
     </div>
@@ -102,21 +146,21 @@ const handleBackdropClick = (event: MouseEvent) => {
 </template>
 
 <style scoped>
-.overflow-y-auto::-webkit-scrollbar {
+.service-list-modal::-webkit-scrollbar {
   width: 8px;
 }
 
-.overflow-y-auto::-webkit-scrollbar-track {
-  background: #f1f1f1;
+.service-list-modal::-webkit-scrollbar-track {
+  background: var(--color-border);
   border-radius: 4px;
 }
 
-.overflow-y-auto::-webkit-scrollbar-thumb {
-  background: #888;
+.service-list-modal::-webkit-scrollbar-thumb {
+  background: var(--color-accent);
   border-radius: 4px;
 }
 
-.overflow-y-auto::-webkit-scrollbar-thumb:hover {
-  background: #555;
+.service-list-modal::-webkit-scrollbar-thumb:hover {
+  background: var(--color-purple);
 }
 </style>

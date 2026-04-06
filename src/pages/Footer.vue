@@ -37,12 +37,16 @@ const navColumnsData: NavColumn[] = [
     title: 'Популярные услуги',
     items: [
       {
-        to: '/services/development/corporate-website',
+        to: '/services/development-launch/site-development',
         label: 'Корпоративный сайт',
         breakWords: true,
       },
-      { to: '/services/development/online-store', label: 'Интернет-магазин', breakWords: true },
-      { to: '/services/development/landing-page', label: 'Лендинг' },
+      {
+        to: '/services/development-launch/site-development',
+        label: 'Интернет-магазин',
+        breakWords: true,
+      },
+      { to: '/services/development-launch/site-development', label: 'Лендинг' },
     ],
   },
   {
@@ -119,9 +123,10 @@ onUnmounted(() => {
 
 <template>
   <footer
-    class="bg-gradient-to-br from-[var(--color-bg)] to-[var(--color-border)] border-t border-[var(--color-accent)]/20"
+    class="stack-section bg-gradient-to-br from-[var(--color-bg)] to-[var(--color-border)] border-t border-[var(--color-accent)]/20"
+    style="min-height: auto; height: auto;"
   >
-    <div class="container mx-auto px-4 py-8">
+    <div class="max-w-7xl mx-auto px-4 py-8">
       <!-- Navigation Menu -->
       <!-- Mobile: 2 columns in a row, Desktop: flex justify-between with 3 columns -->
       <div
@@ -202,7 +207,7 @@ onUnmounted(() => {
     <!-- Debug: Always visible button for testing -->
     <button
       @click="scrollToTop"
-      class="fixed bottom-20 right-6 md:bottom-24 md:right-8 w-12 h-12 bg-blog-button hover:bg-blog-button-hover text-white rounded-full flex items-center justify-center shadow-lg z-[1000] transition-all duration-300 hover:scale-110"
+      class="fixed bottom-20 right-6 md:bottom-24 md:right-8 w-12 h-12 text-white rounded-full flex items-center justify-center shadow-lg z-[1000] transition-all duration-300 hover:scale-110 bg-[var(--color-accent)] hover:bg-[var(--color-purple)]"
       aria-label="Debug scroll to top"
     >
       <span class="text-xs font-bold">UP</span>

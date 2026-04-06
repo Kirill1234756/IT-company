@@ -566,6 +566,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
 
     return {
       id: project.id,
+      title: project.title,
       img: project.modalImg || project.image || '/api/placeholder/1200x700',
       bottomImg: project.modalBottomImg || undefined,
       card: project.modalCard || [],

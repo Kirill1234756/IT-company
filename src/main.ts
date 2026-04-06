@@ -4,9 +4,10 @@ import VueLazyLoad from 'vue3-lazyload'
 import { initGlobalPerformanceMonitoring } from './utils/performance'
 import { installYandexMetrika } from './plugins/yandex-metrika'
 import { createHead } from '@unhead/vue'
+import { MotionPlugin } from '@vueuse/motion'
 
 import App from './App.vue'
-import router from './router'
+import router, { setRouterMetaUpdateCallback } from './router'
 import './style.css'
 
 // Типы для scheduler API
@@ -20,23 +21,32 @@ interface Scheduler {
   postTask(callback: () => void, options?: SchedulerPostTaskOptions): Promise<void>
 }
 
+declare global {
+  interface Window {
+    scheduler?: Scheduler
+  }
+}
+
 const app = createApp(App)
 const head = createHead()
 
 app.use(createPinia())
 app.use(router)
 app.use(head)
+app.use(MotionPlugin)
+setRouterMetaUpdateCallback((payload) => head.push(payload))
 
 // Отложенная загрузка не критичных плагинов до после LCP
 const isMobile = typeof window !== 'undefined' && (window as Window).innerWidth < 768
 
 // Функция для загрузки некритичных плагинов
 const loadNonCriticalPlugins = () => {
-  // Загружаем плагины с дополнительной задержкой на мобильных для лучшей производительности
-  const pluginDelay = isMobile ? 2000 : 1000
+  // Увеличиваем задержку на мобильных для лучшей производительности (4s вместо 2s)
+  const pluginDelay = isMobile ? 4000 : 1500
   
-  if (window.scheduler?.postTask) {
-    window.scheduler.postTask(() => {
+  const win = window as Window & { scheduler?: Scheduler }
+  if (win.scheduler?.postTask) {
+    win.scheduler.postTask(() => {
       app.use(VueLazyLoad, {
         loading: '/favicon.ico',
       })
@@ -73,8 +83,8 @@ if (typeof window !== 'undefined' && 'PerformanceObserver' in window) {
       lcpObserved = true
       lcpObserver.disconnect()
       
-      // Загружаем некритичные плагины после LCP с большой задержкой для лучшей производительности
-      const delay = isMobile ? 3000 : 2000
+      // Загружаем некритичные плагины после LCP с увеличенной задержкой для лучшей производительности
+      const delay = isMobile ? 5000 : 2500
       const win = window as Window & { scheduler?: Scheduler }
       if (win.scheduler?.postTask) {
         win.scheduler.postTask(loadNonCriticalPlugins, { priority: 'background', delay })
@@ -100,7 +110,7 @@ if (typeof window !== 'undefined' && 'PerformanceObserver' in window) {
     }, fallbackDelay)
   } catch {
     // Fallback если PerformanceObserver не поддерживается
-    const fallbackDelay = isMobile ? 3000 : 2000
+    const fallbackDelay = isMobile ? 5000 : 3000
     const win = window as Window & { scheduler?: Scheduler }
     if (win.scheduler?.postTask) {
       win.scheduler.postTask(loadNonCriticalPlugins, { priority: 'background', delay: fallbackDelay })
@@ -124,10 +134,11 @@ if (typeof window !== 'undefined' && 'PerformanceObserver' in window) {
 }
 
 // SEO: derive head tags from vue-router meta - отложено для мобильных
-const seoDelay = isMobile ? 4000 : 2000
-if (window.scheduler?.postTask) {
-  window.scheduler.postTask(() => {
-    router.afterEach((to) => {
+const seoDelay = isMobile ? 6000 : 3000
+  const win = window as Window & { scheduler?: Scheduler }
+  if (win.scheduler?.postTask) {
+    win.scheduler.postTask(() => {
+      router.afterEach((to) => {
       const meta = to.meta || {}
       const titlePart = typeof meta.title === 'string' ? meta.title : 'Kodify'
       const fullTitle = `${titlePart} - Kodify`
@@ -315,3 +326,23 @@ if (window.scheduler?.postTask) {
 }
 
 app.mount('#app')
+
+// Preload MainSection chunk for home route - только на десктопе и после первого рендера
+if (typeof window !== 'undefined') {
+  const prefetchMainSection = () => {
+    // Prefetch только на десктопе и только для главной страницы
+    if (!isMobile && (window.location.pathname === '/' || window.location.pathname === '/home')) {
+      void import('./components/sections/MainSection.vue')
+    }
+  }
+  // На мобильных не prefetch'им, чтобы не тратить bandwidth
+  // На десктопе prefetch после первого рендера через requestIdleCallback
+  if (!isMobile) {
+    if (typeof requestIdleCallback !== 'undefined') {
+      // Задержка для prefetch после первого рендера
+      requestIdleCallback(prefetchMainSection, { timeout: 3000 })
+    } else {
+      setTimeout(prefetchMainSection, 2000)
+    }
+  }
+}

@@ -1,11 +1,20 @@
 <script setup lang="ts">
-import { defineAsyncComponent, onMounted, ref } from 'vue'
+import { defineAsyncComponent, onMounted, ref, computed } from 'vue'
 import { useIntersectionObserver } from '@vueuse/core'
+import { useRoute } from 'vue-router'
 import type { BlogPost } from '../../types/blog'
 
 // Removed console.log for production performance
 
 const BlogSection = defineAsyncComponent(() => import('./BlogSection.vue'))
+
+const route = useRoute()
+
+// Определяем, находимся ли мы на главной странице
+const isOnHomePage = computed(() => {
+  if (typeof window === 'undefined') return false
+  return route.path === '/' || route.path === '/home'
+})
 
 // Define props
 const props = defineProps<{
@@ -19,8 +28,9 @@ const emit = defineEmits<{
 
 const rootEl = ref<HTMLElement | null>(null)
 const scrollContainerRef = ref<HTMLElement | null>(null)
-const isVisible = ref(false)
-const hasLoaded = ref(false)
+// На главной странице загружаем сразу для показа свайпера
+const isVisible = ref(isOnHomePage.value)
+const hasLoaded = ref(isOnHomePage.value)
 
 const { stop } = useIntersectionObserver(
   rootEl,
@@ -45,42 +55,15 @@ onMounted(() => {
     }
   }
 
-  // Настраиваем обработчик wheel для внутреннего скролла
-  const setupScrollHandler = () => {
-    if (!scrollContainerRef.value) {
-      setTimeout(setupScrollHandler, 100)
-      return
-    }
-
-    const scrollContainer = scrollContainerRef.value
-    if ((scrollContainer as any).__scrollHandler) return
-
-    const handleWheel = (e: WheelEvent) => {
-      const { scrollTop, scrollHeight, clientHeight } = scrollContainer
-      const threshold = 10
-      const isAtTop = scrollTop <= threshold
-      const isAtBottom = scrollTop + clientHeight >= scrollHeight - threshold
-
-      if (e.deltaY > 0) {
-        // Скроллим вниз
-        if (!isAtBottom) {
-          e.stopPropagation()
-        }
-      } else if (e.deltaY < 0) {
-        // Скроллим вверх
-        if (!isAtTop) {
-          e.stopPropagation()
-        }
-      }
-    }
-
-    scrollContainer.addEventListener('wheel', handleWheel, { passive: false, capture: true })
-    ;(scrollContainer as any).__scrollHandler = handleWheel
+  // Если на главной странице, загружаем сразу
+  if (isOnHomePage.value) {
+    isVisible.value = true
+    hasLoaded.value = true
   }
 
-  // Ждем загрузки контейнера
-  setTimeout(setupScrollHandler, 500)
-  setTimeout(setupScrollHandler, 1500)
+  // Настраиваем обработчик wheel для внутреннего скролла
+  // Обработчики wheel удалены - используем чистый CSS scroll-snap
+  // .internal-scroll-container имеет overflow: hidden, поэтому скролл происходит только на уровне страницы
 })
 
 function handlePostClick(post: BlogPost) {
@@ -92,16 +75,17 @@ function handlePostClick(post: BlogPost) {
   <section
     ref="rootEl"
     :id="props.id"
-    class="stack-section no-scrollbar blog-section-bg h-screen flex flex-col items-center justify-start rounded-t-3xl py-[5rem] px-10 md:[5rem] lg:px-[12rem]"
+    class="stack-section no-scrollbar h-screen flex flex-col items-center justify-start rounded-t-3xl py-[2rem] px-10 bg-[linear-gradient(135deg,_var(--color-bg)_0%,_var(--color-border)_100%)]"
     style="min-height: 700px; box-sizing: border-box; contain: layout style paint"
   >
-    <div 
-      class="internal-scroll-container w-full h-full overflow-y-auto overflow-x-hidden"
-      ref="scrollContainerRef"
-    >
+    <div class="internal-scroll-container w-full h-full flex flex-col items-center" ref="scrollContainerRef">
       <Suspense>
         <template #default>
-          <BlogSection v-if="hasLoaded && isVisible" @post-click="handlePostClick" />
+          <BlogSection
+            v-if="hasLoaded && isVisible"
+            :use-swiper="isOnHomePage"
+            @post-click="handlePostClick"
+          />
         </template>
         <template #fallback>
           <div

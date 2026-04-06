@@ -11,6 +11,16 @@ export interface PackageCardProps {
   iconPath: string
   iconUseFill?: boolean
   isPopular?: boolean
+  /** Текст на бейдже вместо «Популярный» */
+  popularBadgeText?: string
+  /** Короткий оффер под описанием (якорный пакет) */
+  offerLine?: string
+  /** Доп. результат / обещание */
+  resultHook?: string
+  /** Бейдж «якоря» (премиум): фиолетовый, не путать с «Популярный» */
+  anchorBadgeText?: string
+  /** Оформить offerLine в фирменном фиолетовом (премиум-якорь) */
+  offerLineViolet?: boolean
   isClickable?: boolean
   slug?: string
 }
@@ -34,18 +44,29 @@ const handleClick = () => {
 <template>
   <div
     :class="[
-      'package-card group rounded-[3rem] services-card shadow-sm p-6 md:p-8 flex flex-col transition-all duration-300 relative',
-      isClickable ? 'cursor-pointer hover:shadow-lg hover:scale-[1.02]' : '',
-      isPopular ? 'ring-2 ring-accent' : '',
+      'package-card group rounded-[3rem] shadow-sm p-6 md:p-8 flex flex-col transition-all duration-300 relative bg-[var(--color-border)] border border-[var(--color-border)] backdrop-blur-[10px]',
+      isClickable
+        ? 'cursor-pointer hover:shadow-lg hover:scale-[1.02] hover:border-[var(--color-accent)] hover:shadow-[0_20px_40px_-10px_rgba(255,136,99,0.2)]'
+        : '',
+      isPopular ? 'ring-2 ring-accent shadow-[0_0_0_1px_rgba(255,136,99,0.15)]' : '',
+      anchorBadgeText && !isPopular
+        ? 'ring-2 ring-violet-400/50 shadow-[0_0_24px_-8px_rgba(139,92,246,0.35)]'
+        : '',
     ]"
     @click="handleClick"
   >
     <!-- Popular Badge -->
     <div
       v-if="isPopular"
-      class="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-accent text-bg rounded-full text-xs font-bold"
+      class="absolute -top-4.5 md:-top-5.5 left-1/2 -translate-x-1/2 px-3 py-2 md:px-5 md:py-3 bg-accent text-bg rounded-full text-xs sm:text-sm md:text-base font-bold text-center max-w-[calc(100%-1.5rem)] leading-tight z-[1]"
     >
-      Популярный
+      {{ popularBadgeText || 'Популярный' }}
+    </div>
+    <div
+      v-if="anchorBadgeText"
+      class="absolute -top-4.5 md:-top-5.5 left-1/2 -translate-x-1/2 px-3 py-2 md:px-5 md:py-3 bg-[var(--color-purple)] text-white rounded-full text-xs sm:text-sm md:text-base font-bold text-center max-w-[calc(100%-1.5rem)] leading-tight z-[1]"
+    >
+      {{ anchorBadgeText }}
     </div>
 
     <!-- Icon -->
@@ -65,7 +86,7 @@ const handleClick = () => {
     <div class="flex-1 flex flex-col">
       <h3
         :class="[
-          'text-xl md:text-2xl font-bold services-card-title leading-snug transition-colors duration-300 mb-2',
+          'text-xl md:text-2xl font-bold leading-snug transition-colors duration-300 mb-2 text-accent font-display',
           isClickable ? 'group-hover:text-accent' : '',
         ]"
       >
@@ -73,11 +94,34 @@ const handleClick = () => {
       </h3>
       <p
         :class="[
-          'services-card-description text-sm md:text-base leading-relaxed mb-6 transition-colors duration-300',
+          'text-sm md:text-base leading-relaxed transition-colors duration-300 text-white',
+          offerLine || resultHook ? 'mb-4' : 'mb-6',
           isClickable ? 'group-hover:text-text' : '',
         ]"
       >
         {{ description }}
+      </p>
+
+      <div
+        v-if="offerLine"
+        :class="[
+          'mb-3 rounded-2xl px-4 py-2.5 border',
+          offerLineViolet
+            ? 'border-violet-400/45 bg-violet-500/10'
+            : 'border-[var(--color-accent)]/45 bg-[var(--color-accent)]/12',
+        ]"
+      >
+        <p
+          :class="[
+            'text-xs md:text-sm font-bold leading-snug',
+            offerLineViolet ? 'text-violet-200' : 'text-[var(--color-accent)]',
+          ]"
+        >
+          {{ offerLine }}
+        </p>
+      </div>
+      <p v-if="resultHook" class="text-xs md:text-sm font-semibold text-[var(--color-text)] mb-4">
+        {{ resultHook }}
       </p>
 
       <!-- Features List -->
@@ -85,7 +129,7 @@ const handleClick = () => {
         <li
           v-for="(feature, index) in features"
           :key="index"
-          class="flex items-start gap-2 text-sm text-text-muted"
+          class="flex items-start gap-2 text-sm text-white"
         >
           <svg
             class="w-5 h-5 text-accent shrink-0 mt-0.5"
@@ -111,11 +155,7 @@ const handleClick = () => {
           <span class="text-xs text-accent font-semibold">Экономия</span>
         </div>
         <div class="flex items-baseline gap-2">
-          <span
-            :class="[
-              'text-2xl md:text-3xl font-bold services-card-price transition-colors duration-300',
-              isClickable ? 'group-hover:text-purple' : '',
-            ]"
+          <span class="text-2xl md:text-3xl font-bold transition-colors duration-300 text-[var(--color-accent)]"
           >
             {{ price }}
           </span>

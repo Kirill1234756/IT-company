@@ -1,8 +1,8 @@
 <template>
   <div :class="sectionClasses">
-    <div class="flex justify-between items-start mb-6">
-      <h2 :class="['text-xl font-bold font-display', titleColor]">{{ title }}</h2>
-      <p :class="textColor" class="text-sm max-w-xs ml-8">{{ helperText }}</p>
+    <div class="flex flex-col md:flex-row md:justify-between md:items-start mb-6">
+      <h2 :class="['text-xl font-bold font-display mb-2 md:mb-0', titleColor]">{{ title }}</h2>
+      <p :class="textColor" class="text-sm md:max-w-xs md:ml-8">{{ helperText }}</p>
     </div>
     <textarea
       ref="textareaRef"
@@ -17,7 +17,7 @@
       ]"
       :style="{ height: textareaHeight }"
     />
-    <p v-if="error" class="client-form-error text-sm mt-2">{{ error }}</p>
+    <p v-if="error" class="text-[var(--color-error)] text-sm mt-2">{{ error }}</p>
   </div>
 </template>
 

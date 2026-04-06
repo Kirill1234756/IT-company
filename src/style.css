@@ -1,5 +1,24 @@
 @import "tailwindcss";
 
+/* =============================
+   Global fonts for headings
+   ============================= */
+@font-face {
+  font-family: "CD Masvol";
+  src: url("/fonts/CD-Masvol-Thin.otf") format("opentype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "LTSuperior";
+  src: url("/fonts/LTSuperior-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 body {
   box-sizing: border-box;
   overflow-x: hidden;
@@ -59,6 +78,20 @@ body {
   --color-peach: #F3CDBF;
 }
 
+/* =============================
+   Heading utilities
+   ============================= */
+.heading-font {
+  font-family: "IBM Plex Sans Condensed", "Arial Narrow", Arial, sans-serif;
+  letter-spacing: 0.02em;
+}
+
+/* Для hero‑заголовка, который уже использует text-condense */
+.text-condense {
+  font-family: "CD Masvol", "LTSuperior", var(--font-condensed);
+  letter-spacing: 0.03em;
+}
+
 /* Global utility aliases for theme tokens */
 .bg-bg {
   background-color: var(--color-bg);
@@ -111,6 +144,314 @@ body {
   --color-text-muted: #AE70AC;
   --color-rose: #E0BBB9;
   --color-peach: #F3CDBF;
+}
+
+/* Hero LCP: GPU-composited CSS animations (no JS, better TBT/CLS) */
+@keyframes hero-title-in {
+  from {
+    opacity: 1;
+    transform: translateY(20px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes hero-desc-in {
+  from {
+    opacity: 1;
+    transform: translateY(25px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes hero-card-in {
+  from {
+    opacity: 1;
+    transform: translateY(40px) scale(0.85);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes hero-cta-in {
+  from {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-animate-title {
+  animation: hero-title-in 0.8s ease-out forwards;
+  will-change: transform;
+}
+
+.hero-animate-desc {
+  opacity: 1;
+  animation: hero-desc-in 0.8s 0.3s ease-out forwards;
+  will-change: transform;
+}
+
+.hero-animate-card {
+  opacity: 1;
+  will-change: transform;
+}
+
+.hero-animate-card.hero-card-1 {
+  animation: hero-card-in 0.7s 0.52s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.hero-animate-card.hero-card-2 {
+  animation: hero-card-in 0.7s 0.64s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.hero-animate-card.hero-card-3 {
+  animation: hero-card-in 0.7s 0.76s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.hero-animate-cta {
+  opacity: 1;
+  animation: hero-cta-in 0.6s 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  will-change: transform;
+}
+
+/* Отключение анимаций на мобильных для предотвращения CLS и улучшения производительности */
+@media (max-width: 768px) {
+  .hero-animate-title,
+  .hero-animate-desc,
+  .hero-animate-card,
+  .hero-animate-cta {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    will-change: auto !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .hero-animate-title,
+  .hero-animate-desc,
+  .hero-animate-card,
+  .hero-animate-cta {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* Section/header entrance: GPU-composited (replace v-motion) */
+@keyframes nav-link-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes section-title-in {
+  from {
+    opacity: 0;
+    transform: translateY(50px) scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes section-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(60px) scale(0.85);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes section-cta-in {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes cases-title-in {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes cases-filter-in {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-nav-link {
+  opacity: 0;
+  animation: nav-link-in 0.5s ease-out forwards;
+  will-change: transform;
+}
+
+.animate-section-title {
+  opacity: 0;
+  animation: section-title-in 1s ease-out forwards;
+  will-change: transform;
+}
+
+.animate-section-card {
+  opacity: 0;
+  animation: section-card-in 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  will-change: transform;
+}
+
+.animate-section-card-inline-delay {
+  opacity: 0;
+  animation: section-card-in 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  will-change: transform;
+}
+
+.animate-section-cta {
+  opacity: 0;
+  animation: section-cta-in 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  will-change: transform;
+}
+
+.animate-cases-title {
+  opacity: 0;
+  animation: cases-title-in 1s ease-out forwards;
+  will-change: transform;
+}
+
+.animate-cases-filter {
+  opacity: 0;
+  animation: cases-filter-in 0.6s 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  will-change: transform;
+}
+
+.animate-nav-link.delay-0 {
+  animation-delay: 200ms;
+}
+
+.animate-nav-link.delay-1 {
+  animation-delay: 320ms;
+}
+
+.animate-nav-link.delay-2 {
+  animation-delay: 440ms;
+}
+
+.animate-nav-link.delay-3 {
+  animation-delay: 560ms;
+}
+
+.animate-nav-link.delay-4 {
+  animation-delay: 680ms;
+}
+
+.animate-nav-link.delay-5 {
+  animation-delay: 800ms;
+}
+
+.animate-nav-link.delay-6 {
+  animation-delay: 920ms;
+}
+
+.animate-section-card.delay-0 {
+  animation-delay: 500ms;
+}
+
+.animate-section-card.delay-1 {
+  animation-delay: 620ms;
+}
+
+.animate-section-card.delay-2 {
+  animation-delay: 740ms;
+}
+
+.animate-section-card.delay-3 {
+  animation-delay: 860ms;
+}
+
+.animate-section-card.delay-4 {
+  animation-delay: 980ms;
+}
+
+.animate-section-card.delay-5 {
+  animation-delay: 1100ms;
+}
+
+.animate-section-cta.delay-1220 {
+  animation-delay: 1220ms;
+}
+
+.animate-section-cta.delay-950 {
+  animation-delay: 950ms;
+}
+
+.animate-section-cta.delay-1250 {
+  animation-delay: 1250ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .animate-nav-link,
+  .animate-section-title,
+  .animate-section-card,
+  .animate-section-card-inline-delay,
+  .animate-section-cta,
+  .animate-cases-title,
+  .animate-cases-filter {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* Below-the-fold sections: skip layout/paint until near viewport (LCP/CLS safe) */
+#stack>.stack-section:not(:first-of-type) {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 80vh;
 }
 
 /* Hide scrollbar but keep scrolling */
@@ -255,58 +596,10 @@ body {
   border-color: var(--color-success);
 }
 
-/* Blog color utilities - адаптированы под основную цветовую схему */
-.text-blog-title {
-  color: var(--color-text);
-}
-
-.text-blog-subtitle {
-  color: var(--color-text-muted);
-}
-
-.text-blog-muted {
-  color: var(--color-text-muted);
-}
-
-.bg-blog-card {
-  background-color: rgba(3, 18, 47, 0.95);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--color-border);
-}
-
-.bg-blog-tab-active {
-  background-color: var(--color-accent);
-  color: var(--color-bg);
-}
-
-.bg-blog-tab-inactive {
-  background-color: rgba(25, 48, 92, 0.6);
-  border: 1px solid var(--color-border);
-  color: var(--color-text);
-}
-
-.bg-blog-tab-inactive:hover {
-  background-color: rgba(25, 48, 92, 0.8);
-  border-color: var(--color-accent);
-}
-
-.bg-blog-button {
-  background-color: var(--color-accent);
-}
-
-.bg-blog-button:hover {
-  background-color: var(--color-purple);
-}
-
-.bg-blog-button-hover {
-  background-color: var(--color-purple);
-}
-
 /* Typography utilities */
 .font-display {
   font-family: var(--font-condensed);
-  font-weight: 700;
+  /* Вес шрифта задаём утилитами Tailwind (font-bold, font-black и т.д.) */
   letter-spacing: 0.01em;
 }
 
@@ -315,373 +608,240 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Blog-only fonts wrapper */
-.blog-fonts {
-  font-family: var(--font-sans);
-}
 
-
-/* Blog section background */
-.blog-gradient {
-  background: linear-gradient(135deg, var(--color-bg) 0%, var(--color-border) 50%, var(--color-bg) 100%);
-}
-
-/* Blog modal styles */
-.blog-modal {
-  background-color: var(--color-bg);
-  color: var(--color-text);
-}
-
-.blog-modal .prose {
-  color: var(--color-text-muted);
-}
-
-.blog-modal .prose h3 {
-  color: var(--color-text);
-  font-family: var(--font-condensed);
-  font-weight: 700;
-}
-
-.blog-modal .prose p {
-  color: var(--color-text-muted);
-  line-height: 1.7;
-}
-
-/* Blog card hover effects */
-.blog-card-hover {
-  transition: all 0.3s ease;
-}
-
-.blog-card-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px -10px rgba(255, 136, 99, 0.2);
-}
-
-/* Blog section specific styles */
-.blog-section-bg {
-  background: linear-gradient(135deg, var(--color-bg) 0%, var(--color-border) 100%);
-}
-
-/* Client form styles - адаптированы под основную цветовую схему */
-.client-form-bg {
-  background: linear-gradient(135deg, var(--color-bg) 0%, var(--color-border) 100%);
-}
-
-
-.client-form-card-alt {
-  border: 1px solid var(--color-border);
-}
-
-.client-form-input {
-  border: 1px solid var(--color-border);
-  color: black !important;
-  -webkit-backdrop-filter: blur(5px);
-  backdrop-filter: blur(5px);
-}
-
-.client-form-button:hover {
-  background-color: var(--color-purple);
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(255, 136, 99, 0.3);
-}
-
-.client-form-button:disabled {
-  background-color: var(--color-border);
-  color: var(--color-text-muted);
-  transform: none;
-  box-shadow: none;
-}
-
-.client-form-file-button {
-  background-color: rgba(25, 48, 92, 0.6);
-  border: 1px solid var(--color-border);
-  color: var(--color-text);
-  transition: all 0.3s ease;
-}
-
-.client-form-file-button:hover {
-  background-color: rgba(25, 48, 92, 0.8);
-  border-color: var(--color-accent);
-}
-
-.client-form-checkbox {
-  accent-color: var(--color-accent);
-}
-
-.client-form-link {
-  color: var(--color-accent);
-  transition: color 0.3s ease;
-}
-
-.client-form-link:hover {
-  color: var(--color-purple);
-}
-
-.client-form-error {
-  color: var(--color-error);
-}
-
-.client-form-title {
-  color: var(--color-text);
-  font-family: var(--font-condensed);
-  font-weight: 700;
-}
-
-.client-form-text {
-  color: var(--color-text-muted);
-}
-
-.client-form-helper {
-  color: var(--color-text-muted);
-  font-size: 0.875rem;
-}
-
-/* Services page styles - адаптированы под основную цветовую схему */
-.services-page-bg {
-  background: linear-gradient(135deg, var(--color-bg) 0%, var(--color-border) 100%);
-}
-
-.services-header {
-  background-color: rgba(3, 18, 47, 0.95);
-  border-bottom: 1px solid var(--color-border);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-}
-
-
-.services-filter-active {
-  background-color: var(--color-accent);
-  color: var(--color-bg);
-  border: 2px solid var(--color-accent);
-}
-
-.services-filter-inactive {
-  background-color: rgba(3, 18, 47, 0.8);
-  border: 2px solid var(--color-border);
-  color: var(--color-text);
-}
-
-.services-filter-inactive:hover {
-  border-color: var(--color-accent);
-  background-color: rgba(25, 48, 92, 0.6);
-}
-
-.services-card {
-  background-color: var(--color-border);
-  border: 1px solid var(--color-border);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-}
-
-.services-card:hover {
-  border-color: var(--color-accent);
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px -10px rgba(255, 136, 99, 0.2);
-}
-
-.services-card-title {
-  color: var(--color-text);
-  font-family: var(--font-condensed);
-  font-weight: 700;
-}
-
-.services-card-description {
-  color: var(--color-text-muted);
-}
-
-.services-card-price {
-  color: var(--color-accent);
-}
-
-
-.services-cta {
-  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-purple) 100%);
-}
-
-.services-cta-button-primary {
-  background-color: var(--color-bg);
-  color: var(--color-accent);
-  transition: all 0.3s ease;
-}
-
-.services-cta-button-primary:hover {
-  background-color: rgba(3, 18, 47, 0.9);
-  transform: translateY(-2px);
-}
-
-.services-cta-button-secondary {
-  border: 2px solid var(--color-text);
-  color: var(--color-text);
-  transition: all 0.3s ease;
-}
-
-.services-cta-button-secondary:hover {
-  background-color: var(--color-text);
-  color: var(--color-accent);
-}
-
-.services-modal {
-  background-color: var(--color-bg);
-  color: var(--color-text);
-}
-
-.services-modal-header {
-  background-color: rgba(3, 18, 47, 0.95);
-  border-bottom: 1px solid var(--color-border);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-}
-
-.services-modal-breadcrumb {
-  color: var(--color-text-muted);
-}
-
-.services-modal-breadcrumb:hover {
-  color: var(--color-text);
-}
-
-.services-modal-title {
-  color: var(--color-accent);
-  font-family: var(--font-condensed);
-  font-weight: 700;
-}
-
-.services-modal-description {
-  color: var(--color-text);
-}
-
-.services-modal-item {
-  background-color: rgba(3, 18, 47, 0.8);
-  border: 1px solid var(--color-border);
-  transition: all 0.3s ease;
-}
-
-.services-modal-item:hover {
-  border-color: var(--color-accent);
-  background-color: rgba(25, 48, 92, 0.6);
-}
-
-.services-modal-item-title {
-  color: var(--color-text);
-  font-family: var(--font-condensed);
-  font-weight: 600;
-}
-
-.services-modal-item-price {
-  color: var(--color-accent);
-}
-
-.services-modal-item-description {
-  color: var(--color-text-muted);
-}
-
-.services-detail-metric {
-  background-color: var(--color-accent);
-  color: var(--color-bg);
-}
-
-.services-detail-feature {
-  background-color: rgba(3, 18, 47, 0.8);
-  border: 1px solid var(--color-border);
-}
-
-.services-detail-feature-number {
-  color: var(--color-accent);
-  opacity: 0.3;
-}
-
-.services-detail-stage {
-  background-color: var(--color-accent);
-  color: var(--color-bg);
-}
-
-.services-detail-stage-line {
-  background-color: var(--color-border);
-}
-
-
-.services-detail-faq-item {
-  background-color: rgba(3, 18, 47, 0.8);
-  border: 1px solid var(--color-border);
-}
-
-.services-detail-faq-question {
-  color: var(--color-text);
-  font-family: var(--font-condensed);
-  font-weight: 600;
-}
-
-.services-detail-faq-answer {
-  color: var(--color-text-muted);
-}
-
-.services-detail-cta {
-  background-color: rgba(3, 18, 47, 0.8);
-  border: 1px solid var(--color-border);
-}
-
-.services-detail-cta-button {
-  background-color: var(--color-accent);
-  color: var(--color-bg);
-  transition: all 0.3s ease;
-}
-
-.services-detail-cta-button:hover {
-  background-color: var(--color-purple);
-  transform: translateY(-2px);
-}
-
-/* Stack container - ensure proper height for GSAP */
+/* Stack container - scroll-snap implementation (как в Test.vue) */
 #stack {
-  /* Let GSAP handle height and overflow */
   position: relative;
-  overflow: visible;
   width: 100%;
-  /* Hide background between sections */
-  background-color: transparent;
-  /* Ensure no background color */
-  background: transparent !important;
-  /* Prevent any blue background */
-  /* GSAP will set min-height dynamically */
-  min-height: 100vh;
-  /* Контролируем горизонтальный скролл на уровне контейнера */
+  height: 100vh;
+  display: flex;
+  flex-flow: column nowrap;
   overflow-x: hidden;
+  overflow-y: auto;
+  background-color: transparent;
+  /* Scrollbar видимый - показывает объем контента и позволяет скроллить */
+  scrollbar-width: thin;
+  /* Firefox - тонкий scrollbar */
+  scrollbar-color: var(--color-accent) var(--color-bg);
+  /* Firefox - цвет scrollbar */
+  /* Scroll-snap как в Test.vue */
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  /* Убеждаемся, что скролл работает */
+  -webkit-overflow-scrolling: touch;
 }
 
-/* Stack section positioning - minimal styles to allow GSAP control */
-.stack-section {
-  /* Let GSAP handle all positioning and transforms */
-  /* Only keep essential styles */
-  pointer-events: auto;
-  /* GSAP will set position, top, left, width via JavaScript */
-  /* Убрано transition - GSAP управляет анимациями напрямую */
-  /* Убрано will-change и transform - GSAP управляет этим напрямую */
-  /* Улучшаем производительность скролла */
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  /* Ensure sections are visible initially before GSAP takes over */
-  opacity: 1;
-  /* GSAP will control visibility via autoAlpha */
-  /* Overflow: visible для работы анимации наслаивания и основного скролла */
-  /* overflow-x: hidden убран с секций, чтобы не обрезать трансформации */
-  /* Горизонтальный скролл контролируется на уровне контейнера #stack */
-  overflow: visible;
+/* Стилизация scrollbar для #stack - видимый и стилизованный */
+#stack::-webkit-scrollbar {
+  width: 8px;
+  /* Ширина scrollbar */
+  display: block;
+  /* Показываем scrollbar */
 }
+
+#stack::-webkit-scrollbar-track {
+  background: var(--color-bg);
+  /* Цвет трека */
+}
+
+#stack::-webkit-scrollbar-thumb {
+  background: var(--color-accent);
+  /* Цвет ползунка */
+  border-radius: 4px;
+  /* Скругление */
+}
+
+#stack::-webkit-scrollbar-thumb:hover {
+  background: var(--color-purple);
+  /* Цвет при наведении */
+}
+
+/* Stack section positioning - CSS scroll-snap (как в Test.vue) */
+.stack-section,
+section.stack-section {
+  pointer-events: auto;
+  /* Scroll-snap properties - применяем через CSS */
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  /* Строго фиксируем высоту 100vh - как в Test.vue */
+  flex: none;
+  width: 100%;
+  height: 100vh;
+  /* Убираем overflow - никакого внутреннего скролла */
+  overflow: hidden;
+  /* Убеждаемся, что секции занимают место в потоке документа */
+  position: relative;
+  box-sizing: border-box;
+  /* Убеждаемся, что события wheel могут всплывать до #stack */
+  /* Не блокируем события wheel */
+}
+
+/* ContactSection и Footer могут иметь auto высоту, но все равно учитываются в scrollbar */
+.stack-section[style*="height: auto"],
+footer.stack-section {
+  height: auto !important;
+  min-height: auto !important;
+  overflow: visible;
+  /* Разрешаем overflow для контента */
+  /* Убираем фиксированную высоту, но сохраняем scroll-snap */
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
+  /* Не останавливаемся принудительно на этих секциях */
+}
+
+
+/* Убираем overflow из внутренних контейнеров во всех секциях */
+.stack-section .internal-scroll-container,
+section.stack-section .internal-scroll-container,
+.stack-section>.internal-scroll-container {
+  overflow: hidden !important;
+  overflow-y: hidden !important;
+  overflow-x: hidden !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  /* Убеждаемся, что события wheel всплывают до #stack */
+  /* Не блокируем события wheel */
+  pointer-events: auto;
+}
+
+/* Stack section with scroll-snap enabled - не нужен, scroll-snap работает через CSS */
 
 /* Внутренний скроллируемый контейнер для контента внутри секций */
 .internal-scroll-container {
   /* Скрываем scrollbar, но сохраняем функциональность скролла */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE и Edge */
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE и Edge */
+  /* iOS fix для плавной прокрутки */
+  -webkit-overflow-scrolling: touch;
+  /* Убираем overscroll-behavior, чтобы события wheel всплывали до #stack */
+  /* overscroll-behavior: contain блокирует передачу событий родителю */
 }
 
 .internal-scroll-container::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  display: none;
+  /* Chrome, Safari, Opera */
+}
+
+/* Скролл на главной странице происходит внутри #stack */
+/* Для других страниц скролл работает на уровне html/body */
+html {
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* Возвращаем скролл для обычных страниц */
+  height: 100%;
 }
 
 body {
   overflow-x: hidden;
-  /* overflow-y управляется ScrollTrigger через pinning */
+  overflow-y: auto;
+  /* Возвращаем скролл для обычных страниц */
+  height: 100%;
+  /* iOS fix для корректной высоты body */
+  min-height: -webkit-fill-available;
+  /* Fallback for older iOS */
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
-/* Убрано scroll-behavior: smooth для html - GSAP ScrollTrigger управляет скроллом */
+/* На главной странице блокируем скролл html/body, чтобы скролл был только в #stack */
+body:has(#stack) {
+  overflow-y: hidden;
+  /* Блокируем скролл body на главной странице */
+}
+
+html:has(#stack) {
+  overflow-y: hidden;
+  /* Блокируем скролл html на главной странице */
+}
+
+/* Убрано scroll-behavior: smooth для html - используется v-motion для анимаций */
+
+/* ============================================
+   iOS / Safari специфичные исправления
+   ============================================ */
+
+/* Исправление для viewport height на iOS Safari */
+/* iOS Safari имеет проблему с 100vh из-за адресной строки браузера */
+@supports (-webkit-touch-callout: none) {
+
+  /* Это iOS Safari */
+  html {
+    height: -webkit-fill-available;
+  }
+
+  body {
+    min-height: -webkit-fill-available;
+    min-height: 100vh;
+  }
+
+  /* Исправление для fixed элементов на iOS */
+  .fixed {
+    /* Убеждаемся, что fixed элементы правильно позиционируются */
+    position: fixed;
+    -webkit-transform: translateZ(0);
+    /* Принудительное аппаратное ускорение */
+    transform: translateZ(0);
+  }
+
+  /* Улучшение прокрутки для всех скроллируемых элементов */
+  .overflow-y-auto,
+  .overflow-auto {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+}
+
+/* Общие исправления для всех браузеров с поддержкой dvh */
+@supports (height: 100dvh) {
+
+  /* Используем динамический viewport height где возможно */
+  .min-h-screen {
+    min-height: -webkit-fill-available;
+    /* Fallback for older iOS */
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .h-screen {
+    min-height: -webkit-fill-available;
+    /* Fallback for older iOS */
+    height: 100vh;
+    height: 100dvh;
+  }
+}
+
+/* Исправление для backdrop-filter на старых версиях Safari */
+@supports not (backdrop-filter: blur(10px)) {
+
+  .bg-blog-card,
+  .services-header,
+  .services-modal-header {
+    background-color: rgba(3, 18, 47, 0.98) !important;
+  }
+}
+
+/* Исправление для sticky элементов на iOS */
+@supports (-webkit-touch-callout: none) {
+  .sticky {
+    /* Принудительное аппаратное ускорение для sticky на iOS */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    /* Улучшаем производительность */
+    will-change: transform;
+  }
+}
+
+/* Исправление для fixed header на iOS */
+@supports (-webkit-touch-callout: none) {
+  header.fixed {
+    /* Убеждаемся, что header правильно позиционируется на iOS */
+    position: fixed;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    /* Предотвращаем "прыжки" при скролле */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+}

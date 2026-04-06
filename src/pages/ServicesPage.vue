@@ -2,7 +2,6 @@
 import { ref, shallowRef, onMounted, defineAsyncComponent, computed, watchEffect, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import type { ServiceCardProps } from '../components/ServiceCard.vue'
-import { cn } from '../utils/cn'
 import { useServicesStore } from '../stores/services'
 import type { ServiceCategory, ServiceItem, ServiceDetail } from '../types/services'
 import { useYandexMetrika } from '../composables/useYandexMetrika'
@@ -10,7 +9,8 @@ import { useHead } from '@unhead/vue'
 const SEOContent = defineAsyncComponent(() => import('../components/seo/SEOContent.vue'))
 import { useServiceSchema } from '../composables/useServiceSchema'
 import { useBreadcrumbSchema } from '../composables/useBreadcrumbSchema'
-import FilterButtons from '../components/FilterButtons.vue'
+import SectionHeading from '../components/ui/SectionHeading.vue'
+
 
 const Breadcrumbs = defineAsyncComponent(() => import('../components/ui/Breadcrumbs.vue'))
 const ServiceCard = defineAsyncComponent(() => import('../components/ServiceCard.vue'))
@@ -26,20 +26,8 @@ const route = useRoute()
 const servicesStore = useServicesStore()
 const { trackServiceView, trackButtonClick } = useYandexMetrika()
 
-// Check if we're on a detail page or hub page
+// Check if we're on a detail page
 const isDetailPage = computed(() => route.name === 'service-detail')
-const isHubPage = computed(() => {
-  const hubRoutes = ['services-development', 'services-growth', 'services-strategy']
-  const hubPaths = ['/services/development', '/services/growth', '/services/strategy']
-  return hubRoutes.includes(route.name as string) || hubPaths.includes(route.path)
-})
-const hubCategory = computed(() => {
-  if (route.path === '/services/development' || route.name === 'services-development')
-    return 'development'
-  if (route.path === '/services/growth' || route.name === 'services-growth') return 'growth'
-  if (route.path === '/services/strategy' || route.name === 'services-strategy') return 'strategy'
-  return null
-})
 
 // Modal state
 const activeModal = ref<'list' | 'detail' | null>(null)
@@ -48,7 +36,11 @@ const selectedService = ref<ServiceItem | null>(null)
 const selectedServiceDetail = shallowRef<ServiceDetail | null>(null)
 
 // Local state + lazy data
-type ServiceFilter = 'Growth' | 'Strategy' | 'Development' | 'All'
+type ServiceFilter =
+  | 'AnalyticsResearch'
+  | 'StrategyPositioning'
+  | 'DevelopmentLaunch'
+  | 'AutomationGrowth'
 type Service = {
   id: number
   title: string
@@ -56,36 +48,55 @@ type Service = {
   priceFrom: string
   iconPath: string
   iconUseFill?: boolean
-  category?: string
+  category?: ServiceFilter
   slug?: string
 }
 
-const growthServices = shallowRef<Service[]>([])
-const strategyServices = shallowRef<Service[]>([])
-const developmentServices = shallowRef<Service[]>([])
+const analyticsResearchServices = shallowRef<Service[]>([])
+const strategyPositioningServices = shallowRef<Service[]>([])
+const developmentLaunchServices = shallowRef<Service[]>([])
+const automationGrowthServices = shallowRef<Service[]>([])
 
-const activeFilter = ref<ServiceFilter>('All')
+// null = hub screen (no direction selected); otherwise filter by direction
+const activeFilter = ref<ServiceFilter | null>(null)
 const isLoading = ref(false)
 const isLoaded = ref(false)
 
 // Lazy computed to avoid recomputation when sections are off-screen
 const allServices = computed(() => [
-  ...growthServices.value,
-  ...strategyServices.value,
-  ...developmentServices.value,
+  ...analyticsResearchServices.value,
+  ...strategyPositioningServices.value,
+  ...developmentLaunchServices.value,
+  ...automationGrowthServices.value,
 ])
 
 const availableCategories = computed(() => [
-  { key: 'All', label: 'Все услуги' },
-  { key: 'Growth', label: 'Рост' },
-  { key: 'Strategy', label: 'Стратегия' },
-  { key: 'Development', label: 'Разработка' },
+  {
+    key: 'AnalyticsResearch' as const,
+    label: 'Аналитика и исследования',
+    tagline: 'Понять, что происходит и где деньги',
+  },
+  {
+    key: 'StrategyPositioning' as const,
+    label: 'Стратегия и позиционирование',
+    tagline: 'Понять, как расти',
+  },
+  {
+    key: 'DevelopmentLaunch' as const,
+    label: 'Разработка и запуск',
+    tagline: 'Создать инструмент продаж',
+  },
+  {
+    key: 'AutomationGrowth' as const,
+    label: 'Автоматизация и рост',
+    tagline: 'Увеличить заявки и масштабировать',
+  },
 ])
 
 const filteredServices = computed(() => {
-  let list = allServices.value
-  if (activeFilter.value !== 'All') list = list.filter((s) => s.category === activeFilter.value)
-  return list
+  if (activeFilter.value === null) return []
+  const list = allServices.value
+  return list.filter((s) => s.category === activeFilter.value)
 })
 
 // JSON-LD for services list
@@ -115,36 +126,43 @@ watchEffect(() => {
   })
 })
 
-const filterServices = (category: string) => {
-  activeFilter.value = category as ServiceFilter
+const directionPaths: Record<ServiceFilter, string> = {
+  AnalyticsResearch: '/services/analytics-research',
+  StrategyPositioning: '/services/strategy-positioning',
+  DevelopmentLaunch: '/services/development-launch',
+  AutomationGrowth: '/services/automation-growth',
+}
 
-  // Отслеживаем клик по фильтру услуг
-  trackButtonClick(`service-filter-${category.toLowerCase()}`, {
-    filter_category: category,
-    previous_filter: activeFilter.value,
+const filterServices = (category: ServiceFilter | null) => {
+  activeFilter.value = category
+}
+
+const selectDirection = (filter: ServiceFilter) => {
+  filterServices(filter)
+  trackButtonClick(`service-direction-${filter.toLowerCase()}`, {
+    filter_category: filter,
   })
+  router.push(directionPaths[filter])
 }
 
-// Оранжевые цвета как в портфолио
-const filterButtonColors = {
-  bg: '!bg-accent',
-  border: 'border-rose-custom',
-  hover: 'hover:bg-[#ae70ac] hover:border-[#ae70ac]',
-  inner: 'bg-[#ae70ac]',
-  text: 'text-white',
+const isServiceFilter = (key: string): key is ServiceFilter =>
+  key === 'AnalyticsResearch' ||
+  key === 'StrategyPositioning' ||
+  key === 'DevelopmentLaunch' ||
+  key === 'AutomationGrowth'
+
+const onDirectionClick = (key: string) => {
+  if (isServiceFilter(key)) selectDirection(key)
 }
 
-// Обработчик изменения фильтра
-const handleFilterChange = (value: string) => {
-  filterServices(value)
-}
+// Обработчик изменения фильтра (если в будущем вернём FilterButtons)
 
 // Handle service click
-const handleServiceClick = (service: ServiceCardProps & { category?: ServiceCategory }) => {
-  // Пытаемся получить детальную информацию по slug или ID
+const handleServiceClick = async (service: ServiceCardProps & { category?: ServiceCategory }) => {
+  // Пытаемся получить детальную информацию по slug или ID (чанк overrides подгружается при первом запросе)
   const serviceDetail = service.slug
-    ? servicesStore.getServiceDetailBySlug(service.slug)
-    : servicesStore.getServiceDetail(service.id)
+    ? await servicesStore.getServiceDetailBySlug(service.slug)
+    : await servicesStore.getServiceDetail(service.id)
 
   if (serviceDetail) {
     // Отслеживаем просмотр услуги
@@ -198,8 +216,8 @@ const handleServiceClick = (service: ServiceCardProps & { category?: ServiceCate
 }
 
 // Handle service item click from list modal
-const handleServiceItemClick = (service: ServiceItem) => {
-  const serviceDetail = servicesStore.getServiceDetail(service.id)
+const handleServiceItemClick = async (service: ServiceItem) => {
+  const serviceDetail = await servicesStore.getServiceDetail(service.id)
   if (serviceDetail) {
     // Отслеживаем просмотр услуги из списка
     trackServiceView(
@@ -225,14 +243,24 @@ const handleServiceItemClick = (service: ServiceItem) => {
   }
 }
 
+/** Хаб направления без slug услуги, чтобы handleRouteParams снова выставил фильтр по path */
+function servicesHubPathFromCurrentRoute(): string {
+  const path = router.currentRoute.value.path.replace(/\/$/, '') || '/services'
+  const segs = path.split('/').filter(Boolean)
+  if (segs.length <= 1 || segs[0] !== 'services') return '/services'
+  if (segs.length === 2) return path
+  // /services/:category/:service → остаёмся на /services/:category
+  return `/services/${segs[1]}`
+}
+
 // Close modals
 const closeModal = () => {
+  const target = servicesHubPathFromCurrentRoute()
   activeModal.value = null
   selectedCategory.value = null
   selectedService.value = null
   selectedServiceDetail.value = null
-  // Возвращаемся к основному списку услуг
-  router.push('/services')
+  router.push(target)
 }
 
 // Initialize filter based on route and lazy-load data
@@ -241,10 +269,13 @@ onMounted(async () => {
     try {
       isLoading.value = true
       await servicesStore.loadDataIfNeeded()
-      // consume cached data from store
-      growthServices.value = servicesStore.growthServices
-      strategyServices.value = servicesStore.strategyServices
-      developmentServices.value = servicesStore.developmentServices
+      // consume cached data from store (description для карточек/JSON-LD из локального типа Service)
+      const withDesc = (rows: typeof servicesStore.analyticsResearchServices): Service[] =>
+        rows.map((s) => ({ ...s, description: '' })) as Service[]
+      analyticsResearchServices.value = withDesc(servicesStore.analyticsResearchServices)
+      strategyPositioningServices.value = withDesc(servicesStore.strategyPositioningServices)
+      developmentLaunchServices.value = withDesc(servicesStore.developmentLaunchServices)
+      automationGrowthServices.value = withDesc(servicesStore.automationGrowthServices)
       isLoaded.value = true
     } finally {
       isLoading.value = false
@@ -252,11 +283,11 @@ onMounted(async () => {
   }
 
   // Handle URL parameters for modals
-  handleRouteParams()
+  void handleRouteParams()
 })
 
 // Handle route parameters for modals
-const handleRouteParams = () => {
+const handleRouteParams = async () => {
   const route = router.currentRoute.value
   const { category, service } = route.params
 
@@ -264,7 +295,10 @@ const handleRouteParams = () => {
     // URL: /services/:category/:service - открыть детальную информацию
     const categoryData = servicesStore.getCategoryBySlug(category as string)
     if (categoryData) {
-      const serviceDetail = servicesStore.getServiceDetailBySlug(service as string)
+      const seg = String(service)
+      const serviceDetail = /^\d+$/.test(seg)
+        ? await servicesStore.getServiceDetail(Number(seg))
+        : await servicesStore.getServiceDetailBySlug(seg)
       if (serviceDetail) {
         selectedServiceDetail.value = serviceDetail
         activeModal.value = 'detail'
@@ -283,14 +317,16 @@ const handleRouteParams = () => {
 
   // Set filter based on route
   const path = route.path
-  if (path.includes('/growth')) {
-    filterServices('Growth')
-  } else if (path.includes('/strategy')) {
-    filterServices('Strategy')
-  } else if (path.includes('/development')) {
-    filterServices('Development')
+  if (path.includes('/analytics-research')) {
+    filterServices('AnalyticsResearch')
+  } else if (path.includes('/strategy-positioning')) {
+    filterServices('StrategyPositioning')
+  } else if (path.includes('/development-launch')) {
+    filterServices('DevelopmentLaunch')
+  } else if (path.includes('/automation-growth')) {
+    filterServices('AutomationGrowth')
   } else {
-    filterServices('All')
+    filterServices(null)
   }
 }
 
@@ -298,7 +334,7 @@ const handleRouteParams = () => {
 watch(
   () => router.currentRoute.value,
   () => {
-    handleRouteParams()
+    void handleRouteParams()
   },
   { deep: true }
 )
@@ -366,7 +402,7 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div class="min-h-screen py-[5rem] px-8 md:px-[5rem] bg-text">
+  <div class="min-h-screen px-[1rem] md:px-[3rem] bg-text">
     <!-- Detail Page with SEO Content -->
     <main v-if="isDetailPage && selectedServiceDetail" class="max-w-7xl mx-auto">
       <Breadcrumbs
@@ -434,13 +470,25 @@ watchEffect(() => {
           <div class="mb-8">
             <div class="flex gap-6">
               <div class="px-6 py-3 rounded-[3rem] border border-border flex-1 text-center">
-                <div class="opacity-80">Стоимость работ</div>
+                <div class="opacity-80">
+                  {{
+                    selectedServiceDetail.metrics.costMetricCaption || 'Стоимость работ'
+                  }}
+                </div>
                 <div class="text-3xl font-bold">{{ selectedServiceDetail.metrics.cost }}</div>
               </div>
               <div class="px-6 py-3 rounded-[3rem] border border-border flex-1 text-center">
-                <div class="opacity-80">Рабочих дней на сдачу</div>
+                <div class="opacity-80">
+                  {{
+                    selectedServiceDetail.metrics.workingDaysCaption ||
+                    'Рабочих дней на сдачу'
+                  }}
+                </div>
                 <div class="text-3xl font-bold">
-                  {{ selectedServiceDetail.metrics.workingDays }}
+                  {{
+                    selectedServiceDetail.metrics.workingDaysLabel ??
+                    selectedServiceDetail.metrics.workingDays
+                  }}
                 </div>
               </div>
             </div>
@@ -652,178 +700,125 @@ watchEffect(() => {
     <!-- Hub Page or Services List -->
     <main v-else class="max-w-7xl mx-auto">
       <!-- Breadcrumbs -->
-      <Breadcrumbs :items="[{ label: 'Главная', to: '/' }, { label: 'Услуги' }]" class="mb-8" />
-
-      <!-- Hub page internal links -->
-      <div
-        v-if="isHubPage && hubCategory === 'development'"
-        class="mb-12 p-8 rounded-3xl border border-border"
-      >
-        <h2 class="text-2xl font-bold mb-6">Наши услуги разработки</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <a
-            href="/services/development/corporate-website"
-            class="p-4 rounded-2xl border border-border hover:border-accent transition-colors"
-          >
-            <h3 class="font-semibold mb-2">Разработка сайта</h3>
-            <p class="text-sm text-text-muted">Корпоративные сайты под ключ</p>
-          </a>
-          <a
-            href="/services/development/online-store"
-            class="p-4 rounded-2xl border border-border hover:border-accent transition-colors"
-          >
-            <h3 class="font-semibold mb-2">Интернет‑магазин</h3>
-            <p class="text-sm text-text-muted">Полнофункциональные интернет-магазины</p>
-          </a>
-          <a
-            href="/services/development/landing-page"
-            class="p-4 rounded-2xl border border-border hover:border-accent transition-colors"
-          >
-            <h3 class="font-semibold mb-2">Лендинг</h3>
-            <p class="text-sm text-text-muted">Конверсионные одностраничные сайты</p>
-          </a>
-          <a
-            href="/services/development/saas-solutions"
-            class="p-4 rounded-2xl border border-border hover:border-accent transition-colors"
-          >
-            <h3 class="font-semibold mb-2">SaaS</h3>
-            <p class="text-sm text-text-muted">Облачные решения для бизнеса</p>
-          </a>
-          <a
-            href="/services/development/crm-integration"
-            class="p-4 rounded-2xl border border-border hover:border-accent transition-colors"
-          >
-            <h3 class="font-semibold mb-2">CRM интеграция</h3>
-            <p class="text-sm text-text-muted">Интеграция с системами управления</p>
-          </a>
-        </div>
-      </div>
-
-      <div
-        v-if="isHubPage && hubCategory === 'growth'"
-        class="mb-12 p-8 rounded-3xl border border-border"
-      >
-        <h2 class="text-2xl font-bold mb-6">Наши услуги роста</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <a
-            href="/services/growth/promotion"
-            class="p-4 rounded-2xl border border-border hover:border-accent transition-colors"
-          >
-            <h3 class="font-semibold mb-2">Продвижение сайта</h3>
-            <p class="text-sm text-text-muted">SEO, контент, техоптимизация, линкбилдинг</p>
-          </a>
-        </div>
-      </div>
-
-      <div
-        v-if="isHubPage && hubCategory === 'strategy'"
-        class="mb-12 p-8 rounded-3xl border border-border"
-      >
-        <h2 class="text-2xl font-bold mb-6">Наши стратегические услуги</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <a
-            href="/services/strategy/branding"
-            class="p-4 rounded-2xl border border-border hover:border-accent transition-colors"
-          >
-            <h3 class="font-semibold mb-2">Брендинг</h3>
-            <p class="text-sm text-text-muted">Бренд‑стратегия и визуальная айдентика</p>
-          </a>
-        </div>
-      </div>
-
-      <!-- Filter Buttons -->
-      <FilterButtons
-        :items="availableCategories.map(cat => ({ label: cat.label, value: cat.key }))"
-        :model-value="activeFilter"
-        :colors="filterButtonColors"
-        container-class="mb-12"
-        @update:model-value="handleFilterChange"
+      <Breadcrumbs
+        :items="[
+          { label: 'Главная', to: '/' },
+          { label: 'Услуги' },
+        ]"
+        class="mb-8"
       />
 
-      <!-- Internal links for crawl and relevance -->
-      <p class="mb-8 text-accent">
-        Ищете, какую услугу выбрать, чтобы <strong class="!text-border">создать сайт</strong> и
-        запустить продажи? Посмотрите
-        <a href="/cases" class="underline !text-purple">наши кейсы</a> и
-        <a href="/blog" class="underline !text-purple">статьи блога</a> — мы собрали практику и
-        ответы.
+      <SectionHeading
+        :level="1"
+        size="lg"
+        color="bg"
+        align="center"
+        weight="black"
+        animation-class="animate-cases-title"
+        class="mb-4 md:mb-6 lg:mb-8"
+      >
+       Почему нет роста? Потому что нет системы
+      </SectionHeading>
+
+      <p
+        class="mb-8 text-accent max-w-3xl mx-auto text-center text-base md:text-lg leading-relaxed px-2"
+      >
+       Объединяем стратегию, сайт и продвижение в одну работающую систему привлечения клиентов
       </p>
 
-      <!-- Loading State -->
-      <div v-if="isLoading" class="text-center py-12">
-        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
-        <p class="mt-4 text-text-muted">Загрузка услуг...</p>
-      </div>
-
-      <!-- Services List -->
-      <div v-else-if="filteredServices.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <ServiceCard
-          v-for="(service, index) in filteredServices"
-          :key="service.id"
-          :id="service.id"
-          :title="service.title"
-          :description="service.description"
-          :priceFrom="service.priceFrom"
-          :icon-path="service.iconPath"
-          :icon-use-fill="service.iconUseFill"
-          :slug="service.slug"
-          :index="index"
-          :isClickable="true"
-          @click="handleServiceClick"
-        />
-      </div>
-
-      <!-- No Results -->
-      <div v-else class="text-center py-12">
-        <svg
-          class="mx-auto h-12 w-12 text-text-muted"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.29-1.009-5.824-2.709"
-          />
-        </svg>
-        <h3 class="mt-4 text-lg font-medium services-modal-title">Услуги не найдены</h3>
-        <p class="mt-2 text-text-muted">Попробуйте изменить фильтры</p>
+      <div
+        class="grid grid-cols-1  md:grid-cols-2 gap-2 md:gap-4 mb-12 max-w-7xl mx-auto"
+      >
         <button
-          @click="
-            () => {
-              activeFilter = 'All'
-            }
-          "
-          class="mt-4 px-4 py-2 services-detail-cta-button rounded-lg transition-colors"
+          v-for="dir in availableCategories"
+          :key="dir.key"
+          type="button"
+          @click="onDirectionClick(dir.key)"
+          :class="[
+            'w-full px-5 py-5 md:px-6 md:py-6 rounded-[3rem] text-center sm:text-center transition-all duration-300 hover:-translate-y-0.5  focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ',
+            activeFilter === dir.key
+              ? ' bg-accent text-bg shadow-lg shadow-accent/20 scale-[1.02]'
+              : ' bg-bg text-text hover:bg-accent hover:shadow-md',
+          ]"
         >
-          Сбросить фильтры
+          <span
+            class="block font-semibold text-sm md:text-base leading-snug"
+            :class="activeFilter === dir.key ? 'text-white' : 'text-accent'"
+            >{{ dir.label }}</span
+          >
+          <span
+            class="block mt-2 text-xs md:text-sm font-normal leading-snug"
+            :class="activeFilter === dir.key ? 'text-bg' : 'text-white'"
+            >{{ dir.tagline }}</span
+          >
         </button>
       </div>
 
-      <!-- CTA Section -->
-      <!-- <section class="services-cta rounded-3xl p-12 text-center text-white">
-        <h3 class="text-4xl font-bold mb-4 font-display">Готовы начать работу?</h3>
-        <p class="text-xl mb-8 opacity-90">
-          Выберите услуги, которые лучше всего подходят для вашего бизнеса, и давайте создадим
-          что-то удивительное вместе.
-        </p>
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <button
-            @click="$router.push('/client-form')"
-            class="services-cta-button-primary px-8 py-4 rounded-full font-semibold text-lg transition-colors duration-300"
+
+
+      <!-- Filter + services section -->
+      <div class="scroll-mt-8">
+
+
+
+
+        <!-- Loading State -->
+        <div v-if="isLoading" class="text-center py-12">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+          <p class="mt-4 text-text-muted">Загрузка услуг...</p>
+        </div>
+
+        <!-- Services List (only when direction selected) -->
+        <div
+          v-else-if="activeFilter !== null && filteredServices.length > 0"
+          class="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6"
+        >
+          <ServiceCard
+            v-for="service in filteredServices"
+            :key="service.id"
+            :id="service.id"
+            :title="service.title"
+            :description="service.description"
+            :priceFrom="service.priceFrom"
+            :icon-path="service.iconPath"
+            :icon-use-fill="service.iconUseFill"
+            :slug="service.slug"
+            :isClickable="true"
+            :show-description="false"
+            @click="handleServiceClick"
+          />
+        </div>
+
+        <!-- No Results (direction selected but no services) -->
+        <div v-else-if="activeFilter !== null" class="text-center py-12">
+          <svg
+            class="mx-auto h-12 w-12 text-text-muted"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
           >
-            Стать клиентом
-          </button>
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.29-1.009-5.824-2.709"
+            />
+          </svg>
+          <h3 class="mt-4 text-lg font-medium services-modal-title">Услуги не найдены</h3>
+          <p class="mt-2 text-text-muted">Попробуйте изменить направление</p>
           <button
-            @click="$router.push('/cases')"
-            class="services-cta-button-secondary px-8 py-4 rounded-full font-semibold text-lg transition-colors duration-300"
+            @click="() => { filterServices(null); router.push('/services') }"
+            class="mt-4 px-4 py-2 services-detail-cta-button rounded-lg transition-colors"
           >
-            Посмотреть кейсы
+            Выбрать направление
           </button>
         </div>
-      </section> -->
+
+        <!-- No direction selected: gentle prompt (no list shown) -->
+        <p v-else class="text-center text-bg py-8">
+          Выберите этап, на котором сейчас ваш бизнес — и получите решение под задачу.
+        </p>
+      </div>
     </main>
 
     <!-- Service List Modal -->

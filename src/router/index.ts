@@ -1,9 +1,17 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import type { RouteLocationNormalized } from 'vue-router'
+import type { RouteLocationGeneric, RouteLocationNormalized } from 'vue-router'
 import { useServicesStore } from '@/stores/services'
 import { useBlogStore } from '@/stores/blog'
 import { usePortfolioStore } from '@/stores/portfolio'
 import { getSEOConfig, getBlogPostSEO } from '@/config/seo'
+import { fetchSeoFromApi } from '@/services/seoService'
+
+/** Called after deferred meta is computed so main can update head (avoids blocking navigation). */
+export type MetaUpdatePayload = { title?: string; meta?: object[]; link?: object[] }
+let metaUpdateCallback: ((payload: MetaUpdatePayload) => void) | null = null
+export function setRouterMetaUpdateCallback(cb: (payload: MetaUpdatePayload) => void) {
+  metaUpdateCallback = cb
+}
 
 const HomePage = () => import('@/pages/HomePage.vue')
 const ServicesPage = () => import('@/pages/ServicesPage.vue')
@@ -18,8 +26,17 @@ const NotFound = () => import('@/pages/NotFound.vue')
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   scrollBehavior(to, from, savedPosition) {
+    // Главная: всегда показывать с main section, не восстанавливать прошлую позицию
+    if (to.path === '/' || to.path === '/home') {
+      return { top: 0, left: 0 }
+    }
     if (savedPosition) return savedPosition
     if (to.hash) return { el: to.hash, behavior: 'smooth' }
+    // Внутри /services один и тот же layout: push категории/деталки не должен сбрасывать скролл наверх
+    // (иначе конфликтует с scrollIntoView к блоку карточек в ServicesPage).
+    if (to.path.startsWith('/services') && from.path.startsWith('/services')) {
+      return false
+    }
     return { top: 0 }
   },
   routes: [
@@ -29,6 +46,7 @@ const router = createRouter({
       component: HomePage,
       meta: { title: 'Главная', description: 'Kodify — продажа сайтов и цифровых решений для развития бизнеса. Разработка корпоративных сайтов, интернет-магазинов, лендингов. Продвижение и поддержка. Портфолио и экспертный блог.', canonicalPath: '/', ogImage: '/og-image.webp' }
     },
+
     {
       path: '/services',
       component: ServicesPage,
@@ -36,37 +54,66 @@ const router = createRouter({
       children: [
         // default /services → stay on ServicesPage
         { path: '', name: 'services', component: ServicesPage },
-        // top-level short categories (aliases handled by ServicesPage itself)
+        // legacy slugs → hub or canonical category/service URLs
+        { path: 'growth', redirect: '/services' },
         {
-          path: 'growth',
-          name: 'services-growth',
+          path: 'growth/:service',
+          redirect: (to) => redirectLegacyServicePath(to),
+        },
+        { path: 'strategy', redirect: '/services/strategy-positioning' },
+        {
+          path: 'strategy/:service',
+          redirect: (to) => redirectLegacyServicePath(to),
+        },
+        { path: 'development', redirect: '/services/development-launch' },
+        {
+          path: 'development/:service',
+          redirect: (to) => redirectLegacyServicePath(to),
+        },
+        {
+          path: 'analytics-research',
+          name: 'services-analytics-research',
           component: ServicesPage,
           meta: {
-            title: 'Услуги роста',
-            description: 'Комплексное продвижение сайтов: SEO-оптимизация, контент-маркетинг, контекстная реклама, аналитика. Увеличиваем трафик и конверсию.',
-            canonicalPath: '/services/growth',
+            title: 'Аналитика и исследования',
+            description:
+              'Аудит кампаний, исследования аудитории, анализ рынка и конкурентов. Решения на основе данных.',
+            canonicalPath: '/services/analytics-research',
             ogImage: '/og-image.webp',
           },
         },
         {
-          path: 'strategy',
-          name: 'services-strategy',
+          path: 'strategy-positioning',
+          name: 'services-strategy-positioning',
           component: ServicesPage,
           meta: {
-            title: 'Стратегические услуги',
-            description: 'Разработка бизнес-стратегии, брендинг и позиционирование. Исследования рынка, анализ конкурентов, создание платформы бренда.',
-            canonicalPath: '/services/strategy',
+            title: 'Стратегия и позиционирование',
+            description:
+              'Маркетинговая стратегия, бизнес-план, брендинг и позиционирование на рынке.',
+            canonicalPath: '/services/strategy-positioning',
             ogImage: '/og-image.webp',
           },
         },
         {
-          path: 'development',
-          name: 'services-development',
+          path: 'development-launch',
+          name: 'services-development-launch',
           component: ServicesPage,
           meta: {
-            title: 'Услуги разработки',
-            description: 'Разработка сайтов под ключ: корпоративные сайты, интернет-магазины, лендинги, SaaS-платформы. Интеграции и поддержка.',
-            canonicalPath: '/services/development',
+            title: 'Разработка и запуск',
+            description:
+              'Разработка сайта, дизайн, интеграции, тексты и калькуляторы — запуск инструмента продаж.',
+            canonicalPath: '/services/development-launch',
+            ogImage: '/og-image.webp',
+          },
+        },
+        {
+          path: 'automation-growth',
+          name: 'services-automation-growth',
+          component: ServicesPage,
+          meta: {
+            title: 'Автоматизация и рост',
+            description: 'Продвижение, CRM и автоматизация: больше заявок и прозрачная воронка.',
+            canonicalPath: '/services/automation-growth',
             ogImage: '/og-image.webp',
           },
         },
@@ -137,6 +184,8 @@ const router = createRouter({
         description: 'Рассчитайте стоимость разработки сайта за 60 секунд. Получите подробную смету в PDF и консультацию менеджера.',
         canonicalPath: '/calculator',
         ogImage: '/og-image.webp',
+        /** Нужен для SEOContent: без h2Outline слоты секций не монтируются */
+        h2Outline: ['Шаги', 'Результат', 'Что дальше'],
       },
     },
     {
@@ -145,10 +194,16 @@ const router = createRouter({
       component: PackagesPage,
       meta: {
         title: 'Пакеты услуг',
-        description: 'Готовые пакеты услуг для вашего бизнеса. Стартовый, Бизнес, E-commerce и Премиум пакеты с выгодной экономией до 20%.',
+        description: 'Превращаем сайт в инструмент продаж: выберите пакет под вашу задачу и начните получать заявки',
         canonicalPath: '/packages',
         ogImage: '/og-image.webp',
       },
+    },
+    {
+      path: '/seo-core',
+      name: 'seo-core',
+      component: () => import('@/pages/SeoCorePage.vue'),
+      meta: { title: 'SEO ядро', robots: 'noindex,nofollow' },
     },
     {
       path: '/blog/:category',
@@ -206,10 +261,97 @@ router.onError((error) => {
   }
 })
 
-// SEO: Load metadata from seo.ts config and dynamic routes
+// SEO: minimal meta in beforeEach (non-blocking), heavy meta deferred to avoid main-thread work
+function applyDeferredMeta(to: RouteLocationNormalized) {
+  try {
+    if (to.name === 'blog-post' || to.name === 'home-blog-post') {
+      const { category, post } = to.params
+      if (post && typeof post === 'string') {
+        const blogStore = useBlogStore()
+        const blogPost = blogStore.getPostBySlug(post)
+        if (blogPost) {
+          const blogSEO = getBlogPostSEO(post)
+          if (blogSEO) {
+            Object.assign(to.meta, {
+              title: blogSEO.title || `${blogPost.fullTitle || blogPost.title} - Блог`,
+              description: blogSEO.description || blogPost.summary ||
+                (blogPost.content?.[0]?.text?.substring(0, 160) ?? `Статья "${blogPost.title}" о разработке сайтов и веб-технологиях.`),
+              canonicalPath: `/blog/${category}/${post}`,
+              h1: blogSEO.h1 || blogPost.fullTitle || blogPost.title,
+              h2Outline: blogSEO.h2Outline ?? [],
+              faq: blogSEO.faq ?? [],
+              ogImage: blogPost.image || blogSEO.ogImage || '/og-image.webp',
+            })
+          } else {
+            const postDescription = blogPost.summary ?? blogPost.content?.[0]?.text?.substring(0, 160) ?? `Статья "${blogPost.title}" о разработке сайтов и веб-технологиях.`
+            Object.assign(to.meta, {
+              title: `${blogPost.fullTitle || blogPost.title} - Блог`,
+              description: postDescription.length > 160 ? postDescription.substring(0, 157) + '...' : postDescription,
+              canonicalPath: `/blog/${category}/${post}`,
+              ogImage: blogPost.image || '/og-image.webp',
+            })
+          }
+        }
+      }
+    } else if (to.name === 'portfolio-project') {
+      const { projectTitle } = to.params
+      if (projectTitle && typeof projectTitle === 'string') {
+        const portfolioStore = usePortfolioStore()
+        const project = portfolioStore.findProjectBySlug(projectTitle)
+        if (project) {
+          const technologiesText = project.technologies?.length ? ` Технологии: ${project.technologies.join(', ')}.` : ''
+          const projectDescription = project.description ?? `Проект "${project.title}". ${project.category}.${technologiesText}`
+          Object.assign(to.meta, {
+            title: `${project.title} - Портфолио`,
+            description: projectDescription.length > 160 ? projectDescription.substring(0, 157) + '...' : projectDescription,
+            canonicalPath: `/cases/${projectTitle}`,
+            ogImage: project.image || '/og-image.webp',
+          })
+        }
+      }
+    } else if (to.name === 'blog-category') {
+      const category = to.params.category as string
+      const categoryNames: Record<string, string> = {
+        all: 'Все статьи',
+        development: 'Разработка сайтов',
+        marketing: 'Маркетинг и продвижение',
+        design: 'Дизайн и UX',
+        business: 'Бизнес и стратегия',
+      }
+      const categoryName = categoryNames[category] || category
+      Object.assign(to.meta, {
+        title: `${categoryName} - Блог`,
+        description: `Статьи по теме "${categoryName}". Экспертные материалы о разработке сайтов, веб-технологиях и продвижении.`,
+        canonicalPath: `/blog/${category}`,
+      })
+    }
+
+    const titlePart = typeof to.meta.title === 'string' ? to.meta.title : 'Kodify'
+    const fullTitle = `${titlePart} - Kodify`
+    const description = (to.meta.description as string) || 'Веб‑компания полного цикла: разработка, поддержка, продвижение. Кейсы и блог.'
+    const canonicalPath = (to.meta.canonicalPath as string) || to.fullPath
+    const ogImage = (to.meta.ogImage as string) || '/og-image.webp'
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://kodifyweb.ru'
+    metaUpdateCallback?.({
+      title: fullTitle,
+      meta: [
+        { name: 'description', content: description },
+        { property: 'og:title', content: fullTitle },
+        { property: 'og:description', content: description },
+        { property: 'og:type', content: 'website' },
+        { property: 'og:url', content: origin + canonicalPath },
+        { property: 'og:image', content: ogImage },
+        { name: 'twitter:card', content: 'summary_large_image' },
+      ],
+      link: [{ rel: 'canonical', href: origin + canonicalPath }],
+    })
+  } catch (err) {
+    console.warn('Deferred meta update failed:', err)
+  }
+}
+
 router.beforeEach((to, _from, next) => {
   try {
-    // 1. Сначала загружаем из seo.ts конфигурации
     const seo = getSEOConfig(to.path)
     if (seo) {
       to.meta = {
@@ -223,115 +365,64 @@ router.beforeEach((to, _from, next) => {
         ogImage: seo.ogImage,
       }
     }
-
-    // 2. Для динамических роутов блога - загружаем description из store или seo.ts
-    if (to.name === 'blog-post' || to.name === 'home-blog-post') {
-      const { category, post } = to.params
-      if (post && typeof post === 'string') {
-        try {
-          const blogStore = useBlogStore()
-          const blogPost = blogStore.getPostBySlug(post)
-          if (blogPost) {
-            // Сначала проверяем, есть ли оптимизированная SEO-конфигурация в seo.ts
-            const blogSEO = getBlogPostSEO(post)
-
-            if (blogSEO) {
-              // Используем оптимизированные метаданные из семантического ядра
-              to.meta = {
-                ...to.meta,
-                title: blogSEO.title || `${blogPost.fullTitle || blogPost.title} - Блог`,
-                description: blogSEO.description || blogPost.summary ||
-                  (blogPost.content && blogPost.content[0]?.text
-                    ? blogPost.content[0].text.substring(0, 160)
-                    : `Статья "${blogPost.title}" о разработке сайтов и веб-технологиях. Экспертные советы и практические рекомендации.`),
-                canonicalPath: `/blog/${category}/${post}`,
-                h1: blogSEO.h1 || blogPost.fullTitle || blogPost.title,
-                h2Outline: blogSEO.h2Outline || [],
-                faq: blogSEO.faq || [],
-                ogImage: blogPost.image || blogSEO.ogImage || '/og-image.webp',
-              }
-            } else {
-              // Fallback: генерируем description из контента статьи (для существующих статей)
-              const postDescription =
-                blogPost.summary ||
-                (blogPost.content && blogPost.content[0]?.text
-                  ? blogPost.content[0].text.substring(0, 160)
-                  : null) ||
-                `Статья "${blogPost.title}" о разработке сайтов и веб-технологиях. Экспертные советы и практические рекомендации.`
-              to.meta = {
-                ...to.meta,
-                title: `${blogPost.fullTitle || blogPost.title} - Блог`,
-                description: postDescription.length > 160 ? postDescription.substring(0, 157) + '...' : postDescription,
-                canonicalPath: `/blog/${category}/${post}`,
-                ogImage: blogPost.image || '/og-image.webp',
-              }
-            }
-          }
-        } catch (error) {
-          console.warn('Failed to load blog post metadata:', error)
-        }
-      }
-    }
-
-    // 3. Для динамических роутов портфолио - загружаем description из store
-    if (to.name === 'portfolio-project') {
-      const { projectTitle } = to.params
-      if (projectTitle && typeof projectTitle === 'string') {
-        try {
-          const portfolioStore = usePortfolioStore()
-          const project = portfolioStore.findProjectBySlug(projectTitle)
-          if (project) {
-            const technologiesText = project.technologies && project.technologies.length > 0
-              ? ` Технологии: ${project.technologies.join(', ')}.`
-              : ''
-            const projectDescription =
-              project.description ||
-              `Проект "${project.title}". ${project.category}.${technologiesText} Детальное описание реализации и результатов.`
-            to.meta = {
-              ...to.meta,
-              title: `${project.title} - Портфолио`,
-              description: projectDescription.length > 160 ? projectDescription.substring(0, 157) + '...' : projectDescription,
-              canonicalPath: `/cases/${projectTitle}`,
-              ogImage: project.image || '/og-image.webp',
-            }
-          }
-        } catch (error) {
-          console.warn('Failed to load portfolio project metadata:', error)
-        }
-      }
-    }
-
-    // 4. Для категорий блога - генерируем description на основе категории
-    if (to.name === 'blog-category') {
-      const { category } = to.params
-      const categoryNames: Record<string, string> = {
-        all: 'Все статьи',
-        development: 'Разработка сайтов',
-        marketing: 'Маркетинг и продвижение',
-        design: 'Дизайн и UX',
-        business: 'Бизнес и стратегия',
-      }
-      const categoryName = categoryNames[category as string] || category
-      to.meta = {
-        ...to.meta,
-        title: `${categoryName} - Блог`,
-        description: `Статьи по теме "${categoryName}". Экспертные материалы о разработке сайтов, веб-технологиях и продвижении.`,
-        canonicalPath: `/blog/${category}`,
-      }
-    }
-
-    // 5. Убеждаемся, что description всегда есть (fallback)
     if (!to.meta.description) {
       to.meta.description =
         to.meta.title && typeof to.meta.title === 'string'
           ? `${to.meta.title}. Kodify — продажа сайтов и цифровых решений для развития бизнеса.`
           : 'Kodify — продажа сайтов и цифровых решений для развития бизнеса. Разработка корпоративных сайтов, интернет-магазинов, лендингов. Продвижение и поддержка.'
     }
-
     next()
+
+    // Отложенная обработка meta для мобильных - не блокируем навигацию
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+    const deferredDelay = isMobile ? 1000 : 0
+    if (typeof requestIdleCallback !== 'undefined') {
+      requestIdleCallback(() => applyDeferredMeta(to), { timeout: deferredDelay + 2000 })
+    } else {
+      setTimeout(() => applyDeferredMeta(to), deferredDelay)
+    }
+
+    // Асинхронно подтягиваем SEO из backend, если есть запись в БД (пропускаем внутренние страницы без SEO в БД)
+    const skipSeoApi = to.path === '/seo-core'
+    if (typeof window !== 'undefined' && !skipSeoApi) {
+      const path = to.path
+      const city = (to.query?.city as string | undefined) || undefined
+      const win = window as Window & {
+        scheduler?: {
+          postTask?: (cb: () => void, opts?: { priority?: string; delay?: number }) => void
+        }
+      }
+
+      const scheduleFetch = () => {
+        fetchSeoFromApi(path, city)
+          .then((apiSeo) => {
+            if (!apiSeo) return
+            Object.assign(to.meta, {
+              title: apiSeo.title,
+              description: apiSeo.description,
+              canonicalPath: apiSeo.canonicalPath,
+              h1: apiSeo.h1,
+              h2Outline: apiSeo.h2Outline,
+              faq: apiSeo.faq,
+              ogImage: apiSeo.ogImage,
+            })
+            applyDeferredMeta(to)
+          })
+          .catch(() => {
+            // fallback: nothing, локальный seoConfig уже применён
+          })
+      }
+
+      if (win.scheduler?.postTask) {
+        win.scheduler.postTask(scheduleFetch, { priority: 'background', delay: deferredDelay + 500 })
+      } else if (typeof requestIdleCallback !== 'undefined') {
+        requestIdleCallback(scheduleFetch, { timeout: deferredDelay + 1500 })
+      } else {
+        setTimeout(scheduleFetch, deferredDelay + 500)
+      }
+    }
   } catch (error) {
     console.error('Error in router beforeEach:', error)
-    // Fallback на главную при ошибке
     if (to.name !== 'home') {
       next({ name: 'home' })
     } else {
@@ -339,6 +430,20 @@ router.beforeEach((to, _from, next) => {
     }
   }
 })
+
+/** Old /services/{growth|strategy|development}/:service → canonical /services/:category/:service */
+function redirectLegacyServicePath(to: RouteLocationGeneric) {
+  try {
+    const store = useServicesStore()
+    store.loadDataIfNeeded()
+    const s = String(to.params.service ?? '')
+    if (!s) return '/services'
+    const cat = store.getCategorySlugForServiceSlug(s)
+    return cat ? `/services/${cat}/${s}` : '/services'
+  } catch {
+    return '/services'
+  }
+}
 
 // Route param validators
 function validateCategory(to: RouteLocationNormalized) {
@@ -364,7 +469,9 @@ function validateServiceDetail(to: RouteLocationNormalized) {
     const category = String(to.params.category || '')
     const service = String(to.params.service || '')
     const categoryOk = store.getCategoryBySlug(category) || (/^\d+$/.test(category) && store.getCategoryById(Number(category)))
-    const serviceOk = store.getServiceDetailBySlug(service) || (/^\d+$/.test(service) && store.getServiceDetail(Number(service)))
+    const serviceOk =
+      store.getCatalogItemBySlug(service) != null ||
+      (/^\d+$/.test(service) && store.getCatalogItemById(Number(service)) != null)
     if (categoryOk && serviceOk) return true
     // Fallback на страницу услуг
     return { name: 'services' }

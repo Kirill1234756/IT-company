@@ -1,59 +1,17 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
-import { defineAsyncComponent, onMounted, ref, watch, onBeforeUnmount } from 'vue'
+import { RouterView, useRoute } from 'vue-router'
+import { defineAsyncComponent, ref, computed } from 'vue'
 import { useIntersectionObserver } from '@vueuse/core'
-const LoaderC = defineAsyncComponent(() => import('./components/ui/Loader.vue'))
-import { usePageLoader } from './composables/usePageLoader'
 const Header = defineAsyncComponent(() => import('./pages/Header.vue'))
 const ContactSection = defineAsyncComponent(
   () => import('./components/sections/ContactSection.vue')
 )
 const Footer = defineAsyncComponent(() => import('./pages/Footer.vue'))
 
-const { isLoading, progress, isRouteChange, initLoader, initRouterLoader, addLoadingPromise } =
-  usePageLoader()
-
-// Track if this is initial load (use pre-rendered loader) or route change (use Vue loader)
-const isInitialLoad = ref(true)
-
-// Update pre-rendered loader progress
-const updatePreRenderedLoader = () => {
-  const progressFill = document.getElementById('loader-progress-fill')
-  const progressText = document.getElementById('loader-progress-text')
-  const loaderText = document.getElementById('loader-text')
-
-  if (progressFill && progressText && loaderText) {
-    progressFill.style.width = progress.value + '%'
-    progressText.textContent = Math.round(progress.value) + '%'
-    loaderText.textContent = isRouteChange.value ? 'Переход...' : 'Загрузка...'
-  }
-}
-
-// Hide pre-rendered loader
-const hidePreRenderedLoader = () => {
-  const loader = document.getElementById('pre-rendered-loader')
-  if (loader) {
-    loader.style.opacity = '0'
-    loader.style.transition = 'opacity 0.3s ease-out'
-    setTimeout(() => {
-      loader.style.display = 'none'
-    }, 300)
-  }
-}
-
-// Watch progress and update pre-rendered loader
-watch(
-  [progress, isLoading, isRouteChange],
-  () => {
-    if (isInitialLoad.value && !isRouteChange.value) {
-      updatePreRenderedLoader()
-      if (!isLoading.value) {
-        hidePreRenderedLoader()
-      }
-    }
-  },
-  { immediate: true }
-)
+const route = useRoute()
+// ContactSection и Footer показываются только на других страницах (не на главной)
+// На главной странице они внутри #stack
+const isHomePage = computed(() => route.path === '/' || route.path === '/home')
 
 // Lazy load triggers and flags
 const contactSectionTrigger = ref<HTMLElement | null>(null)
@@ -78,7 +36,7 @@ declare global {
   }
 }
 
-// Загрузка ContactSection и Footer без задержки - лоадер ждет реальной загрузки
+// Загрузка ContactSection и Footer
 const loadContactSection = () => {
   shouldLoadContactSection.value = true
 }
@@ -88,7 +46,6 @@ const loadFooter = () => {
 }
 
 // Observers (vueuse handles cleanup when target unmounts)
-// Загрузка без задержки - лоадер ждет реальной загрузки
 useIntersectionObserver(
   contactSectionTrigger,
   ([entry]) => {
@@ -108,76 +65,14 @@ useIntersectionObserver(
   },
   { rootMargin: '300px', threshold: 0 }
 )
-
-onMounted(async () => {
-  // Notify that Vue is mounted (stops pre-rendered loader's own progress simulation)
-  window.dispatchEvent(new Event('vue-mounted'))
-
-  // Initial update of pre-rendered loader
-  updatePreRenderedLoader()
-
-  initLoader()
-  initRouterLoader()
-
-  // Ждем загрузки критических компонентов перед скрытием лоадера
-  // Pre-rendered контент в HTML обеспечивает мгновенный LCP, поэтому уменьшаем время ожидания
-  const waitForMainSection = new Promise<void>((resolve) => {
-    const isMobile = window.innerWidth < 768
-    const MAX_WAIT_TIME = isMobile ? 1500 : 2000 // Уменьшено для быстрого FCP
-    const startTime = Date.now()
-
-    // Проверяем наличие MainSection (LCP элемент) - pre-rendered в HTML
-    const checkMainSection = () => {
-      const mainSection = document.querySelector('.main-section')
-      const h1 = mainSection?.querySelector('h1')
-      const elapsed = Date.now() - startTime
-
-      // Проверяем что h1 загружен и имеет контент (pre-rendered или Vue)
-      if (mainSection && h1 && h1.textContent && h1.textContent.trim().length > 0) {
-        // Минимальная задержка для рендеринга контента
-        setTimeout(() => resolve(), isMobile ? 50 : 100)
-      } else if (elapsed >= MAX_WAIT_TIME) {
-        // Таймаут - принудительно завершаем, чтобы лоадер не зависал
-        resolve()
-      } else {
-        setTimeout(checkMainSection, isMobile ? 20 : 30)
-      }
-    }
-    // Начинаем проверку сразу
-    checkMainSection()
-  })
-
-  addLoadingPromise(waitForMainSection)
-
-  // Mark initial load as complete after first load
-  watch(
-    isLoading,
-    (newVal) => {
-      if (!newVal && isInitialLoad.value) {
-        isInitialLoad.value = false
-      }
-    },
-    { once: true }
-  )
-})
-
-onBeforeUnmount(() => {
-  // Cleanup: hide pre-rendered loader if still visible
-  hidePreRenderedLoader()
-})
 </script>
 
 <template>
   <main id="app">
-    <!-- Show Vue loader only for route changes, not initial load (pre-rendered loader handles that) -->
-    <LoaderC
-      v-if="isLoading && !isInitialLoad"
-      :progress="progress"
-      :is-route-change="isRouteChange"
-    />
     <header
       ref="headerRef"
       class="fixed top-[0.7rem] left-0 w-full flex justify-center items-center z-10 px-3 md:px-12 lg:px-[8rem]"
+      style="pointer-events: none"
     >
       <!-- Reserve space to avoid CLS when header fonts load -->
       <div
@@ -188,6 +83,7 @@ onBeforeUnmount(() => {
           display: flex;
           align-items: center;
           justify-content: center;
+          pointer-events: auto;
         "
       >
         <Header />
@@ -196,15 +92,19 @@ onBeforeUnmount(() => {
     <RouterView />
 
     <!-- Lazy placeholders and sections -->
-    <div ref="contactSectionTrigger" style="height: 1px; width: 100%"></div>
-    <ContactSection v-if="shouldLoadContactSection" />
+    <!-- ContactSection и Footer показываются только на других страницах (не на главной) -->
+    <!-- На главной странице они внутри #stack -->
+    <template v-if="!isHomePage">
+      <div ref="contactSectionTrigger" style="height: 1px; width: 100%"></div>
+      <ContactSection v-if="shouldLoadContactSection" />
 
-    <div ref="footerTrigger" style="height: 1px; width: 100%"></div>
-    <Footer v-if="shouldLoadFooter" />
+      <div ref="footerTrigger" style="height: 1px; width: 100%"></div>
+      <Footer v-if="shouldLoadFooter" />
+    </template>
 
     <!-- Telegram Icon -->
     <a
-      href="https://t.me/ITcompany_tg"
+      href="https://t.me/kodifyweb"
       target="_blank"
       rel="noopener noreferrer"
       class="fixed bottom-6 right-6 md:bottom-8 md:right-8 w-12 h-12 md:w-12 md:h-12 bg-gradient-to-br from- [#0088cc] to-[#00a8ff] rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 hover:scale-105 active:scale-95 transition-all duration-300 z-[1000] animate-pulse"
@@ -250,7 +150,18 @@ body {
 }
 
 #app {
-  min-height: 100vh;
+  position: relative;
+  /* Скролл работает на уровне html/body для всех страниц */
+  /* На главной странице скролл также работает внутри #stack */
+  /* Для главной страницы #stack имеет height: 100vh и overflow-y: auto */
+  /* Для других страниц контент скроллится через html/body */
+}
+
+/* На главной странице #stack должен занимать всю высоту viewport */
+/* Используем :has() для определения главной страницы */
+#app:has(#stack) {
+  height: 100vh;
+  overflow: hidden;
 }
 
 /* Scrollbar styling */
@@ -271,10 +182,7 @@ body {
   background: var(--color-purple);
 }
 
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
+/* Smooth scrolling - управляется через style.css для scroll-snap */
 
 /* Focus styles */
 
@@ -299,11 +207,13 @@ p {
   line-height: 1.6;
 }
 
-/* Button styles */
+/*
+ * Не задавать здесь border/background у всех button — это в unlayered CSS
+ * перебивает Tailwind (@layer utilities) и ломает bg-*, border-* на кнопках.
+ * Сброс фона/бордера уже в tailwind preflight (* { border: 0 solid }, button { background-color: transparent }).
+ */
 button {
   cursor: pointer;
-  border: none;
-  background: none;
   font-family: inherit;
 }
 

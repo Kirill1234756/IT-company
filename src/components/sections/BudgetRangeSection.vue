@@ -1,8 +1,8 @@
 <template>
   <div :class="sectionClasses">
-    <div class="flex justify-between items-start mb-6">
-      <h2 :class="['text-xl font-bold font-display', titleColor]">{{ title }}</h2>
-      <p :class="textColor" class="text-sm max-w-xs ml-8">{{ helperText }}</p>
+    <div class="flex flex-col md:flex-row md:justify-between md:items-start mb-6">
+      <h2 :class="['text-xl font-bold font-display mb-2 md:mb-0', titleColor]">{{ title }}</h2>
+      <p :class="textColor" class="text-sm md:max-w-xs md:ml-8">{{ helperText }}</p>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -33,7 +33,7 @@
           'w-full min-h-[6.5rem] max-h-48 px-6 py-4 border border-border rounded-[3rem] text-lg resize-none focus:outline-none focus:border-accent focus:ring-0 placeholder:text-sm placeholder:text-accent overflow-y-auto',
         ]"
       />
-      <p v-if="commentError" class="client-form-error text-sm mt-2">{{ commentError }}</p>
+      <p v-if="commentError" class="text-[var(--color-error)] text-sm mt-2">{{ commentError }}</p>
     </div>
   </div>
 </template>

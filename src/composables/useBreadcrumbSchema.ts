@@ -33,9 +33,14 @@ export function useBreadcrumbSchema(route: RouteLocationNormalized) {
                 const { category, service } = route.params
 
                 if (service && index === 2) {
-                    // Детальная страница услуги
-                    const serviceDetail = servicesStore.getServiceDetailBySlug(String(service))
-                    if (serviceDetail?.title) return serviceDetail.title
+                    // Детальная страница услуги (каталог, без чанка overrides)
+                    const s = String(service)
+                    const bySlug = servicesStore.getCatalogItemBySlug(s)
+                    if (bySlug?.title) return bySlug.title
+                    if (/^\d+$/.test(s)) {
+                        const byId = servicesStore.getCatalogItemById(Number(s))
+                        if (byId?.title) return byId.title
+                    }
                 }
 
                 if (category && index === 1) {
@@ -43,10 +48,17 @@ export function useBreadcrumbSchema(route: RouteLocationNormalized) {
                     const categoryData = servicesStore.getCategoryBySlug(String(category))
                     if (categoryData?.title) return categoryData.title
 
-                    // Fallback для известных категорий
-                    if (category === 'development') return 'Разработка'
-                    if (category === 'growth') return 'Рост'
-                    if (category === 'strategy') return 'Стратегия'
+                    // Fallback для известных категорий (в т.ч. старые slug)
+                    if (category === 'development' || category === 'development-launch') {
+                        return 'Разработка и запуск'
+                    }
+                    if (category === 'growth' || category === 'automation-growth') {
+                        return 'Автоматизация и рост'
+                    }
+                    if (category === 'strategy' || category === 'strategy-positioning') {
+                        return 'Стратегия и позиционирование'
+                    }
+                    if (category === 'analytics-research') return 'Аналитика и исследования'
                 }
 
                 if (segment === 'services') return 'Услуги'

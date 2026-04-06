@@ -1,9 +1,15 @@
 <script setup lang="ts">
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { ref, onMounted, onBeforeUnmount, nextTick, computed, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useYandexMetrika } from '../composables/useYandexMetrika'
 
 defineOptions({ name: 'AppHeader' })
+
+defineProps<{
+  dataVInspector?: string
+}>()
+
+const { trackNavigationClick } = useYandexMetrika()
 
 // menu state
 const isMobileMenuOpen = ref(false)
@@ -26,62 +32,6 @@ const rightNav = [
   { to: '/contacts', label: 'Контакты', type: 'route' as const, href: undefined },
   { to: '/client-form', label: 'Стать клиентом', type: 'route' as const, href: undefined },
 ]
-
-// Refs for animations
-// removed unused headerRef
-const navLeftRef = ref<HTMLElement>()
-const navRightRef = ref<HTMLElement>()
-const brandLogoRef = ref<HTMLElement>()
-const brandFirstRef = ref<HTMLElement>()
-const brandCharsRef = ref<HTMLElement>()
-const brandCodeRef = ref<HTMLElement>()
-const brandUnderlineRef = ref<HTMLElement>()
-const mobileMenuRef = ref<HTMLElement>()
-
-// gsap references (loaded dynamically)
-let gsapRef: any = null
-let codeTimeline: any = null
-
-const initCodeAnimation = () => {
-  if (!gsapRef) return
-  const codeElements = Array.from(brandCodeRef.value?.querySelectorAll('[data-code]') ?? [])
-  if (!codeElements.length) return
-
-  gsapRef.set(codeElements, {
-    transformPerspective: 800,
-    transformStyle: 'preserve-3d',
-    backfaceVisibility: 'hidden',
-    willChange: 'transform, color',
-    force3D: true,
-  })
-
-  codeTimeline = gsapRef.timeline({ paused: true })
-  codeTimeline
-    .to(codeElements, {
-      rotateY: 360,
-      color: '#7D53FF',
-      duration: 1.1,
-      ease: 'power2.out',
-      stagger: { each: 0.06, from: 'center' },
-    })
-    .to(
-      codeElements,
-      {
-        rotateY: 0,
-        color: 'currentColor',
-        duration: 0.6,
-        ease: 'power2.inOut',
-        stagger: { each: 0.04, from: 'end' },
-      },
-      '>-0.05'
-    )
-}
-
-const playCodeAnimation = () => {
-  if (!codeTimeline) initCodeAnimation()
-  codeTimeline?.restart()
-}
-const reverseCodeAnimation = () => codeTimeline?.reverse()
 
 // active-route helper
 const route = useRoute()
@@ -111,10 +61,11 @@ const handleClickOutside = (event: MouseEvent) => {
     clickedElement.closest('button[aria-expanded]') !== null
 
   // Check if click is inside the mobile menu
-  const isInsideMenu = mobileMenuRef.value?.contains(target) || false
+  const mobileMenuRef = document.getElementById('mobile-menu')
+  const isInsideMenu = mobileMenuRef?.contains(target) || false
 
   // Close menu only if clicking outside menu and not on menu button
-  if (!isMenuButton && !isInsideMenu && mobileMenuRef.value) {
+  if (!isMenuButton && !isInsideMenu && mobileMenuRef) {
     closeMobileMenu()
   }
 }
@@ -123,7 +74,7 @@ const handleClickOutside = (event: MouseEvent) => {
 let onKeyHandler: ((e: KeyboardEvent) => void) | null = null
 let clickHandler: ((event: MouseEvent) => void) | null = null
 
-onMounted(async () => {
+onMounted(() => {
   // Add click outside listener - only when menu is open
   const handleDocumentClick = (event: MouseEvent) => {
     if (isMobileMenuOpen.value) {
@@ -140,98 +91,6 @@ onMounted(async () => {
     if (e.key === 'Escape') closeMobileMenu()
   }
   window.addEventListener('keydown', onKeyHandler)
-
-  // Defer GSAP to next frame/idle to avoid early layout shifts impacting CLS
-  await new Promise((r) => requestAnimationFrame(() => r(null)))
-  if ('requestIdleCallback' in window) {
-    await new Promise<void>((resolve) => (window as any).requestIdleCallback(() => resolve()))
-  }
-
-  const { gsap } = await import('gsap')
-  gsapRef = gsap
-
-  nextTick(() => {
-    if (brandLogoRef.value) {
-      brandLogoRef.value.addEventListener('pointerenter', playCodeAnimation, { passive: true })
-      brandLogoRef.value.addEventListener('pointerleave', reverseCodeAnimation, { passive: true })
-    }
-
-    if (!codeTimeline) initCodeAnimation()
-
-    const navLeftLinks = Array.from(navLeftRef.value?.querySelectorAll('a') ?? [])
-    const navRightLinks = Array.from(navRightRef.value?.querySelectorAll('a') ?? [])
-    const allNavLinks = [...navLeftLinks, ...navRightLinks]
-
-    const brandChars = Array.from(brandCharsRef.value?.querySelectorAll('[data-ch]') ?? [])
-
-    const timeline = gsapRef.timeline({ defaults: { ease: 'power3.out' } })
-
-    if (brandFirstRef.value) {
-      timeline.from(brandFirstRef.value, {
-        y: -30,
-        opacity: 0,
-        rotate: -18,
-        scale: 0.5,
-        duration: 0.8,
-        transformOrigin: '50% 80%',
-      })
-    }
-
-    timeline.add(() => {
-      brandChars.forEach((char, index) => {
-        const duration = 0.5 + (index % 3) * 0.12
-        const delay = index * 0.1
-        const animationType = index % 4
-
-        switch (animationType) {
-          case 0:
-            gsapRef.from(char, {
-              opacity: 0,
-              y: 22,
-              rotateX: -70,
-              transformPerspective: 500,
-              duration,
-              delay,
-            })
-            break
-          case 1:
-            gsapRef.from(char, { opacity: 0, x: -18, rotate: -12, skewY: 8, duration, delay })
-            break
-          case 2:
-            gsapRef.from(char, { opacity: 0, y: -20, scale: 0.6, rotate: 10, duration, delay })
-            break
-          default:
-            gsapRef.from(char, {
-              opacity: 0,
-              x: 20,
-              rotateY: -90,
-              transformPerspective: 500,
-              duration,
-              delay,
-            })
-        }
-      })
-    }, '-=0.15')
-
-    if (brandUnderlineRef.value) {
-      timeline.from(
-        brandUnderlineRef.value,
-        { scaleX: 0, opacity: 0, transformOrigin: '0% 50%', duration: 0.6 },
-        '-=0.15'
-      )
-      gsapRef.fromTo(
-        brandUnderlineRef.value,
-        { backgroundPositionX: '0%' },
-        { backgroundPositionX: '200%', duration: 4, repeat: -1, ease: 'none' }
-      )
-    }
-
-    timeline.from(allNavLinks, { y: 14, opacity: 0, duration: 0.5, stagger: 0.12 }, '-=0.2')
-
-    if (mobileMenuRef.value) {
-      timeline.from(mobileMenuRef.value, { opacity: 0, scale: 0.9, duration: 0.4 }, '-=0.3')
-    }
-  })
 })
 
 // Cleanup event listeners
@@ -251,20 +110,24 @@ onBeforeUnmount(() => {
     aria-label="Main"
   >
     <!-- Left Navigation -->
-    <div ref="navLeftRef" class="hidden md:flex gap-3">
-      <template v-for="item in leftNav" :key="item.label">
+    <div class="hidden md:flex gap-3">
+      <template v-for="(item, index) in leftNav" :key="item.label">
         <router-link
           v-if="item.type === 'route'"
           :to="getRouteTo(item)"
-          class="rounded-2xl py-2 px-3 text-accent hover:bg-bg hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[44px] min-w-[44px] flex items-center"
+          :class="['animate-nav-link', 'delay-' + index]"
+          class="rounded-[3rem] py-1 px-3 text-accent hover:bg-bg hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[44px] min-w-[44px] flex items-center"
           :aria-current="isActive(item.to).value ? 'page' : undefined"
+          @click="trackNavigationClick(item.label)"
         >
           {{ item.label }}
         </router-link>
         <a
           v-else
           :href="item.href"
-          class="rounded-2xl py-2 px-3 text-accent hover:bg-border hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[44px] min-w-[44px] flex items-center"
+          :class="['animate-nav-link', 'delay-' + index]"
+          class="rounded-[3rem] py-1 px-3 text-accent hover:bg-border hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[44px] min-w-[44px] flex items-center"
+          @click="trackNavigationClick(item.label)"
         >
           {{ item.label }}
         </a>
@@ -308,20 +171,24 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- Right Navigation -->
-    <div ref="navRightRef" class="hidden md:flex gap-3">
-      <template v-for="item in rightNav" :key="item.label">
+    <div class="hidden md:flex gap-3">
+      <template v-for="(item, index) in rightNav" :key="item.label">
         <router-link
           v-if="item.type === 'route'"
           :to="getRouteTo(item)"
-          class="rounded-2xl py-2 px-3 text-accent hover:bg-bg hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[44px] min-w-[44px] flex items-center"
+          :class="['animate-nav-link', 'delay-' + (leftNav.length + index)]"
+          class="rounded-[3rem] py-1 px-3 text-accent hover:bg-bg hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[44px] min-w-[44px] flex items-center"
           :aria-current="isActive(item.to).value ? 'page' : undefined"
+          @click="trackNavigationClick(item.label)"
         >
           {{ item.label }}
         </router-link>
         <a
           v-else
           :href="item.href"
-          class="rounded-2xl py-2 px-3 text-accent hover:bg-border hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[44px] min-w-[44px] flex items-center"
+          :class="['animate-nav-link', 'delay-' + (leftNav.length + index)]"
+          class="rounded-[3rem] py-1 px-3 text-accent hover:bg-border hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[44px] min-w-[44px] flex items-center"
+          @click="trackNavigationClick(item.label)"
         >
           {{ item.label }}
         </a>
@@ -378,7 +245,7 @@ onBeforeUnmount(() => {
               <router-link
                 v-if="item.type === 'route'"
                 :to="getRouteTo(item)"
-                @click="closeMobileMenu"
+                @click="trackNavigationClick(item.label); closeMobileMenu()"
                 class="rounded-2xl py-2 px-4 text-accent hover:bg-border hover:text-white transition-colors duration-300"
                 active-class="text-white"
               >
@@ -387,7 +254,7 @@ onBeforeUnmount(() => {
               <a
                 v-else
                 :href="item.href"
-                @click="closeMobileMenu"
+                @click="trackNavigationClick(item.label); closeMobileMenu()"
                 class="rounded-2xl py-2 px-4 text-accent hover:bg-border hover:text-white transition-colors duration-300"
               >
                 {{ item.label }}
@@ -419,7 +286,7 @@ onBeforeUnmount(() => {
 }
 
 .focus\:ring-accent\/50:focus {
-  --tw-ring-color: rgba(0, 223, 130, 0.5);
+  --tw-ring-color: var(--text-accent);
 }
 
 /* Mobile menu animations */
@@ -438,6 +305,55 @@ onBeforeUnmount(() => {
 .font-extrabold:hover {
   transform: scale(1.05);
   transition: transform 0.3s ease;
+}
+
+/* Underline shimmer animation */
+@keyframes underline-shimmer {
+  0% {
+    background-position-x: 0%;
+  }
+  100% {
+    background-position-x: 200%;
+  }
+}
+
+/* Code character hover animation */
+.logo-container:hover .code-char {
+  animation: code-rotate 1.1s ease-out forwards;
+}
+
+.logo-container:hover .code-char:nth-child(2) {
+  animation-delay: 0.06s;
+}
+
+.logo-container:not(:hover) .code-char {
+  animation: code-rotate-back 0.6s ease-in-out forwards;
+}
+
+.logo-container:not(:hover) .code-char:nth-child(2) {
+  animation-delay: 0.04s;
+}
+
+@keyframes code-rotate {
+  0% {
+    transform: rotateY(0);
+    color: currentColor;
+  }
+  100% {
+    transform: rotateY(360deg);
+    color: #7d53ff;
+  }
+}
+
+@keyframes code-rotate-back {
+  0% {
+    transform: rotateY(360deg);
+    color: #7d53ff;
+  }
+  100% {
+    transform: rotateY(0);
+    color: currentColor;
+  }
 }
 
 /* Responsive adjustments */

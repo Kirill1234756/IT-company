@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, defineAsyncComponent, ref, watch, watchEffect } from 'vue'
+import { onMounted, defineAsyncComponent, ref, watch, watchEffect, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useBlogStore } from '../stores/blog'
 import type { BlogPost } from '../types/blog'
@@ -8,6 +8,9 @@ import { useBreadcrumbSchema } from '../composables/useBreadcrumbSchema'
 
 const BlogSection = defineAsyncComponent(() => import('../components/sections/BlogSection.vue'))
 const BlogModal = defineAsyncComponent(() => import('../components/modals/BlogModal.vue'))
+const Breadcrumbs = defineAsyncComponent(
+  () => import('../components/ui/Breadcrumbs.vue')
+)
 
 const router = useRouter()
 const route = useRoute()
@@ -15,6 +18,29 @@ const blogStore = useBlogStore()
 
 // Breadcrumb schema
 const { schema: breadcrumbSchema } = useBreadcrumbSchema(route)
+
+// Breadcrumbs items
+const breadcrumbItems = computed(() => {
+  const items: { label: string; to?: string }[] = [
+    { label: 'Главная', to: '/' },
+    { label: 'Блог', to: '/blog' },
+  ]
+  const { category, post } = route.params
+  if (category && typeof category === 'string') {
+    const categoryTab = blogStore.tabs.find((t) => t.id === category)
+    if (categoryTab) {
+      items.push({ label: categoryTab.name, to: `/blog/${category}` })
+    }
+  }
+  if (post && typeof post === 'string') {
+    const blogPost = blogStore.getPostBySlug(post)
+    if (blogPost) {
+      // Последний элемент крошек не является ссылкой, поэтому to опускаем
+      items.push({ label: blogPost.title })
+    }
+  }
+  return items
+})
 
 // Modal state
 const activeModal = ref<'detail' | null>(null)
@@ -106,7 +132,6 @@ watchEffect(() => {
         '@context': 'https://schema.org',
         '@type': 'BlogPosting',
         headline: post.title,
-        datePublished: post.date || undefined,
         articleSection: post.category,
         url:
           typeof window !== 'undefined'
@@ -124,7 +149,12 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div class="min-h-screen blog-fonts blog-section-bg">
+  <div
+    class="min-h-screen font-[var(--font-sans)] bg-[linear-gradient(135deg,_var(--color-bg)_0%,_var(--color-border)_100%)] px-[1rem] md:px-[3rem]"
+  >
+    <div class="max-w-7xl mx-auto px-4">
+      <Breadcrumbs :items="breadcrumbItems" class="mb-4 md:mb-6" />
+    </div>
     <!-- Blog Section -->
     <BlogSection @post-click="handlePostClick" />
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineProps, defineEmits, onMounted, ref } from 'vue'
+import { defineProps, defineEmits } from 'vue'
 import { useServicesStore } from '../stores/services'
 import type { ServiceCategory } from '../types/services'
 import IconContainer from './IconContainer.vue'
@@ -14,23 +14,15 @@ export interface ServiceCardProps {
   isClickable?: boolean
   wrapperClass?: string
   slug?: string
-  index?: number
+  /** Показывать абзац описания под заголовком (на странице услуг — обычно выкл.) */
+  showDescription?: boolean
 }
-
-const isVisible = ref(false)
-
-onMounted(() => {
-  // Задержка для stagger эффекта
-  const delay = (props.index ?? 0) * 100
-  setTimeout(() => {
-    isVisible.value = true
-  }, delay)
-})
 
 const props = withDefaults(defineProps<ServiceCardProps>(), {
   iconUseFill: true,
   isClickable: true,
   wrapperClass: '',
+  showDescription: true,
 })
 
 const emit = defineEmits<{
@@ -57,10 +49,9 @@ const handleClick = () => {
 <template>
   <div
     :class="[
-      'service-card group rounded-[3rem] services-card shadow-sm p-6 flex flex-col gap-4 transition-all duration-300',
-      isClickable ? 'cursor-pointer hover:shadow-lg hover:scale-[1.02]' : '',
+      'service-card group rounded-[3rem] shadow-sm p-6 flex flex-col gap-4 transition-all duration-300 bg-[var(--color-border)] border border-[var(--color-border)] backdrop-blur-[10px]',
+      isClickable ? 'cursor-pointer hover:shadow-lg hover:scale-[1.02] hover:border-[var(--color-accent)] hover:shadow-[0_20px_40px_-10px_rgba(255,136,99,0.2)]' : '',
       wrapperClass,
-      isVisible ? 'animate-fade-in-up' : 'opacity-0 translate-y-4',
     ]"
     @click="handleClick"
   >
@@ -78,24 +69,25 @@ const handleClick = () => {
     <div class="flex-1 flex flex-col">
       <h3
         :class="[
-          'text-lg md:text-xl font-bold services-card-title leading-snug transition-colors duration-300 text-center',
+          'text-lg md:text-xl font-bold leading-snug transition-colors duration-300 text-center text-[var(--color-text)] font-display',
           isClickable ? 'group-hover:text-accent' : '',
         ]"
       >
         {{ title }}
       </h3>
       <p
+        v-if="showDescription"
         :class="[
-          'services-card-description mt-3 text-[0.7rem] leading-relaxed transition-colors duration-300 text-center',
+          'mt-3 text-[0.7rem] leading-relaxed transition-colors duration-300 text-center text-white',
           isClickable ? 'group-hover:text-text' : '',
         ]"
       >
         {{ description }}
       </p>
-      <div class="mt-auto pt-4">
+      <div :class="showDescription ? 'mt-auto pt-4' : 'mt-auto pt-2'">
         <span
           :class="[
-            'text-lg md:text-xl font-semibold services-card-price transition-colors duration-300 block text-center',
+            'text-lg md:text-xl font-semibold transition-colors duration-300 block text-center text-[var(--color-accent)]',
             isClickable ? 'group-hover:text-purple' : '',
           ]"
         >
@@ -113,20 +105,5 @@ const handleClick = () => {
 
 .service-card:hover {
   transform: translateY(-2px);
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-in-up {
-  animation: fadeInUp 0.6s ease-out forwards;
 }
 </style>

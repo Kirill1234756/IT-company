@@ -13,7 +13,7 @@ const props = defineProps<{
   <article
     class="relative overflow-hidden"
     :class="[
-      'p-6 md:p-8 ',
+      'p-2 md:p-8 ',
       // alternate big padding sides
       (props.index ?? 0) % 2 === 0
         ? 'ps-4 md:ps-8 lg:ps-12 pe-6 rounded-e-[3rem]'
@@ -29,7 +29,7 @@ const props = defineProps<{
     ]"
   >
     <div class="flex items-center md:items-start gap-5">
-      <h3 class="text-lg font-extrabold w-full text-white group-[.bg-white]:text-neutral-900">
+      <h3 class="text-md md:text-lg font-extrabold w-full text-white group-[.bg-white]:text-neutral-900">
         {{ props.title }}
       </h3>
       <p
