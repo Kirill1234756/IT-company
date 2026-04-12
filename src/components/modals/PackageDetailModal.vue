@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { onMounted, defineAsyncComponent } from 'vue'
+import { onMounted, defineAsyncComponent, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import type { PackageDetail } from '../../types/packages'
 import { useYandexMetrika } from '../../composables/useYandexMetrika'
 
+const Breadcrumbs = defineAsyncComponent(() => import('../ui/Breadcrumbs.vue'))
 const SectionHeading = defineAsyncComponent(() => import('../ui/SectionHeading.vue'))
 
 const props = defineProps<{
@@ -23,7 +24,16 @@ onMounted(() => {
 
 const close = () => emit('close')
 
-const onBreadcrumbClick = () => close()
+const packageBreadcrumbItems = computed(() => {
+  const labels = props.packageDetail.breadcrumbs ?? []
+  return labels.map((label, index) => {
+    const isLast = index === labels.length - 1
+    if (isLast) return { label }
+    if (index === 0 && label === 'Главная') return { label, to: '/' }
+    if (index === 1 && label === 'Пакеты') return { label, to: '/packages' }
+    return { label }
+  })
+})
 
 const goOrder = () => {
   trackButtonClick('package-detail-order', {
@@ -46,10 +56,10 @@ const goOrder = () => {
     <div
       class="sticky top-0 z-10 bg-[rgba(3,18,47,0.95)] border-b border-[var(--color-border)] backdrop-blur-[10px]"
     >
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap items-center justify-between gap-3">
+      <div class="max-w-7xl mx-auto px-[1rem] md:px-[3rem] py-4 flex flex-wrap items-center justify-between gap-3">
         <button
           type="button"
-          class="flex items-center gap-2 text-text-muted hover:text-text transition-colors"
+          class="flex items-center gap-2 text-accent hover:text-text transition-colors"
           @click="close"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -72,27 +82,17 @@ const goOrder = () => {
       </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-5 md:px-[5rem] pb-16">
-      <!-- Breadcrumbs -->
-      <div class="text-sm mt-6 mb-4 text-[var(--color-text-muted)]">
-        <span
-          v-for="(crumb, index) in packageDetail.breadcrumbs"
-          :key="index"
-          class="cursor-pointer text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
-          @click="onBreadcrumbClick"
-        >
-          {{ crumb }}
-          <span v-if="index < packageDetail.breadcrumbs.length - 1" class="mx-1">/</span>
-        </span>
-      </div>
+    <div class="max-w-7xl mx-auto px-[1rem] md:px-[3rem] pb-16">
+      <Breadcrumbs :items="packageBreadcrumbItems" class="mb-8" />
 
       <SectionHeading
         :level="1"
         size="lg"
         color="accent"
-        align="left"
+        align="center"
         weight="black"
-        class="font-display text-condense mb-4"
+        animation-class="animate-cases-title"
+        class="mb-4 md:mb-6 lg:mb-8"
       >
         {{ packageDetail.title }}
       </SectionHeading>

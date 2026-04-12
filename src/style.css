@@ -48,6 +48,30 @@ body {
   }
 }
 
+/* Form error banner: subtle shake (disabled when prefers-reduced-motion) */
+@keyframes form-error-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+}
+
+.form-error-shake {
+  animation: form-error-shake 0.35s ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .form-error-shake {
+    animation: none;
+  }
+}
+
 /* Optional: app-wide base styles can go below */
 
 /* Tailwind v4 theme tokens */

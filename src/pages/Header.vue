@@ -292,13 +292,27 @@ onBeforeUnmount(() => {
 /* Mobile menu animations */
 .mobile-menu-enter-active,
 .mobile-menu-leave-active {
-  transition: all 0.3s ease;
+  transition:
+    opacity 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .mobile-menu-enter-from,
 .mobile-menu-leave-to {
   opacity: 0;
-  transform: translateY(-10px);
+  transform: translateY(-14px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-menu-enter-active,
+  .mobile-menu-leave-active {
+    transition-duration: 0.01ms;
+  }
+
+  .mobile-menu-enter-from,
+  .mobile-menu-leave-to {
+    transform: none;
+  }
 }
 
 /* Logo hover effects */

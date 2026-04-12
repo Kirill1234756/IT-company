@@ -1,22 +1,19 @@
 <script setup lang="ts">
-import { computed, defineProps, defineEmits } from 'vue'
 import type { BlogPost } from '../types/blog'
-import { useBlogStore } from '../stores/blog'
 import OptimizedImage from './OptimizedImage.vue'
 
-const props = defineProps<{
-  post: BlogPost
-}>()
+const props = withDefaults(
+  defineProps<{
+    post: BlogPost
+    /** Лента на главной: прежний вид карточки, высота как у компактной ленты */
+    inSwiper?: boolean
+  }>(),
+  { inSwiper: false }
+)
 
 const emit = defineEmits<{
   (e: 'click', post: BlogPost): void
 }>()
-
-const blogStore = useBlogStore()
-
-const categoryLabel = computed(() => {
-  return blogStore.tabs.find((t) => t.id === props.post.category)?.name ?? ''
-})
 
 const handleClick = () => {
   emit('click', props.post)
@@ -25,11 +22,16 @@ const handleClick = () => {
 
 <template>
   <div
-    class="blog-card-root rounded-2xl shadow-lg overflow-hidden flex flex-col group cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 border border-[var(--color-border)] hover:border-[var(--color-accent)]/35 bg-[#050a1b]"
+    class="blog-card-root rounded-2xl shadow-lg overflow-hidden flex flex-col group cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.99] active:translate-y-0 border border-[var(--color-border)] hover:border-[var(--color-accent)]/35 bg-[#050a1b]"
+    :class="inSwiper ? 'h-full max-h-[24rem] min-h-0' : ''"
     @click="handleClick"
   >
-    <div class="relative w-full overflow-hidden" style="aspect-ratio: 16/9">
+    <div
+      class="relative w-full flex-shrink-0 overflow-hidden bg-[#050a1b]"
+      style="aspect-ratio: 14/9"
+    >
       <OptimizedImage
+        layout="fill"
         :src="post.image"
         :alt="post.title"
         :width="400"
@@ -39,8 +41,8 @@ const handleClick = () => {
         loading="lazy"
         decoding="async"
         fetchpriority="low"
-        class="w-full h-full object-cover transform group-hover:scale-[1.03] transition-transform duration-300"
-        style="box-sizing: border-box; display: block; transform: translateZ(0)"
+        class="absolute inset-0 w-full h-full object-cover object-center transform group-hover:scale-[1.03] transition-transform duration-300"
+        style="box-sizing: border-box; transform: translateZ(0)"
         :sizes="{ mobile: '100vw', tablet: '50vw', desktop: '33vw' }"
       />
       <div
@@ -49,20 +51,21 @@ const handleClick = () => {
       />
     </div>
 
-    <div class="px-5 py-5 md:px-6 md:py-6 text-left flex flex-col flex-grow min-h-[7.5rem]">
-      <p
-        v-if="categoryLabel"
-        class="text-[11px] md:text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-accent)] mb-2"
+    <div
+      class="px-5 py-5 md:px-6 md:py-6 text-left flex flex-col flex-grow min-h-0"
+      :class="inSwiper ? 'flex-1 justify-between overflow-hidden' : 'min-h-[7.5rem]'"
+    >
+      <h3
+        class="text-lg md:text-xl font-bold text-white leading-snug font-display min-h-0 overflow-hidden line-clamp-2"
       >
-        {{ categoryLabel }}
-      </p>
-      <h3 class="text-lg md:text-xl font-bold text-white leading-snug line-clamp-2 font-display flex-grow">
         {{ post.title }}
       </h3>
       <div
-        class="mt-4 flex items-center justify-between gap-3 pt-4 border-t border-white/[0.08]"
+        class="mt-auto pt-4 flex items-center justify-between gap-3 border-t border-white/[0.08]"
       >
-        <span class="text-sm font-medium text-[var(--color-accent)] group-hover:text-[var(--color-peach)] transition-colors">
+        <span
+          class="text-[0.7rem] md:text-sm font-medium text-[var(--color-accent)] group-hover:text-[var(--color-peach)] transition-colors"
+        >
           Читать статью
         </span>
         <div

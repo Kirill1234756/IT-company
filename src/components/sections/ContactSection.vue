@@ -21,6 +21,8 @@ const performanceMetrics = shallowReactive({
 import type { ContactFormData } from '../../types/contact-form'
 import { ContactFormAPI } from '../../api/contact-form'
 import { useYandexMetrika } from '../../composables/useYandexMetrika'
+import FormSuccessBanner from '../ui/FormSuccessBanner.vue'
+import FormErrorBanner from '../ui/FormErrorBanner.vue'
 
 // Validation cache for performance
 const validationCache = new Map<string, string | undefined>()
@@ -66,8 +68,16 @@ const errors = ref<Record<string, string | undefined>>({})
 
 // Form submission state
 const isSubmitting = ref(false)
+const submitSuccess = ref(false)
+const successMessage = ref('')
+const errorBannerKey = ref(0)
 
 const { trackFormSubmit } = useYandexMetrika()
+
+function dismissSuccess() {
+  submitSuccess.value = false
+  successMessage.value = ''
+}
 
 // Lazy loading state
 const isVisible = ref(false)
@@ -81,13 +91,22 @@ const contactFields = markRaw([
   { key: 'email' as keyof ContactFormData, placeholder: 'Электронная почта', type: 'email' },
 ])
 
-// Memoized computed classes with better caching
-const inputClasses = computed(() => {
-  return 'w-full max-w-xs px-4 sm:px-5 md:px-6 py-3 sm:py-3.5 md:py-4 text-sm sm:text-base border border-bg rounded-[3rem] text-bg placeholder:text-bg/70 bg-transparent focus:outline-none focus:border-accent focus:ring-0 transition-colors duration-200'
-})
+type ContactKeys = 'name' | 'phone' | 'email'
+
+const inputBaseClass =
+  'w-full max-w-xs px-4 sm:px-5 md:px-6 py-3 sm:py-3.5 md:py-4 text-sm sm:text-base rounded-[3rem] text-bg placeholder:text-bg/70 bg-transparent focus:outline-none focus:ring-0 transition-colors duration-200'
+
+function getInputClasses(key: ContactKeys): string {
+  const err = errors.value?.[String(key)]
+  if (err) {
+    return `${inputBaseClass} border-red-500/90 focus:border-red-500`
+  }
+  return `${inputBaseClass} border border-bg focus:border-accent`
+}
 
 const buttonClasses = computed(() => {
-  return 'w-full sm:w-auto px-6 sm:px-7 md:px-8 py-3 sm:py-3.5 md:py-4 text-sm sm:text-base border border-bg rounded-[3rem] text-bg bg-transparent hover:bg-bg hover:text-text transition-colors duration-200 focus:outline-none focus:border-accent focus:ring-0 disabled:opacity-50 disabled:cursor-not-allowed'
+  // hover:text-text мог не попасть в билд Tailwind — тогда текст оставался text-bg и пропадал на тёмном hover:bg-bg
+  return 'w-full sm:w-auto px-6 sm:px-7 md:px-8 py-3 sm:py-3.5 md:py-4 text-sm sm:text-base border border-bg rounded-[3rem] text-bg bg-transparent hover:bg-bg hover:text-[var(--color-text)] transition-colors duration-200 focus:outline-none focus:border-accent focus:ring-0 disabled:opacity-50 disabled:cursor-not-allowed'
 })
 
 // Memoized validation functions with caching
@@ -160,8 +179,6 @@ const validateEmail = (email: string): string | undefined => {
   performanceMetrics.validationTime += performance.now() - start
   return result
 }
-
-type ContactKeys = 'name' | 'phone' | 'email'
 
 // Debounced validation for real-time feedback
 const debouncedValidateField = debounce(
@@ -252,6 +269,7 @@ const submitForm = async () => {
   // Validate form before submission
   if (!validateForm()) {
     errors.value.general = 'Пожалуйста, исправьте ошибки в форме'
+    errorBannerKey.value += 1
     // Scroll to first error
     nextTick(() => {
       const firstErrorField = document.querySelector('[aria-invalid="true"]')
@@ -290,15 +308,17 @@ const submitForm = async () => {
       // Clear validation cache
       validationCache.clear()
 
-      // Show success message
-      alert(result.message || 'Заявка успешно отправлена!')
+      successMessage.value = result.message || 'Заявка успешно отправлена!'
+      submitSuccess.value = true
     } else {
       errors.value.general =
         result.message || 'Произошла ошибка при отправке заявки. Попробуйте еще раз.'
+      errorBannerKey.value += 1
     }
   } catch (error) {
     console.error('Form submission error:', error)
     errors.value.general = 'Произошла ошибка при отправке заявки. Попробуйте еще раз.'
+    errorBannerKey.value += 1
   } finally {
     isSubmitting.value = false
   }
@@ -378,17 +398,24 @@ const getFieldError = (key: keyof ContactFormData): string | undefined =>
     <!-- Actual content with v-memo optimization -->
     <div
       v-else
-      v-memo="[isVisible, isSubmitting]"
+      v-memo="[isVisible, isSubmitting, submitSuccess]"
       class="max-w-7xl mx-auto flex flex-col border border-accent rounded-[3rem] p-4 sm:p-5 md:p-6"
     >
       <h3 class="text-bg text-xl sm:text-2xl md:text-3xl font-bold text-center mb-3 sm:mb-4">
         Станьте нашим новым партнером
       </h3>
-      <p class="text-bg text-xs sm:text-sm text-center mb-6 sm:mb-8 px-2">
+      <p class="text-accent text-xs sm:text-sm text-center mb-6 sm:mb-8 px-2">
         Оставьте заявку на сотрудничество прямо сейчас и получите стоимость проекта уже сегодня
       </p>
 
       <form @submit.prevent="submitForm" class="space-y-6">
+        <FormSuccessBanner
+          :show="submitSuccess"
+          :message="successMessage"
+          variant="on-dark"
+          :auto-dismiss-ms="5500"
+          @dismiss="dismissSuccess"
+        />
         <!-- Honeypot anti-bot field (hidden) -->
         <input
           type="text"
@@ -413,28 +440,31 @@ const getFieldError = (key: keyof ContactFormData): string | undefined =>
               :value="formData[field.key]"
               @input="handleInput(field.key, $event)"
               :placeholder="field.placeholder"
-              :class="inputClasses"
+              :class="getInputClasses(field.key as ContactKeys)"
               :aria-invalid="!!getFieldError(field.key)"
               :aria-describedby="getFieldError(field.key) ? `${field.key}-error` : undefined"
             />
-            <p
-              v-if="getFieldError(field.key)"
-              :id="`${field.key}-error`"
-              class="text-red-500 text-xs mt-1 text-center"
-              role="alert"
-            >
-              {{ getFieldError(field.key) }}
-            </p>
+            <Transition name="field-error">
+              <p
+                v-if="getFieldError(field.key)"
+                :id="`${field.key}-error`"
+                class="text-red-500 text-xs mt-1 text-center"
+                role="alert"
+              >
+                {{ getFieldError(field.key) }}
+              </p>
+            </Transition>
           </div>
           <!-- Submit Button with optimized state -->
           <div
-            class="flex justify-center bg-accent rounded-[3rem] hover:bg-purple transition-colors duration-200 w-full sm:w-auto"
+            class="flex justify-center rounded-[3rem]  bg-accent w-full sm:w-auto transition-colors duration-200"
           >
             <button
               type="submit"
               :class="buttonClasses"
               :disabled="isSubmitting"
               :aria-busy="isSubmitting"
+              class="!text-white !border-none"
             >
               <span v-if="isSubmitting">Отправка...</span>
               <span v-else>Отправить</span>
@@ -442,15 +472,12 @@ const getFieldError = (key: keyof ContactFormData): string | undefined =>
           </div>
         </div>
 
-        <!-- General Error with accessibility -->
-        <p
+        <FormErrorBanner
           v-if="errors.general"
-          class="text-red-500 text-sm text-center"
-          role="alert"
-          aria-live="polite"
-        >
-          {{ errors.general }}
-        </p>
+          :key="errorBannerKey"
+          :message="errors.general"
+          shake
+        />
       </form>
     </div>
   </section>
@@ -495,7 +522,10 @@ button:focus-visible {
 /* Optimized transitions - без will-change для статических элементов */
 input,
 button {
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 /* Reduce repaints */
@@ -524,6 +554,31 @@ input[type='text'],
 input[type='tel'],
 input[type='email'] {
   contain: layout style;
+}
+
+.field-error-enter-active,
+.field-error-leave-active {
+  transition:
+    opacity 0.18s ease-out,
+    transform 0.18s ease-out;
+}
+
+.field-error-enter-from,
+.field-error-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .field-error-enter-active,
+  .field-error-leave-active {
+    transition-duration: 0.01ms;
+  }
+
+  .field-error-enter-from,
+  .field-error-leave-to {
+    transform: none;
+  }
 }
 </style>
 

@@ -83,18 +83,16 @@ const breadcrumbItems = computed(() => [
 
         <!-- Content -->
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ">
-          <Breadcrumbs
-            :items="breadcrumbItems"
-            class="mb-6"
-          />
+          <Breadcrumbs :items="breadcrumbItems" class="mb-8" />
 
           <SectionHeading
-            :level="2"
+            :level="1"
             size="lg"
-            color="accent"
-            align="left"
+            color="bg"
+            align="center"
             weight="black"
-            class="mb-8 font-display text-condense"
+            animation-class="animate-cases-title"
+            class="mb-4 md:mb-6 lg:mb-8"
           >
             {{ category.title }}
           </SectionHeading>

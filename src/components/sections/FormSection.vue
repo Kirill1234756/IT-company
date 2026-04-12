@@ -17,7 +17,9 @@
       ]"
       :style="{ height: textareaHeight }"
     />
-    <p v-if="error" class="text-[var(--color-error)] text-sm mt-2">{{ error }}</p>
+    <Transition name="form-section-err">
+      <p v-if="error" class="text-[var(--color-error)] text-sm mt-2">{{ error }}</p>
+    </Transition>
   </div>
 </template>
 
@@ -128,6 +130,31 @@ textarea:focus {
 textarea:focus-visible {
   outline: none !important;
   box-shadow: none !important;
+}
+
+.form-section-err-enter-active,
+.form-section-err-leave-active {
+  transition:
+    opacity 0.18s ease-out,
+    transform 0.18s ease-out;
+}
+
+.form-section-err-enter-from,
+.form-section-err-leave-to {
+  opacity: 0;
+  transform: translateY(-3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .form-section-err-enter-active,
+  .form-section-err-leave-active {
+    transition-duration: 0.01ms;
+  }
+
+  .form-section-err-enter-from,
+  .form-section-err-leave-to {
+    transform: none;
+  }
 }
 </style>
 

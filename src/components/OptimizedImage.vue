@@ -19,6 +19,8 @@ interface Props {
   fetchpriority?: 'high' | 'low' | 'auto'
   class?: string
   style?: string | Record<string, string>
+  /** box — фиксированное соотношение width/height; intrinsic — высота по картинке; fill — заполнить родителя (absolute inset-0 + object-cover) */
+  layout?: 'box' | 'intrinsic' | 'fill'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -29,6 +31,7 @@ const props = withDefaults(defineProps<Props>(), {
   fetchpriority: 'low',
   class: '',
   style: '',
+  layout: 'box',
 })
 
 const optimizedImage = computed<ImageSrcSet>(() => {
@@ -46,16 +49,31 @@ const optimizedImage = computed<ImageSrcSet>(() => {
 
 // Computed style для правильной обработки строки или объекта
 const computedStyle = computed(() => {
-  const baseStyle = `aspect-ratio: ${props.width} / ${props.height};`
-  if (!props.style) return baseStyle
-  if (typeof props.style === 'string') {
-    return `${props.style}; ${baseStyle}`
+  const merge = (base: string) => {
+    if (!props.style) return base
+    if (typeof props.style === 'string') {
+      return `${props.style}; ${base}`
+    }
+    const styleString = Object.entries(props.style)
+      .map(([key, value]) => `${key.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${value}`)
+      .join('; ')
+    return `${styleString}; ${base}`
   }
-  // Если объект, конвертируем в строку
-  const styleString = Object.entries(props.style)
-    .map(([key, value]) => `${key.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${value}`)
-    .join('; ')
-  return `${styleString}; ${baseStyle}`
+
+  if (props.layout === 'intrinsic') {
+    const intrinsic =
+      'width: 100%; max-width: 100%; height: auto; display: block; aspect-ratio: auto;'
+    return merge(intrinsic)
+  }
+
+  if (props.layout === 'fill') {
+    const fill =
+      'width: 100%; height: 100%; aspect-ratio: unset; max-width: none; max-height: none; display: block;'
+    return merge(fill)
+  }
+
+  const baseStyle = `aspect-ratio: ${props.width} / ${props.height};`
+  return merge(baseStyle)
 })
 </script>
 

@@ -149,7 +149,7 @@ const closePackageModal = () => {
       </div>
 
       <!-- Packages Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-12">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-12">
         <PackageCard
           v-for="pkg in packages"
           :key="pkg.id"

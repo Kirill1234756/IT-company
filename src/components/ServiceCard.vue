@@ -50,7 +50,9 @@ const handleClick = () => {
   <div
     :class="[
       'service-card group rounded-[3rem] shadow-sm p-6 flex flex-col gap-4 transition-all duration-300 bg-[var(--color-border)] border border-[var(--color-border)] backdrop-blur-[10px]',
-      isClickable ? 'cursor-pointer hover:shadow-lg hover:scale-[1.02] hover:border-[var(--color-accent)] hover:shadow-[0_20px_40px_-10px_rgba(255,136,99,0.2)]' : '',
+      isClickable
+        ? 'cursor-pointer hover:shadow-lg hover:scale-[1.02] active:scale-[0.99] hover:border-[var(--color-accent)] hover:shadow-[0_20px_40px_-10px_rgba(255,136,99,0.2)]'
+        : '',
       wrapperClass,
     ]"
     @click="handleClick"

@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { defineProps, defineEmits, ref, onMounted, defineAsyncComponent } from 'vue'
+import { defineProps, defineEmits, ref, onMounted, defineAsyncComponent, computed } from 'vue'
 import type { ServiceDetail } from '../../types/services'
 import { useYandexMetrika } from '../../composables/useYandexMetrika'
 
+const Breadcrumbs = defineAsyncComponent(() => import('../ui/Breadcrumbs.vue'))
 const SectionHeading = defineAsyncComponent(() => import('../ui/SectionHeading.vue'))
 const ContactSection = defineAsyncComponent(() => import('../sections/ContactSection.vue'))
 const Footer = defineAsyncComponent(() => import('../../pages/Footer.vue'))
@@ -32,11 +33,16 @@ const handleBackClick = () => {
   emit('close')
 }
 
-// Пока модалка открыта поверх страницы, клик по хлебным крошкам
-// просто закрывает модальное окно и возвращает к предыдущему состоянию.
-const handleBreadcrumbClick = (_index?: number) => {
-  handleBackClick()
-}
+const serviceBreadcrumbItems = computed(() => {
+  const labels = props.service.breadcrumbs ?? []
+  return labels.map((label, index) => {
+    const isLast = index === labels.length - 1
+    if (isLast) return { label }
+    if (index === 0 && label === 'Главная') return { label, to: '/' }
+    if (index === 1 && label === 'Услуги') return { label, to: '/services' }
+    return { label }
+  })
+})
 </script>
 
 <template>
@@ -46,10 +52,10 @@ const handleBreadcrumbClick = (_index?: number) => {
       <div
         class="sticky top-0 z-10 bg-[rgba(3,18,47,0.95)] border-b border-[var(--color-border)] backdrop-blur-[10px]"
       >
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="max-w-7xl mx-auto px-[1rem] md:px-[3rem] py-4">
           <button
             @click="handleBackClick"
-            class="flex items-center gap-2 text-text-muted hover:text-text transition-colors"
+            class="flex items-center gap-2 text-accent hover:text-text transition-colors"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -65,28 +71,20 @@ const handleBreadcrumbClick = (_index?: number) => {
       </div>
 
       <div class="max-w-7xl mx-auto px-[1rem] md:px-[3rem]">
-        <!-- Breadcrumbs -->
-        <div class="text-sm mb-4 text-[var(--color-text-muted)]">
-          <span
-            v-for="(breadcrumb, index) in service.breadcrumbs"
-            :key="index"
-            class="cursor-pointer text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
-            @click="handleBreadcrumbClick(index)"
-          >
-            {{ breadcrumb }}
-            <span v-if="index < service.breadcrumbs.length - 1" class="mx-1">/</span>
-          </span>
-        </div>
+        <Breadcrumbs :items="serviceBreadcrumbItems" class="mb-8" />
 
-        <!-- Main Title -->
         <SectionHeading
           :level="1"
           size="lg"
-          color="accent"
-          align="left"
+          color=accent
+          align="center"
           weight="black"
-          class="font-display text-condense"
-          :class="service.tagline || service.subtitle || service.primaryCta ? 'mb-4' : 'mb-8'"
+          animation-class="animate-cases-title"
+          :class="
+            service.tagline || service.subtitle || service.primaryCta
+              ? 'mb-4 md:mb-5 lg:mb-6'
+              : 'mb-4 md:mb-6 lg:mb-8'
+          "
         >
           {{ service.title }}
         </SectionHeading>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { defineAsyncComponent, ref, onMounted, onUnmounted } from 'vue'
 import { useYandexMetrika } from '../../composables/useYandexMetrika'
+import { useInViewOnce } from '../../composables/useInViewOnce'
 
 const AdvantageCard = defineAsyncComponent(() => import('../AdvantageCard.vue'))
 const CtaButton = defineAsyncComponent(() => import('../ui/CtaButton.vue'))
@@ -9,6 +10,8 @@ const SectionHeading = defineAsyncComponent(() => import('../ui/SectionHeading.v
 
 const rootEl = ref<HTMLElement | null>(null)
 const scrollContainerRef = ref<HTMLElement | null>(null)
+const ctaRevealRef = ref<HTMLElement | null>(null)
+const { isInView: ctaRevealed } = useInViewOnce(ctaRevealRef)
 const isMobile = ref(false)
 
 // Функция для обновления состояния мобильного устройства
@@ -130,7 +133,11 @@ onUnmounted(() => {
         />
       </div>
 
-      <div class="flex justify-center">
+      <div
+        ref="ctaRevealRef"
+        class="flex justify-center transition-all duration-500 ease-out"
+        :class="ctaRevealed ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'"
+      >
         <div class="animate-section-cta delay-1220">
           <CtaButton to="/services" bgClass="bg-bg" @click="trackCtaClick('cta_advantages_services', { location: 'advantages_section' })">Узнать больше</CtaButton>
         </div>

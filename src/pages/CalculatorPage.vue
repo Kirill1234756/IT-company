@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, defineAsyncComponent } from 'vue'
+import { ref, computed, defineAsyncComponent, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { CalculatorFormAPI } from '../api/calculator-form'
 const SEOContent = defineAsyncComponent(() => import('../components/seo/SEOContent.vue'))
@@ -9,6 +9,9 @@ import { useBreadcrumbSchema } from '../composables/useBreadcrumbSchema'
 import { useHead } from '@unhead/vue'
 import { watchEffect } from 'vue'
 import IconContainer from '../components/IconContainer.vue'
+import FormSuccessBanner from '../components/ui/FormSuccessBanner.vue'
+import FormErrorBanner from '../components/ui/FormErrorBanner.vue'
+import CtaButton from '../components/ui/CtaButton.vue'
 import {
   siteTypes,
   designOptions,
@@ -251,6 +254,27 @@ const progress = computed(() => {
 const isSubmitting = ref(false)
 const submitError = ref<string | null>(null)
 const fieldErrors = ref<Record<string, string>>({})
+const submitSuccess = ref(false)
+const successMessage = ref('')
+const submitErrorKey = ref(0)
+const submitButtonSuccess = ref(false)
+let submitSuccessBtnTimer: ReturnType<typeof setTimeout> | null = null
+
+const stepPanelRef = ref<HTMLElement | null>(null)
+
+const stepTransitionKey = computed(() => `${currentStep.value}-${answers.value.siteType}`)
+
+watch(currentStep, () => {
+  nextTick(() => {
+    if (typeof window === 'undefined' || window.innerWidth >= 1024) return
+    stepPanelRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  })
+})
+
+function dismissCalcSuccess() {
+  submitSuccess.value = false
+  successMessage.value = ''
+}
 
 // Валидация полей (как в ContactSection)
 const validateName = (name: string): string | undefined => {
@@ -300,6 +324,7 @@ const validateForm = (): boolean => {
   // Проверка, что есть хотя бы базовые данные калькулятора
   if (!answers.value.siteType) {
     submitError.value = 'Пожалуйста, заполните калькулятор'
+    submitErrorKey.value += 1
     return false
   }
 
@@ -311,11 +336,13 @@ const submitContactForm = async () => {
   // Валидация
   if (!validateForm()) {
     submitError.value = 'Пожалуйста, исправьте ошибки в форме'
+    submitErrorKey.value += 1
     return
   }
 
   isSubmitting.value = true
   submitError.value = null
+  submitSuccess.value = false
   fieldErrors.value = {}
 
   try {
@@ -342,24 +369,32 @@ const submitContactForm = async () => {
     const result = await CalculatorFormAPI.submitForm(formData)
 
     if (result.success) {
-      // Очистить форму
       contactForm.value.name = ''
       contactForm.value.phone = ''
       contactForm.value.email = ''
 
-      // Показать успешное сообщение
-      alert(result.message || 'Спасибо! Мы свяжемся с вами в ближайшее время.')
+      successMessage.value =
+        result.message || 'Спасибо! Мы свяжемся с вами в ближайшее время.'
+      submitSuccess.value = true
+      submitButtonSuccess.value = true
+      if (submitSuccessBtnTimer) clearTimeout(submitSuccessBtnTimer)
+      submitSuccessBtnTimer = setTimeout(() => {
+        submitButtonSuccess.value = false
+        submitSuccessBtnTimer = null
+      }, 2600)
     } else {
       submitError.value = result.message || 'Произошла ошибка при отправке формы'
+      submitErrorKey.value += 1
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Ошибка отправки формы:', error)
-    // Обработка ошибок валидации с бэкенда
-    if (error.message && error.message.includes('Ошибка валидации')) {
-      submitError.value = error.message
+    const err = error as { message?: string }
+    if (err.message && err.message.includes('Ошибка валидации')) {
+      submitError.value = err.message
     } else {
       submitError.value = 'Произошла ошибка при отправке формы. Попробуйте еще раз.'
     }
+    submitErrorKey.value += 1
   } finally {
     isSubmitting.value = false
   }
@@ -406,7 +441,9 @@ const submitContactForm = async () => {
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Левая колонка: Вопросы -->
         <div class="lg:col-span-2">
-          <div class="bg-bg rounded-[3rem] p-6 md:p-8">
+          <div ref="stepPanelRef" class="bg-bg rounded-[3rem] p-6 md:p-8">
+            <Transition name="calc-step" mode="out-in">
+              <div :key="stepTransitionKey" class="calc-step-panel">
             <!-- ШАГ 1: Тип сайта -->
             <div v-if="currentStep === 0">
               <h2
@@ -731,13 +768,17 @@ const submitContactForm = async () => {
               </div>
             </div>
 
+              </div>
+            </Transition>
+
             <!-- Навигация -->
             <div class="flex justify-between items-center mt-8 pt-6 border-t border-border">
               <button
+                type="button"
                 @click="prevStep"
                 :disabled="currentStep === 0"
                 :class="[
-                  'px-6 py-3 rounded-full border-2 transition-all',
+                  'px-6 py-3 rounded-full border-2 transition-all active:scale-[0.98] motion-reduce:active:scale-100',
                   currentStep === 0
                     ? 'border-border/30 text-text-muted cursor-not-allowed'
                     : 'border-border hover:border-accent text-accent hover:bg-accent/20',
@@ -747,10 +788,11 @@ const submitContactForm = async () => {
               </button>
               <button
                 v-if="currentStep < totalSteps - 1"
+                type="button"
                 @click="nextStep"
                 :disabled="!canGoNext"
                 :class="[
-                  'px-8 py-3 rounded-full font-semibold transition-all',
+                  'px-8 py-3 rounded-full font-semibold transition-all active:scale-[0.98] motion-reduce:active:scale-100',
                   canGoNext ? 'text-accent hover:bg-accent/90' : 'text-bg cursor-not-allowed',
                 ]"
               >
@@ -785,6 +827,13 @@ const submitContactForm = async () => {
 
             <!-- Форма для получения коммерческого предложения -->
             <div class="border-t border-border pt-6">
+              <FormSuccessBanner
+                :show="submitSuccess"
+                :message="successMessage"
+                variant="on-light"
+                :auto-dismiss-ms="6000"
+                @dismiss="dismissCalcSuccess"
+              />
               <p class="text-sm text-text-muted mb-4 text-center">
                 🎯 Хотите точный расчет? Оставьте контакты:
               </p>
@@ -834,16 +883,25 @@ const submitContactForm = async () => {
                     {{ fieldErrors.email }}
                   </p>
                 </div>
-                <div v-if="submitError" class="text-sm text-error mb-2">
-                  {{ submitError }}
-                </div>
-                <button
+                <FormErrorBanner
+                  v-if="submitError"
+                  :key="submitErrorKey"
+                  :message="submitError"
+                  shake
+                />
+                <CtaButton
+                  type="button"
+                  class="!mt-3 w-full"
+                  bg-class="!bg-[var(--color-accent)]"
+                  text-class="!text-[var(--color-bg)]"
+                  label="Отправить"
+                  :loading="isSubmitting"
+                  :success="submitButtonSuccess"
+                  :disabled="submitButtonSuccess"
+                  loading-label="Отправка..."
+                  success-label="Отправлено"
                   @click="submitContactForm"
-                  :disabled="isSubmitting"
-                  class="w-full px-6 py-3 rounded-[3rem] !bg-accent text-bg font-semibold hover:bg-accent/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {{ isSubmitting ? 'Отправка...' : 'Отправить' }}
-                </button>
+                />
               </div>
               <p class="text-sm text-text-muted mt-4 text-center">
                 📞 Или позвоните прямо сейчас:<br />
@@ -907,5 +965,28 @@ const submitContactForm = async () => {
 </template>
 
 <style scoped>
-/* Дополнительные стили при необходимости */
+.calc-step-enter-active,
+.calc-step-leave-active {
+  transition:
+    opacity 0.22s ease-out,
+    transform 0.22s ease-out;
+}
+
+.calc-step-enter-from,
+.calc-step-leave-to {
+  opacity: 0;
+  transform: translateX(12px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .calc-step-enter-active,
+  .calc-step-leave-active {
+    transition-duration: 0.01ms;
+  }
+
+  .calc-step-enter-from,
+  .calc-step-leave-to {
+    transform: none;
+  }
+}
 </style>

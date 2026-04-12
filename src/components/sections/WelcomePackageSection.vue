@@ -92,12 +92,10 @@ onUnmounted(() => {
 
 <template>
   <section
-    class="bg-text stack-section no-scrollbar h-screen flex flex-col items-center justify-start rounded-t-3xl px-5 sm:px-[1rem] md:px-[3rem]"
+    class="bg-text stack-section no-scrollbar h-screen flex flex-col items-center justify-start rounded-t-3xl px-[1rem] md:px-[3rem]"
     style="min-height: 700px; box-sizing: border-box; contain: layout style paint"
   >
-    <div
-      class="internal-scroll-container w-full h-full flex flex-col items-center justify-start "
-    >
+    <div class="internal-scroll-container w-full h-full flex flex-col items-center justify-start">
       <div class="w-full max-w-7xl mx-auto flex flex-col">
         <SectionHeading
           :level="2"
@@ -114,7 +112,7 @@ onUnmounted(() => {
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 w-full">
           <!-- Left: navigation cards -->
           <div class="w-full">
-            <div class="grid grid-cols-3 gap-3 md:gap-4">
+            <div class="grid grid-cols-3 gap-[0.45rem] md:gap-4">
               <div
                 class="animate-section-card delay-0 rounded-[3rem] bg-bg min-h-[100px] md:min-h-[160px] flex justify-center items-center hover:text-accent hover:border-accent hover:border-2 cursor-pointer transition-all duration-200 hover:scale-[1.02]"
                 @click="router.push('/packages')"
@@ -133,7 +131,9 @@ onUnmounted(() => {
               >
                 Блог
               </div>
-              <div class="animate-section-card delay-3 min-h-[100px] md:min-h-[160px] grid grid-rows-2 gap-2">
+              <div
+                class="animate-section-card text-center delay-3 min-h-[100px] md:min-h-[160px] grid grid-rows-2 gap-2"
+              >
                 <div class="rounded-[3rem] bg-purple flex justify-center items-center">
                   Месяц гарантии
                 </div>
@@ -145,12 +145,13 @@ onUnmounted(() => {
                 </div>
               </div>
               <div
-                class="animate-section-cta delay-1220 col-span-3 rounded-[3rem] bg-accent min-h-[60px] md:min-h-[80px] flex justify-center items-center w-full main-section-cta flex-shrink-0 "
+                class="animate-section-cta col-span-3 rounded-[3rem] bg-accent min-h-[60px] md:min-h-[80px] flex justify-center items-center w-full"
               >
                 <CtaButton
                   to="/calculator"
                   bgClass="bg-accent"
                   textClass="text-bg"
+                  class="!mt-0 text-center pointer"
                   @click="
                     () => trackCtaClick('cta_home_calculator', { location: 'hero_main_section' })
                   "
@@ -171,28 +172,28 @@ onUnmounted(() => {
             <div class="grid grid-cols-4 gap-2 md:gap-4">
               <button
                 type="button"
-                class="col-span-2 rounded-[3rem] !border !border-accent !bg-transparent !text-accent min-h-[60px] md:min-h-[100px] flex justify-center items-center hover:!bg-accent hover:!text-white cursor-pointer transition-all duration-200 hover:scale-[1.02]"
+                class="col-span-2 rounded-[3rem] !border !border-accent !bg-transparent !text-white min-h-[60px] md:min-h-[100px] flex justify-center items-center hover:!bg-accent hover:!text-white cursor-pointer transition-all duration-200 hover:scale-[1.02]"
                 @click="openPrepModal('business')"
               >
                 О бизнесе
               </button>
               <button
                 type="button"
-                class="col-span-2 rounded-[3rem] !border !border-accent !bg-transparent !text-accent min-h-[60px] md:min-h-[100px] flex justify-center items-center hover:!bg-accent hover:!text-white cursor-pointer transition-all duration-200 hover:scale-[1.02]"
+                class="col-span-2 rounded-[3rem] !border !border-accent !bg-transparent !text-white min-h-[60px] md:min-h-[100px] flex justify-center items-center hover:!bg-accent hover:!text-white cursor-pointer transition-all duration-200 hover:scale-[1.02]"
                 @click="openPrepModal('competitors')"
               >
                 О конкурентах
               </button>
               <button
                 type="button"
-                class="col-span-4 rounded-[3rem] !border !border-accent !bg-transparent !text-accent min-h-[60px] md:min-h-[100px] flex justify-center items-center hover:!bg-accent hover:!text-white cursor-pointer transition-all duration-200 hover:scale-[1.02]"
+                class="col-span-4 rounded-[3rem] !border !border-accent !bg-transparent !text-white min-h-[60px] md:min-h-[100px] flex justify-center items-center hover:!bg-accent hover:!text-white cursor-pointer transition-all duration-200 hover:scale-[1.02]"
                 @click="openPrepModal('audience')"
               >
                 О целевой аудитории
               </button>
               <button
                 type="button"
-                class="rounded-[3rem] !border !border-accent !bg-transparent !text-accent min-h-[60px] md:min-h-[100px] flex justify-center items-center hover:!bg-accent hover:!text-white cursor-pointer transition-all duration-200 hover:scale-[1.02]"
+                class="rounded-[3rem] !border !border-accent !bg-transparent !text-white min-h-[60px] md:min-h-[100px] flex justify-center items-center hover:!bg-accent hover:!text-white cursor-pointer transition-all duration-200 hover:scale-[1.02]"
                 @click="openPrepModal('goals')"
               >
                 Цели
@@ -266,10 +267,7 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.main-section-cta {
-  display: flex; 
-  z-index: 10;
-}
+
 
 /* Модалка: появление/исчезновение */
 .prep-modal-enter-active .prep-modal-backdrop,

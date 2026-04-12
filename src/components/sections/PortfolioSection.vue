@@ -57,7 +57,7 @@ onMounted(() => {
       <!-- CTA-кнопка снизу блока портфолио на главной странице -->
       <div
         v-if="isOnHomePage"
-        class="flex justify-center items-center w-full mt-6 md:mt-10 pb-4"
+        class="flex justify-center items-center w-full mt-auto pt-4 pb-4"
       >
         <CtaButton to="/cases" bgClass="bg-accent" textClass="text-bg" @click="trackCtaClick('cta_portfolio_cases', { location: 'portfolio_section' })">
           Все кейсы

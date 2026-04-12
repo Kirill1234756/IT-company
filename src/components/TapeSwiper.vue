@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { ref, nextTick } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { Swiper, SwiperSlide } from 'swiper/vue'
 import type { Swiper as SwiperType } from 'swiper'
-import { Navigation, Pagination, Mousewheel, Keyboard } from 'swiper/modules'
+
+/** В рантайме есть `initialized`, в публичных .d.ts Swiper его не объявляет */
+type SwiperInstance = SwiperType & { initialized?: boolean }
+import { Pagination, Mousewheel, Keyboard } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
@@ -13,16 +16,143 @@ const props = defineProps<{
   uniqueKey?: string
   buttonClassPrefix?: string
   swiperClass?: string
+  /** Слайдов в ряд от 768px (по умолчанию 2). Дробное значение допустимо (например 4.5). */
+  slidesPerViewDesktop?: number
+  /** Центрировать ленту (активная группа по центру), напр. для блога */
+  centerSlidesDesktop?: boolean
 }>()
 
-// Swiper modules
-const swiperModules = [Navigation, Pagination, Mousewheel, Keyboard]
+const desktopSlidesPerView = computed(() => {
+  const v = props.slidesPerViewDesktop
+  if (v == null || Number.isNaN(Number(v))) return 2
+  return Math.min(6, Math.max(1, Number(v)))
+})
+
+/** Для loop и буфера Swiper внутри использует ceil(spv) */
+const desktopSpvCeil = computed(() => Math.ceil(desktopSlidesPerView.value))
+
+const centerTape = computed(() => props.centerSlidesDesktop === true)
+
+// Swiper modules (Navigation не подключаем — избегаем двойных click-listeners и бага slidePrev+loop по snapGrid)
+const swiperModules = [Pagination, Mousewheel, Keyboard]
+
+const swiperRef = ref<SwiperType | null>(null)
+
+const itemCount = computed(() => (props.items ?? []).length)
+
+/** Swiper: loop требует n >= slidesPerView + loopedSlides; буфер от ceil(spv). */
+const loopAdditionalSlides = computed(() => {
+  const n = itemCount.value
+  const spv = desktopSpvCeil.value
+  if (n <= spv + 1) return 0
+  return Math.min(2, n - spv - 2)
+})
+
+const canLoop = computed(() => itemCount.value >= desktopSpvCeil.value + 1)
+/** Если loop нельзя включить при текущем n и spv — листание с края через rewind */
+const useRewind = computed(() => {
+  const n = itemCount.value
+  if (n <= 1) return false
+  return !canLoop.value
+})
+
+const swiperBreakpoints = computed(() => ({
+  768: {
+    slidesPerView: desktopSlidesPerView.value,
+    slidesPerGroup: 1,
+    spaceBetween: centerTape.value ? 14 : 24,
+    loopAdditionalSlides: loopAdditionalSlides.value,
+    centeredSlides: centerTape.value,
+    centerInsufficientSlides: centerTape.value,
+  },
+}))
+
+/** Смена набора слайдов (фильтр и т.д.): пересоздаём loop, иначе бесконечная прокрутка ломается */
+const itemsLoopKey = computed(() =>
+  (props.items ?? [])
+    .map((item: any, index: number) =>
+      props.uniqueKey ? item[props.uniqueKey] : item.id ?? index
+    )
+    .join('|')
+)
+
+/**
+ * Назад: slidePrev + loop + snap даёт пропуск — шаг через slideToLoop по realIndex.
+ * Вперёд: при slidesPerView>1 активен часто не «последний» realIndex, а slideToLoop(next) даёт дёрганье на стыке loop;
+ * нативный slideNext (loopFix + slideTo по activeIndex) стабильнее. Навигация своя — двойных listener нет.
+ */
+function attachLoopStepNavigation(swiper: SwiperType) {
+  const origPrev = swiper.slidePrev.bind(swiper)
+  const origNext = swiper.slideNext.bind(swiper)
+  // Сигнатуры как в swiper-class.d.ts: slidePrev/Next(speed?, runCallbacks?); slideToLoop — без 4-го аргумента
+  swiper.slidePrev = (speed?: number, runCallbacks?: boolean) => {
+    if (!swiper.params.loop) return origPrev(speed, runCallbacks)
+    const len = props.items?.length ?? 0
+    if (len < 1) return origPrev(speed, runCallbacks)
+    const sp = speed === undefined ? swiper.params.speed : speed
+    swiper.allowSlideNext = true
+    swiper.allowSlidePrev = true
+    swiper.slideToLoop((swiper.realIndex - 1 + len) % len, sp, runCallbacks)
+    return true
+  }
+  swiper.slideNext = (speed?: number, runCallbacks?: boolean) => {
+    if (!swiper.params.loop) return origNext(speed, runCallbacks)
+    if ((props.items?.length ?? 0) < 1) return origNext(speed, runCallbacks)
+    const sp = speed === undefined ? swiper.params.speed : speed
+    swiper.allowSlideNext = true
+    swiper.allowSlidePrev = true
+    return origNext(sp, runCallbacks)
+  }
+}
+
+function reinitLoop(preserveRealIndex: boolean) {
+  const swiper = swiperRef.value as SwiperInstance | null
+  if (!swiper || swiper.destroyed || !swiper.initialized || !swiper.params.loop) return
+  const len = props.items?.length ?? 0
+  if (!len) return
+  const ri = preserveRealIndex
+    ? Math.min(Math.max(swiper.realIndex, 0), len - 1)
+    : 0
+  swiper.loopDestroy()
+  swiper.loopCreate()
+  swiper.update()
+  nextTick(() => {
+    swiper.slideToLoop(ri, 0, false)
+  })
+}
+
+watch(
+  itemsLoopKey,
+  () => {
+    nextTick(() => reinitLoop(true))
+  },
+  { flush: 'post' }
+)
+
+const onTapeNavPrev = (e: Event) => {
+  e.preventDefault()
+  e.stopPropagation()
+  swiperRef.value?.slidePrev()
+}
+
+const onTapeNavNext = (e: Event) => {
+  e.preventDefault()
+  e.stopPropagation()
+  swiperRef.value?.slideNext()
+}
 
 const onSwiper = (swiper: SwiperType) => {
-  // Один раз при создании: пересчёт размеров и старт с первого слайда (без сброса при прокрутке)
+  swiperRef.value = swiper
+  attachLoopStepNavigation(swiper)
   nextTick(() => {
     swiper.update()
-    swiper.slideTo(0, 0)
+    if (itemCount.value > 0) {
+      if (swiper.params.loop) {
+        swiper.slideToLoop(0, 0, false)
+      } else {
+        swiper.slideTo(0, 0, false)
+      }
+    }
   })
 }
 
@@ -39,28 +169,25 @@ const handleItemClick = (item: any, index: number) => {
 <template>
   <div class="tape-swiper-wrapper">
     <Swiper
+      :key="`tape-${itemsLoopKey}-${itemCount}-spv${desktopSlidesPerView}-c${centerTape ? 1 : 0}-${canLoop ? 1 : 0}-${useRewind ? 1 : 0}`"
       :modules="swiperModules"
       :initial-slide="0"
       @swiper="onSwiper"
-      :loop="true"
-      :loop-additional-slides="4"
+      :loop="canLoop"
+      :rewind="useRewind"
+      :loop-additional-slides="loopAdditionalSlides"
       :loop-prevents-sliding="false"
+      :watch-overflow="false"
+      :observer="true"
+      :observe-slide-children="true"
       :watch-slides-progress="true"
       :slides-per-view="1"
-      :centered-slides="false"
+      :slides-per-group="1"
+      :round-lengths="true"
+      :centered-slides="centerTape"
+      :center-insufficient-slides="centerTape"
       :space-between="16"
-      :breakpoints="{
-        768: {
-          slidesPerView: 2.2,
-          spaceBetween: 32,
-          loopAdditionalSlides: 4,
-          centeredSlides: false,
-        },
-      }"
-      :navigation="{
-        nextEl: `.${buttonClassPrefix || 'tape'}-swiper-button-next`,
-        prevEl: `.${buttonClassPrefix || 'tape'}-swiper-button-prev`,
-      }"
+      :breakpoints="swiperBreakpoints"
       :pagination="{ clickable: true }"
       :mousewheel="{ forceToAxis: true }"
       :keyboard="{ enabled: true }"
@@ -77,9 +204,23 @@ const handleItemClick = (item: any, index: number) => {
       </SwiperSlide>
     </Swiper>
 
-    <!-- Кастомные кнопки навигации -->
-    <div :class="`${buttonClassPrefix || 'tape'}-swiper-button-prev tape-nav-button`"></div>
-    <div :class="`${buttonClassPrefix || 'tape'}-swiper-button-next tape-nav-button`"></div>
+    <!-- Кастомные кнопки: один обработчик на кнопку (без Swiper Navigation — там возможен двойной init) -->
+    <div
+      :class="`${buttonClassPrefix || 'tape'}-swiper-button-prev tape-nav-button`"
+      role="button"
+      tabindex="0"
+      @click="onTapeNavPrev"
+      @keydown.enter.prevent="onTapeNavPrev"
+      @keydown.space.prevent="onTapeNavPrev"
+    />
+    <div
+      :class="`${buttonClassPrefix || 'tape'}-swiper-button-next tape-nav-button`"
+      role="button"
+      tabindex="0"
+      @click="onTapeNavNext"
+      @keydown.enter.prevent="onTapeNavNext"
+      @keydown.space.prevent="onTapeNavNext"
+    />
   </div>
 </template>
 
@@ -119,14 +260,15 @@ const handleItemClick = (item: any, index: number) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Не анимируем transform вместе с Swiper — иначе на стыке loop визуально «двойной» сдвиг */
+  transition: opacity 0.32s ease, filter 0.32s ease;
   will-change: transform;
   transform: translateZ(0);
 }
 
 /* Базовые стили для всех слайдов */
 .tape-slide {
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 0.32s ease, filter 0.32s ease;
   flex-shrink: 0;
 }
 
@@ -261,7 +403,7 @@ const handleItemClick = (item: any, index: number) => {
   }
 
   .tape-swiper {
-    padding: 0 24px 40px 24px;
+    padding: 0 0px 24px 0px;
     overflow: hidden !important;
     width: 100%;
     max-width: 100%;

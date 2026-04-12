@@ -18,10 +18,14 @@ import TapeSwiper from '../TapeSwiper.vue'
 
 const BlogCard = defineAsyncComponent(() => import('../BlogCard.vue'))
 const SectionHeading = defineAsyncComponent(() => import('../ui/SectionHeading.vue'))
+const CtaButton = defineAsyncComponent(() => import('../ui/CtaButton.vue'))
 
 const blogStore = useBlogStore()
 const route = useRoute()
 const router = useRouter()
+
+// Первая рубрика в данных — дефолт при /blog и на главной (лента блога)
+const DEFAULT_TAB_ID = blogStore.tabs[0]?.id ?? 'preparation'
 
 // Define props
 const props = defineProps<{
@@ -29,7 +33,6 @@ const props = defineProps<{
 }>()
 
 // Filter state with shallowRef for better performance
-const DEFAULT_TAB_ID = 'website-development'
 const activeTab = shallowRef<string>(DEFAULT_TAB_ID)
 
 // Реактивное отслеживание размера экрана для определения количества карточек
@@ -145,7 +148,7 @@ const handleFilterChange = (value: string) => {
 // Инициализация и очистка обработчика изменения размера окна
 onMounted(() => {
   // Синхронизируем активную вкладку с URL
-  // /blog -> редиректим на /blog/website-development, чтобы сразу показать нужную вкладку
+  // /blog -> редирект на /blog/<первая рубрика>
   if (!isOnHomePage.value) {
     const category = route.params.category
     if (typeof category === 'string' && category.length > 0) {
@@ -191,7 +194,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="w-full max-w-7xl mx-auto">
+  <!-- Как CasesPage: те же боковые отступы на lg, чтобы лента свайпера по ширине совпадала с портфолио -->
+  <div class="w-full max-w-7xl mx-auto px-[1rem] lg:px-[12rem]">
     <!-- Main Title -->
     <SectionHeading
       :level="1"
@@ -220,19 +224,28 @@ onUnmounted(() => {
       :items="displayedPosts"
       unique-key="id"
       button-class-prefix="blog"
+    
       @item-click="handlePostClick"
     >
       <template #default="{ item }">
         <BlogCard
           class="blog-card h-full"
+          in-swiper
           :post="item"
           @click="handlePostClick"
         />
       </template>
     </TapeSwiper>
 
+    <!-- CTA снизу блока блога на главной странице -->
+    <div v-if="isOnHomePage" class="flex justify-center items-center w-full pb-4">
+      <CtaButton to="/blog" bgClass="bg-accent" textClass="text-bg" >
+        Все статьи
+      </CtaButton>
+    </div>
+
     <!-- Обычная сетка для отдельной страницы -->
-    <div v-else class="blog-grid grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
+    <div v-else class="blog-grid grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8">
       <BlogCard
         v-for="post in displayedPosts"
         :key="post.id"
@@ -282,4 +295,5 @@ onUnmounted(() => {
 .grid {
   contain: layout;
 }
+
 </style>

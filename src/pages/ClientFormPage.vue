@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watchEffect } from 'vue'
+import { computed, onBeforeUnmount, ref, watchEffect } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import type { ClientFormData } from '../types/client-form'
 import { useClientForm } from '../composables/useClientForm'
@@ -9,6 +9,9 @@ import { useHead } from '@unhead/vue'
 import { useBreadcrumbSchema } from '../composables/useBreadcrumbSchema'
 import SectionHeading from '../components/ui/SectionHeading.vue'
 import Breadcrumbs from '../components/ui/Breadcrumbs.vue'
+import FormSuccessBanner from '../components/ui/FormSuccessBanner.vue'
+import FormErrorBanner from '../components/ui/FormErrorBanner.vue'
+import CtaButton from '../components/ui/CtaButton.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -32,7 +35,34 @@ watchEffect(() => {
 })
 
 // Use the composable for form logic
-const { formData, errors, isSubmitting, submitForm: submitFormComposable } = useClientForm()
+const {
+  formData,
+  errors,
+  isSubmitting,
+  submitForm: submitFormComposable,
+  resetForm,
+  scheduleContactFieldValidation,
+} = useClientForm()
+
+const submitSuccess = ref(false)
+const successMessage = ref('')
+const submitError = ref('')
+const submitErrorKey = ref(0)
+
+let redirectTimer: ReturnType<typeof setTimeout> | null = null
+
+function dismissSuccess() {
+  submitSuccess.value = false
+  successMessage.value = ''
+}
+
+function goHome() {
+  if (redirectTimer) {
+    clearTimeout(redirectTimer)
+    redirectTimer = null
+  }
+  router.push('/')
+}
 
 // Contact fields configuration
 const contactFields: Array<{ key: keyof ClientFormData; placeholder: string }> = [
@@ -62,13 +92,33 @@ const handleContactInput = (key: keyof ClientFormData, event: Event) => {
     }
   }
   formData[key] = value
+
+  if (key === 'phone' || key === 'email') {
+    if (errors.value[key]) {
+      const next = { ...errors.value }
+      delete next[key]
+      errors.value = next
+    }
+    scheduleContactFieldValidation()
+  }
 }
 
 // Submit form with navigation
 const submitForm = async () => {
+  submitError.value = ''
   const result = await submitFormComposable()
-  alert(result.message)
-  if (result.success) router.push('/')
+  if (result.success) {
+    successMessage.value = result.message || 'Спасибо! Мы свяжемся с вами в ближайшее время.'
+    submitSuccess.value = true
+    resetForm()
+    redirectTimer = setTimeout(() => {
+      redirectTimer = null
+      router.push('/')
+    }, 4500)
+  } else {
+    submitError.value = result.message || 'Не удалось отправить форму.'
+    submitErrorKey.value += 1
+  }
 }
 
 // Form sections configuration
@@ -110,6 +160,13 @@ const formSections = computed(() => [
 const updateFormField = (field: keyof ClientFormData, value: string) => {
   formData[field] = value
 }
+
+onBeforeUnmount(() => {
+  if (redirectTimer) {
+    clearTimeout(redirectTimer)
+    redirectTimer = null
+  }
+})
 </script>
 
 <template>
@@ -135,7 +192,7 @@ const updateFormField = (field: keyof ClientFormData, value: string) => {
       >
        Стать клиентом
       </SectionHeading>
-        <p class="text-sm md: text-md text-[var(--color-text-muted)] max-w-3xl mx-auto leading-relaxed">
+        <p class="text-sm md: text-md text-accent max-w-3xl mx-auto leading-relaxed">
           Ответьте на пару вопросов. На основе ответов мы поймем, как можем быть полезны, соберем
           информацию и подготовимся к встрече. Если не сможем помочь — порекомендуем подходящих
           партнеров.
@@ -143,6 +200,28 @@ const updateFormField = (field: keyof ClientFormData, value: string) => {
       </div>
 
       <form @submit.prevent="submitForm" class="space-y-8">
+        <FormSuccessBanner
+          :show="submitSuccess"
+          :message="successMessage"
+          variant="on-light"
+          :auto-dismiss-ms="0"
+          @dismiss="dismissSuccess"
+        />
+        <div v-if="submitSuccess" class="flex justify-center">
+          <button
+            type="button"
+            class="rounded-[3rem] border border-[var(--color-success)] bg-[var(--color-success)]/15 px-6 py-2 text-sm font-medium text-bg transition-colors hover:bg-[var(--color-success)]/25"
+            @click="goHome"
+          >
+            На главную
+          </button>
+        </div>
+        <FormErrorBanner
+          v-if="submitError"
+          :key="submitErrorKey"
+          :message="submitError"
+          shake
+        />
         <!-- Honeypot anti-bot field (hidden) -->
         <input
           type="text"
@@ -199,26 +278,38 @@ const updateFormField = (field: keyof ClientFormData, value: string) => {
                 :value="formData[field.key]"
                 @input="handleContactInput(field.key, $event)"
                 :placeholder="field.placeholder"
-                class="w-full px-4 !text-black placeholder:text-bg py-3 rounded-[3rem] text-sm focus:outline-none border border-[var(--color-border)] backdrop-blur-[5px]"
+                :aria-invalid="field.key === 'phone' || field.key === 'email' ? !!errors[field.key] : undefined"
+                :class="[
+                  'w-full px-4 !text-black placeholder:text-bg py-3 rounded-[3rem] text-sm focus:outline-none border backdrop-blur-[5px] transition-colors duration-200',
+                  errors[field.key]
+                    ? 'border-red-500/90'
+                    : 'border-[var(--color-border)]',
+                ]"
               />
-              <p v-if="errors[field.key]" class="text-[var(--color-error)] text-sm mt-2">
-                {{ errors[field.key] }}
-              </p>
+              <Transition name="field-error">
+                <p
+                  v-if="errors[field.key]"
+                  class="text-[var(--color-error)] text-sm mt-2"
+                >
+                  {{ errors[field.key] }}
+                </p>
+              </Transition>
             </div>
           </div>
         </div>
 
         <!-- Submit Button -->
         <div class="text-center">
-          <button
+          <CtaButton
             type="submit"
-            class="!bg-accent hover:bg-purple px-8 py-3 rounded-[3rem] text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            :disabled="isSubmitting"
-            aria-label="Отправить форму"
-          >
-            <span v-if="isSubmitting">Отправка...</span>
-            <span v-else>Отправить ответы</span>
-          </button>
+            label="Отправить ответы"
+            class="!mt-0"
+            :loading="isSubmitting"
+            :success="submitSuccess"
+            :disabled="submitSuccess"
+            loading-label="Отправка..."
+            success-label="Принято"
+          />
         </div>
       </form>
     </div>
@@ -237,5 +328,30 @@ button,
 input:focus-visible {
   outline: none !important;
   box-shadow: none !important;
+}
+
+.field-error-enter-active,
+.field-error-leave-active {
+  transition:
+    opacity 0.18s ease-out,
+    transform 0.18s ease-out;
+}
+
+.field-error-enter-from,
+.field-error-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .field-error-enter-active,
+  .field-error-leave-active {
+    transition-duration: 0.01ms;
+  }
+
+  .field-error-enter-from,
+  .field-error-leave-to {
+    transform: none;
+  }
 }
 </style>

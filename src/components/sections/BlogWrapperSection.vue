@@ -75,7 +75,10 @@ function handlePostClick(post: BlogPost) {
   <section
     ref="rootEl"
     :id="props.id"
-    class="stack-section no-scrollbar h-screen flex flex-col items-center justify-start rounded-t-3xl py-[2rem] px-10 bg-[linear-gradient(135deg,_var(--color-bg)_0%,_var(--color-border)_100%)]"
+    :class="[
+      'stack-section no-scrollbar h-screen flex flex-col items-center justify-start rounded-t-3xl py-[2rem] bg-[linear-gradient(135deg,_var(--color-bg)_0%,_var(--color-border)_100%)]',
+      isOnHomePage ? 'px-0' : 'px-10',
+    ]"
     style="min-height: 700px; box-sizing: border-box; contain: layout style paint"
   >
     <div class="internal-scroll-container w-full h-full flex flex-col items-center" ref="scrollContainerRef">

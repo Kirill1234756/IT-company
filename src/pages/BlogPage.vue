@@ -78,12 +78,12 @@ const handleRelatedClick = (post: BlogPost) => {
   router.push(`/blog/${post.category}/${post.slug}`)
 }
 
-// Close modal
+// Close modal — возвращаем в список той же категории, иначе /blog сбросит вкладку на «Разработка сайтов»
 const closeModal = () => {
+  const category = selectedPost.value?.category
   activeModal.value = null
   selectedPost.value = null
-  // Return to blog list
-  router.push('/blog')
+  router.push(category ? `/blog/${category}` : '/blog')
 }
 
 onMounted(() => {
@@ -150,9 +150,9 @@ watchEffect(() => {
 
 <template>
   <div
-    class="min-h-screen font-[var(--font-sans)] bg-[linear-gradient(135deg,_var(--color-bg)_0%,_var(--color-border)_100%)] px-[1rem] md:px-[3rem]"
+    class="min-h-screen font-[var(--font-sans)] bg-[linear-gradient(135deg,_var(--color-bg)_0%,_var(--color-border)_100%)] md:px-[3rem]"
   >
-    <div class="max-w-7xl mx-auto px-4">
+    <div class="max-w-7xl mx-auto">
       <Breadcrumbs :items="breadcrumbItems" class="mb-4 md:mb-6" />
     </div>
     <!-- Blog Section -->

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { defineProps, defineEmits, watch, nextTick, defineAsyncComponent, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { usePortfolioStore } from '../../stores/portfolio'
 import { useYandexMetrika } from '../../composables/useYandexMetrika'
 import OptimizedImage from '../OptimizedImage.vue'
@@ -8,7 +9,9 @@ const Breadcrumbs = defineAsyncComponent(() => import('../ui/Breadcrumbs.vue'))
 const SectionHeading = defineAsyncComponent(() => import('../ui/SectionHeading.vue'))
 const ContactSection = defineAsyncComponent(() => import('../sections/ContactSection.vue'))
 const Footer = defineAsyncComponent(() => import('../../pages/Footer.vue'))
-const { trackPortfolioView } = useYandexMetrika()
+const { trackPortfolioView, trackButtonClick } = useYandexMetrika()
+
+const router = useRouter()
 
 const props = defineProps<{
   showModal: boolean
@@ -34,6 +37,31 @@ const cardData = computed(() => modalData.value?.card || [])
 const textData = computed(() => modalData.value?.text || [])
 const heroImage = computed(() => modalData.value?.img || '')
 const bottomImage = computed(() => modalData.value?.bottomImg || '')
+const technologies = computed(() => modalData.value?.technologies ?? [])
+
+const portfolioBreadcrumbItems = computed(() => [
+  { label: 'Главная', to: '/' },
+  { label: 'Кейсы', to: '/cases' },
+  { label: modalData.value?.title || 'Проект' },
+])
+
+const goOrder = () => {
+  const project = props.projectId != null ? portfolioStore.getProjectById(props.projectId) : null
+  const title = project?.title ?? modalData.value?.title ?? ''
+  const slug = project ? portfolioStore.getProjectSlug(project.title) : ''
+  trackButtonClick('portfolio-modal-order', {
+    project_id: props.projectId ?? -1,
+    title,
+    case_slug: slug,
+  })
+  router.push({
+    path: '/client-form',
+    query: {
+      ...(slug ? { case: slug } : {}),
+      ...(title ? { caseTitle: title } : {}),
+    },
+  })
+}
 
 const handleClose = () => {
   emit('close')
@@ -73,6 +101,7 @@ watch(
             has_hero_image: modalData.value.img ? 'yes' : 'no',
             cards_count: modalData.value.card?.length || 0,
             text_sections_count: modalData.value.text?.length || 0,
+            technologies_count: modalData.value.technologies?.length ?? 0,
           })
         }
       })
@@ -105,23 +134,26 @@ watch(
   <Teleport to="body">
     <div
       v-if="showModal && modalData"
-      class="fixed inset-0 bg-black bg-opacity-50 z-50 flex flex-col ios-modal-fix"
+      class="fixed inset-0 z-50 flex flex-col ios-modal-fix bg-black/50 backdrop-blur-[2px]"
       @click="handleClose"
     >
       <div
-        class="flex-1 overflow-y-auto bg-[var(--color-bg)] text-[var(--color-text)]"
+        class="flex-1 overflow-y-auto bg-[var(--color-bg)] text-[var(--color-text)] min-h-0"
         style="-webkit-overflow-scrolling: touch"
         @click.stop
       >
-        <!-- Header with Back button -->
+        <!-- Header -->
         <div
-          class="sticky top-0 border-b border-[var(--color-border)] z-10 bg-[rgba(3,18,47,0.95)] backdrop-blur-[10px]"
+          class="sticky top-0 z-10 bg-[rgba(3,18,47,0.95)] border-b border-[var(--color-border)] backdrop-blur-[10px]"
         >
-          <div class="max-w-7xl mx-auto px-[1rem] md:px-[3rem] py-4">
+          <div
+            class="max-w-7xl mx-auto px-[1rem] md:px-[3rem] py-4 flex flex-wrap items-center justify-between gap-3"
+          >
             <button
-              @click="handleClose"
-              class="flex items-center gap-2 text-text-muted hover:text-text transition-colors"
+              type="button"
+              class="flex items-center gap-2 text-accent hover:text-text transition-colors"
               aria-label="Закрыть модальное окно портфолио"
+              @click="handleClose"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -131,22 +163,20 @@ watch(
                   d="M15 19l-7-7 7-7"
                 />
               </svg>
-              Назад
+              Назад к кейсам
+            </button>
+            <button
+              type="button"
+              class="inline-flex items-center justify-center px-5 py-2.5 rounded-[3rem] bg-[var(--color-accent)] text-[var(--color-bg)] font-semibold text-sm hover:opacity-95 transition-opacity"
+              @click="goOrder"
+            >
+              Оставить заявку
             </button>
           </div>
         </div>
 
-        <!-- Main Content -->
-        <div class="max-w-7xl mx-auto px-[1rem] md:px-[3rem]">
-          <!-- Breadcrumbs and Title -->
-          <Breadcrumbs
-            :items="[
-              { label: 'Главная', to: '/' },
-              { label: 'Кейсы', to: '/cases' },
-              { label: modalData?.title || 'Проект' },
-            ]"
-            class="mb-4"
-          />
+        <div class="max-w-7xl mx-auto px-[1rem] md:px-[3rem] pb-16">
+          <Breadcrumbs :items="portfolioBreadcrumbItems" class="mb-8" />
 
           <SectionHeading
             :level="1"
@@ -154,103 +184,132 @@ watch(
             color="accent"
             align="center"
             weight="black"
-            class="mb-8 font-display text-condense"
+            animation-class="animate-cases-title"
+            class="mb-4 md:mb-6 lg:mb-8"
           >
-            {{ modalData?.title || 'Проект из портфолио' }}
+            {{ modalData.title }}
           </SectionHeading>
-           <SectionHeading
-        :level="1"
-        size="md"
-        color="accent"
-        align="center"
-        weight="black"
-        animation-class="animate-cases-title"
-        class="mb-4 md:mb-6 lg:mb-8"
-      >
-        Услуги
-      </SectionHeading>
 
-          <!-- Hero Image Section -->
+          <p
+            v-if="modalData.description"
+            class="mb-8 text-accent max-w-3xl mx-auto text-center text-base md:text-lg leading-relaxed px-2"
+          >
+            {{ modalData.description }}
+          </p>
+
+          <!-- Технологии -->
+          <div v-if="technologies.length" class="mb-12">
+            <h2 class="text-xl font-bold mb-6 font-display text-[var(--color-accent)]">
+              Технологии и инструменты
+            </h2>
+            <div class="flex flex-wrap gap-2">
+              <span
+                v-for="(tech, idx) in technologies"
+                :key="idx"
+                class="inline-flex items-center px-4 py-2 rounded-[3rem] text-sm font-medium border border-[var(--color-border)] bg-[rgba(3,18,47,0.85)] text-[var(--color-text)] hover:border-[var(--color-accent)]/40 transition-colors"
+              >
+                {{ tech }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Hero: как в BlogModal — без фиксированного 16:9, вертикальные макеты не обрезаются -->
           <div
-            class="rounded-3xl mb-10 flex justify-center items-center overflow-hidden bg-[rgba(3,18,47,0.95)] border border-[var(--color-border)]"
-            style="aspect-ratio: 16/9; min-height: min(220px, 45vw)"
+            class="w-full mb-12 rounded-2xl overflow-hidden border border-[var(--color-border)] bg-[#050a1b] flex items-start justify-center"
           >
             <OptimizedImage
+              layout="intrinsic"
               :src="heroImage"
-              :alt="modalData?.title || 'Изображение проекта'"
+              :alt="modalData.title || 'Изображение проекта'"
               :width="1200"
-              :height="675"
+              :height="800"
               :widths="[800, 1200, 1600]"
               format="webp"
               loading="lazy"
               decoding="async"
               fetchpriority="low"
-              class="w-full h-full object-contain"
+              class="w-full max-w-full h-auto max-h-[min(88vh,960px)] object-contain object-top"
               :sizes="{ mobile: '100vw', tablet: '100vw', desktop: '100vw' }"
             />
           </div>
 
-          <!-- Summary Cards -->
+          <!-- Карточки: о проекте, проблема, цель -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             <div
               v-for="item in cardData"
               :key="item.id"
-              class="rounded-[2rem] p-6 border border-[var(--color-border)] bg-[rgba(3,18,47,0.95)] backdrop-blur-[10px]"
+              class="rounded-[3rem] p-6 md:p-8 border border-[var(--color-border)] bg-[rgba(3,18,47,0.8)]"
             >
-              <h3 class="text-lg md:text-xl font-bold mb-3 font-display text-[var(--color-accent)]">
+              <h3 class="text-base font-bold mb-3 font-display text-[var(--color-accent)]">
                 {{ item.title }}
               </h3>
-              <p class="text-sm md:text-md leading-relaxed text-white">
+              <p class="text-sm leading-relaxed text-[var(--color-text)]">
                 {{ item.description }}
               </p>
             </div>
           </div>
 
-          <!-- What was done Section -->
-          <h2
-            class="text-2xl md:text-3xl font-bold mb-6 md:mb-8 font-display text-[var(--color-accent)]"
-          >
-            Что было сделано
-          </h2>
-          <div class="flex flex-col gap-6 md:gap-10 mb-8 md:mb-12">
-            <div v-for="item in textData" :key="item.id" class="flex flex-col gap-4">
-              <h3
-                class="text-lg md:text-xl font-bold font-display text-[var(--color-accent)] md:flex-shrink-0 md:w-48"
+          <!-- Что было сделано -->
+          <div v-if="textData.length" class="mb-12">
+            <h2 class="text-xl font-bold mb-8 font-display text-[var(--color-accent)]">
+              Что было сделано
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div
+                v-for="item in textData"
+                :key="item.id"
+                class="rounded-[3rem] p-6 md:p-8 relative overflow-hidden border border-[var(--color-border)] bg-[rgba(3,18,47,0.8)]"
               >
-                {{ item.title }}
-              </h3>
-              <p class="text-sm md:text-md leading-relaxed text-white flex-1">
-                {{ item.description }}
-              </p>
+                <h3 class="text-base font-bold mb-3 font-display text-[var(--color-accent)]">
+                  {{ item.title }}
+                </h3>
+                <p class="text-sm leading-relaxed text-[var(--color-text)] whitespace-pre-line">
+                  {{ item.description }}
+                </p>
+              </div>
             </div>
           </div>
 
-          <!-- Bottom Image Section (if available) -->
+          <!-- Дополнительное изображение — тот же паттерн, что и герой в BlogModal -->
           <div
             v-if="bottomImage"
-            class="rounded-3xl mb-12 flex justify-center items-center overflow-hidden bg-[rgba(3,18,47,0.95)] border border-[var(--color-border)]"
-            style="aspect-ratio: 16/9; min-height: min(220px, 45vw)"
+            class="w-full mb-12 rounded-2xl overflow-hidden border border-[var(--color-border)] bg-[#050a1b] flex items-start justify-center"
           >
             <OptimizedImage
+              layout="intrinsic"
               :src="bottomImage"
-              :alt="modalData?.title || 'Дополнительный вид проекта'"
+              :alt="modalData.title || 'Дополнительный вид проекта'"
               :width="1200"
-              :height="675"
+              :height="800"
               :widths="[800, 1200, 1600]"
               format="webp"
               loading="lazy"
               decoding="async"
               fetchpriority="low"
-              class="w-full h-full object-contain"
+              class="w-full max-w-full h-auto max-h-[min(88vh,960px)] object-contain object-top"
               :sizes="{ mobile: '100vw', tablet: '100vw', desktop: '100vw' }"
             />
           </div>
+
+          <div class="flex flex-col sm:flex-row gap-4 justify-start sm:justify-start pb-4">
+            <button
+              type="button"
+              class="inline-flex items-center justify-center px-8 py-3.5 rounded-[3rem] bg-[var(--color-accent)] text-[var(--color-bg)] font-semibold text-sm hover:opacity-95 transition-opacity"
+              @click="goOrder"
+            >
+              Обсудить похожий проект
+            </button>
+            <button
+              type="button"
+              class="inline-flex items-center justify-center px-8 py-3.5 rounded-[3rem] border border-[var(--color-border)] text-[var(--color-text)] font-semibold text-sm hover:border-[var(--color-accent)]/50 transition-colors"
+              @click="handleClose"
+            >
+              Закрыть
+            </button>
+          </div>
         </div>
 
-        <!-- Contact Section -->
         <ContactSection />
-
-        <!-- Footer Section -->
         <Footer />
       </div>
     </div>
@@ -291,5 +350,13 @@ watch(
   height: 100dvh;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+}
+
+@supports (-webkit-touch-callout: none) {
+  body:has(.ios-modal-fix) {
+    position: fixed;
+    width: 100%;
+    overflow: hidden;
+  }
 }
 </style>

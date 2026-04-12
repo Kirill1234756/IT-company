@@ -10,9 +10,28 @@ const { trackCtaClick } = useYandexMetrika()
 
 const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
 
-// Ref для корневого элемента секции
-const rootEl = ref<HTMLElement | null>(null)
-const scrollContainerRef = ref<HTMLElement | null>(null)
+type MainVisualVariant = 'mesh' | 'photo'
+const MAIN_VISUAL_AB_KEY = 'ab_main_visual_v1'
+
+const getMainVisualVariant = (): MainVisualVariant => {
+  if (typeof window === 'undefined') return 'mesh'
+
+  // На мобильных всегда показываем фото (A/B только для больших экранов)
+  if (window.innerWidth < 768) return 'photo'
+
+  const url = new URL(window.location.href)
+  const forced = url.searchParams.get('ab_main_visual')
+  if (forced === 'photo' || forced === 'mesh') return forced
+
+  const stored = window.localStorage.getItem(MAIN_VISUAL_AB_KEY)
+  if (stored === 'photo' || stored === 'mesh') return stored
+
+  const assigned: MainVisualVariant = Math.random() < 0.5 ? 'mesh' : 'photo'
+  window.localStorage.setItem(MAIN_VISUAL_AB_KEY, assigned)
+  return assigned
+}
+
+const mainVisualVariant = ref<MainVisualVariant>('mesh')
 
 // Memoized stats data - используем ref для полной реактивности
 const stats = ref([
@@ -147,6 +166,8 @@ const animateCounters = () => {
 
 // Initialize animations when component mounts - оптимизировано для мобильных
 onMounted(() => {
+  mainVisualVariant.value = getMainVisualVariant()
+
   // Проверяем prefers-reduced-motion
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -182,8 +203,6 @@ onMounted(() => {
     }
   }
 
-  // Обработчики wheel удалены - используем чистый CSS scroll-snap
-  // .internal-scroll-container имеет overflow: hidden, поэтому скролл происходит только на уровне страницы
 })
 
 // Очистка при размонтировании компонента
@@ -206,8 +225,7 @@ onBeforeUnmount(() => {
 }
 
 /* Оптимизация для счетчиков */
-.main-section [class*='bg-error'] p[class*='text-2xl'],
-.main-section [class*='bg-error'] p[class*='text-3xl'] {
+.main-section [class*='bg-error'] p.tabular-nums {
   font-variant-numeric: tabular-nums; /* Предотвращает скачки при изменении чисел */
   /* Резервируем место для максимального числа (999+) */
   min-width: 4ch;
@@ -216,9 +234,9 @@ onBeforeUnmount(() => {
 
 /* Предотвращаем CLS при анимации счетчиков */
 .main-section-stat-card {
-  /* Резервируем место для контента */
-  min-height: 100px;
-  height: 100px;
+  /* ~80% от прежних 80px — как визуал при zoom 80% при 100% масштабе браузера */
+  min-height: 64px;
+  height: 64px;
   contain: layout style paint;
   /* Фиксируем размеры для предотвращения CLS */
   position: relative;
@@ -244,142 +262,227 @@ onBeforeUnmount(() => {
   visibility: visible;
   display: block;
 }
+
+/* CtaButton по умолчанию с mt-6/py-3 — в hero ужимаем под «как при 80% zoom» */
+.main-section-cta :deep(button) {
+  margin-top: 0;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1.35rem;
+  padding-right: 1.35rem;
+  font-size: 0.8125rem;
+  min-height: 2.25rem;
+
+}
+
+/* Правый блок: «glass card» — мягкое свечение, градиентная обводка, без clip-path */
+.main-visual-panel {
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, white 8%, transparent),
+    0 20px 50px -18px color-mix(in oklab, var(--color-success) 35%, transparent),
+    0 0 70px -24px color-mix(in oklab, var(--color-purple) 28%, transparent);
+}
+
+.main-visual-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  border-radius: inherit;
+  pointer-events: none;
+  padding: 1px;
+  background: linear-gradient(
+    130deg,
+    color-mix(in oklab, white 24%, transparent),
+    transparent 38%,
+    color-mix(in oklab, var(--color-success) 30%, transparent) 72%,
+    color-mix(in oklab, var(--color-accent) 18%, transparent)
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}
+
+.main-visual-panel__noise {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/*
+ * Квадрат в правой колонке: Tailwind `w-full` + flex/grid давали ширину 100% колонки
+ * и ломали aspect-ratio. Размер = min(ширина ячейки, высота строки) через container query.
+ */
+@media (min-width: 768px) {
+  .main-visual-host {
+    /* standard: https://developer.mozilla.org/en-US/docs/Web/CSS/container-type */
+    container-type: size;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .main-visual-panel.main-visual-panel--desktop-square {
+    flex: 0 0 auto;
+    align-self: center;
+    box-sizing: border-box;
+    width: 85%;
+    max-width: 100%;
+    aspect-ratio: 1;
+    height: auto;
+  }
+}
+
+@supports not (width: 1cqw) {
+  @media (min-width: 768px) {
+    .main-visual-panel.main-visual-panel--desktop-square {
+      align-self: center;
+      width: auto;
+      height: 100%;
+      max-width: 100%;
+      aspect-ratio: 1;
+    }
+  }
+}
+
 </style>
 
 <template>
-  <!-- Main Hero Section -->
   <section
-    ref="rootEl"
-    class="stack-section main-section no-scrollbar h-screen flex items-start justify-center bg-bg text-white relative gap-6 md:gap-10 w-full [contain:layout_style_paint]"
+    class="stack-section main-section no-scrollbar flex h-full min-h-0 flex-col bg-bg text-white [contain:layout_style_paint]"
   >
     <div
-      class="internal-scroll-container w-full h-full flex flex-col min-h-full"
-      ref="scrollContainerRef"
+      class="internal-scroll-container mx-auto flex w-full max-w-7xl flex-1 flex-col justify-start py-[1rem] px-[1rem] md:px-[5rem] md:pb-3"
     >
       <div
-        class="flex flex-col w-full md:w-7/8 gap-6 md:gap-8 max-w-7xl mx-auto"
+        class="flex w-full flex-1 min-h-0 flex-col gap-2.5 md:grid md:grid-cols-[minmax(0,1.03fr)_minmax(0,0.97fr)] md:gap-16"
       >
         <div
-          class="flex !w-full justify-center  mb-5"
+          class="relative flex flex-col gap-2.5 overflow-hidden bg-bg md:gap-5"
         >
           <SectionHeading
             :level="1"
-            size="md"
-            align="center"
+            size="lg"
+            align="left"
             color="accent"
             weight="bold"
             animation-class="hero-animate-title"
-            class="text-condense main-section-title !text-3xl md:!text-4xl w-full"
+            class="text-condense main-section-title w-full !text-[clamp(1.8rem,8vw,2.7rem)] md:!text-[clamp(2.475rem,4.275vw,4.125rem)] leading-[0.98] md:leading-[0.94] tracking-[-0.02em]"
           >
             Цифровые продукты, которые растят выручку вашего бизнеса
           </SectionHeading>
-        </div>
 
-        <div class="flex flex-col md:flex-row md:justify-start gap-6 md:gap-10">
           <div
-            class="flex flex-col gap-6 md:gap-10 w-full md:flex-shrink-0 md:flex-grow-0 items-start "
+            class="hero-animate-desc main-section-description w-full rounded-[3rem]   text-white "
+          >
+            <p
+              class="max-w-[62ch] text-[clamp(0.8rem,2.4vw,02rem)] leading-snug md:text-[clamp(0.8rem,0.95vw,0.95rem)] md:leading-[1.45] max-md:line-clamp-3"
+            >
+              Проектируем и запускаем сайты, сервисы и CRM-решения под задачи вашего бизнеса:
+              от аналитики и UX до разработки и маркетинга с измеримыми результатами.
+            </p>
+          </div>
+
+          <div
+            class="hero-animate-cta main-section-cta flex min-h-[40px] w-full items-center justify-start"
+          >
+            <CtaButton
+              to="/calculator"
+              bgClass="bg-accent"
+              textClass="text-bg"
+              @click="() => trackCtaClick('cta_home_calculator', { location: 'hero_main_section' })"
+            >
+              Рассчитать стоимость проекта
+            </CtaButton>
+          </div>
+
+          <div
+            class="grid w-full grid-cols-2 gap-1 [contain:layout_style_paint] max-md:shrink-0 md:grid-cols-3 md:gap-1.5 [&>*:last-child]:col-span-2 [&>*:last-child]:w-full [&>*:last-child]:max-w-[176px] [&>*:last-child]:justify-self-center md:[&>*:last-child]:col-span-1 md:[&>*:last-child]:max-w-none md:[&>*:last-child]:justify-self-auto"
           >
             <div
-              class="hero-animate-desc flex justify-center items-center p-6 md:p-10 bg-error text-white rounded-[3rem] md:w-[62.5%] w-full main-section-description text-center"
-              style=""
+              v-for="(stat, index) in stats"
+              :key="stat.title"
+              :class="[
+                'hero-animate-card',
+                'hero-card-' + (index + 1),
+                'main-section-stat-card flex flex-col items-center justify-center    text-center  ',
+              ]"
             >
-              <p class="text-center">
-                Проектируем и запускаем сайты, сервисы и CRM-решения под задачи вашего бизнеса:
-                от аналитики и UX до разработки и маркетинга с измеримыми результатами.
+
+              <p
+                class="m-0 min-h-[26px] w-full text-center text-[clamp(1.05rem,3.8vw,1.35rem)] font-black tabular-nums leading-[1.1] text-white md:text-[clamp(1.1rem,1.45vw,1.45rem)]"
+              >
+                <span class="inline-block min-w-[3ch] text-center">
+                  {{ stat.count.toString().padStart(3, '0') }}
+                </span>
+                +
               </p>
-            </div>
-            <!-- На мобильных: первые 2 карточки рядом, третья внизу по центру -->
-            <!-- На десктопе: все 3 карточки в ряд -->
-            <div
-              class="flex flex-row md:flex-row justify-center md:justify-end gap-2 md:gap-6 w-full  [contain:layout_style_paint]"
-            >
-              <!-- Первые 2 карточки - всегда в ряд -->
-              <div
-                v-for="(stat, index) in stats.slice(0, 2)"
-                :key="stat.title"
-                :class="[
-                  'hero-animate-card',
-                  'hero-card-' + (index + 1),
-                  'flex flex-col items-center justify-center p-3 md:p-4 bg-error rounded-[2rem] md:rounded-[3rem] w-[calc(50%-0.25rem)] md:w-full max-w-[200px] main-section-stat-card text-center shrink-0',
-                ]"
-              >
-                <p
-                  class="text-xs md:text-sm text-gray-300 text-center"
-                >
-                  {{ stat.title }}
-                </p>
-
-                <p
-                  class="text-2xl md:text-3xl font-black text-white  m-0 min-h-[40px] leading-[1.2] w-full text-center tabular-nums"
-                >
-                  <span class="inline-block min-w-[3ch] text-center">
-                    {{ stat.count.toString().padStart(3, '0') }}
-                  </span>
-                  +
-                </p>
-              </div>
-
-              <!-- Третья карточка - только на десктопе в ряд -->
-              <div
-                v-for="stat in stats.slice(2)"
-                :key="stat.title"
-                class="hero-animate-card hero-card-3 hidden md:flex flex-col items-center justify-center p-3 md:p-4 bg-error rounded-[2rem] md:rounded-[3rem] md:w-full max-w-[200px] main-section-stat-card text-center  shrink-0"
-              >
-                <p
-                  class="text-xs md:text-sm text-gray-300 text-center  m-0 min-h-[20px]"
-                >
-                  {{ stat.title }}
-                </p>
-
-                <p
-                  class="text-2xl md:text-3xl font-black text-white  m-0 min-h-[40px] leading-[1.2] w-full text-center tabular-nums"
-                >
-                  <span class="inline-block min-w-[3ch] text-center">
-                    {{ stat.count.toString().padStart(3, '0') }}
-                  </span>
-                  +
-                </p>
-              </div>
-            </div>
-
-            <!-- Третья карточка - только на мобильных внизу по центру -->
-            <div
-              class="flex md:hidden justify-center w-full  min-h-[120px] mt-2"
-            >
-              <div
-                v-for="stat in stats.slice(2)"
-                :key="stat.title"
-                class="hero-animate-card hero-card-3 flex flex-col items-center justify-center p-3 md:p-4 bg-error rounded-[2rem] md:rounded-[3rem] w-1/2 md:w-full max-w-[200px] main-section-stat-card text-center shrink-0"
-              >
-                <p
-                  class="text-xs md:text-sm text-gray-300 text-center  m-0 min-h-[20px]"
-                >
-                  {{ stat.title }}
-                </p>
-
-                <p
-                  class="text-2xl md:text-3xl font-black text-white  m-0 min-h-[40px] leading-[1.2] w-full text-center tabular-nums"
-                >
-                  <span class="inline-block min-w-[3ch] text-center">
-                    {{ stat.count.toString().padStart(3, '0') }}
-                  </span>
-                  +
-                </p>
-              </div>
+               <p class="m-0 min-h-[16px] text-center text-[9px] text-gray-300 max-md:line-clamp-2 md:text-[10px]">
+                {{ stat.title }}
+              </p>
             </div>
           </div>
         </div>
-        <div
-          class="hero-animate-cta flex justify-center items-center w-full main-section-cta flex-shrink-0  min-h-[60px] pb-6"
-        >
-          <CtaButton
-            to="/calculator"
-            bgClass="bg-accent"
-            textClass="text-bg"
-            @click="() => trackCtaClick('cta_home_calculator', { location: 'hero_main_section' })"
+
+        <div class="main-visual-host max-md:w-full max-md:flex-none md:pb-5">
+          <div
+            class="main-visual-panel main-visual-panel--desktop-square  relative isolate max-md:w-full overflow-hidden bg-gradient-modern rounded-[3rem] max-md:aspect-square"
+            :data-ab-variant="mainVisualVariant"
           >
-            Рассчитать стоимость проекта
-          </CtaButton>
+            <div v-if="mainVisualVariant === 'photo'" class="absolute inset-0 z-0 hidden md:block">
+              <img
+                class="!h-full w-full object-cover object-center"
+                src="/img/hero/office.png"
+                alt="Офис компании"
+                decoding="async"
+                loading="eager"
+              />
+            </div>
+            <div class="absolute inset-0 z-0 md:hidden">
+              <img
+                class="!h-full w-full object-cover object-center"
+                src="/img/hero/office.png"
+                alt="Офис компании"
+                decoding="async"
+                fetchpriority="high"
+              />
+            </div>
+            <div
+              v-if="mainVisualVariant !== 'photo'"
+              class="absolute inset-0 z-0 bg-[radial-gradient(120%_90%_at_18%_10%,rgba(255,102,0,0.35),transparent_48%)]"
+            />
+            <div
+              v-if="mainVisualVariant !== 'photo'"
+              class="absolute inset-0 z-0 bg-[radial-gradient(90%_70%_at_78%_20%,rgba(0,209,255,0.4),transparent_44%)]"
+            />
+            <div
+              v-if="mainVisualVariant !== 'photo'"
+              class="absolute inset-0 z-0 bg-[radial-gradient(70%_58%_at_52%_72%,rgba(91,79,255,0.55),transparent_60%)]"
+            />
+            <div
+              v-if="mainVisualVariant !== 'photo'"
+              class="absolute -right-6 top-6 z-[1] h-20 w-20 rounded-full bg-cyan-400/45 opacity-75 blur-[28px] md:-right-8 md:top-8 md:h-[4.5rem] md:w-[4.5rem]"
+            />
+            <div
+              v-if="mainVisualVariant !== 'photo'"
+              class="absolute bottom-8 left-6 z-[1] h-[4.5rem] w-[4.5rem] rounded-full bg-purple-500/40 opacity-75 blur-[28px] md:bottom-10 md:left-8 md:h-28 md:w-28"
+            />
+            <div
+              class="absolute inset-0 z-[2] bg-gradient-to-t from-black/40 via-transparent to-transparent md:from-black/40 max-md:from-black/55"
+            />
+            <div
+              class="main-visual-panel__noise pointer-events-none absolute inset-0 z-[3] rounded-[inherit] opacity-[0.045] mix-blend-soft-light"
+            />
+            <div
+              class="pointer-events-none absolute inset-x-[10%] top-0 z-[5] h-px rounded-full bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-80"
+            />
+          </div>
         </div>
       </div>
     </div>

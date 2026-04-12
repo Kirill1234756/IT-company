@@ -3,6 +3,14 @@ import type { ClientFormData, ClientFormErrors, ClientFormSubmissionResponse } f
 import { ClientFormAPI } from '../api/client-form'
 import { useYandexMetrika } from './useYandexMetrika'
 
+function debounce<T extends (...args: unknown[]) => void>(fn: T, delay: number) {
+  let id: ReturnType<typeof setTimeout>
+  return (...args: Parameters<T>) => {
+    clearTimeout(id)
+    id = setTimeout(() => fn(...args), delay)
+  }
+}
+
 export function useClientForm() {
   const isSubmitting = ref(false)
   const errors = ref<ClientFormErrors>({})
@@ -35,6 +43,34 @@ export function useClientForm() {
     else if (digits.startsWith('7') && digits.length === 11) norm = digits
     return norm.length === 11 ? `+${norm}` : value
   }
+
+  /** Формат телефона/email, если поля не пустые (без мутации телефона — только подсветка). */
+  const applyContactFormatErrors = () => {
+    const next: ClientFormErrors = { ...errors.value }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (formData.email && !emailRegex.test(formData.email)) {
+      next.email = 'Некорректный email'
+    } else {
+      delete next.email
+    }
+    if (formData.phone) {
+      const normalized = normalizePhone(formData.phone)
+      const phoneDigits = normalized.replace(/\D/g, '')
+      const phoneRegex = /^\d{11,15}$/
+      if (!phoneRegex.test(phoneDigits)) {
+        next.phone = 'Некорректный номер телефона'
+      } else {
+        delete next.phone
+      }
+    } else {
+      delete next.phone
+    }
+    errors.value = next
+  }
+
+  const scheduleContactFieldValidation = debounce(() => {
+    applyContactFormatErrors()
+  }, 300)
 
   // Form validation
   const validateForm = (): boolean => {
@@ -116,6 +152,7 @@ export function useClientForm() {
     isSubmitting,
     validateForm,
     submitForm,
-    resetForm
+    resetForm,
+    scheduleContactFieldValidation,
   }
 }

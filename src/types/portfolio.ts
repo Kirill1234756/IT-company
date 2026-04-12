@@ -12,6 +12,8 @@ export interface PortfolioModal {
     title: string
     description: string
   }>
+  technologies?: string[]
+  description?: string
 }
 
 export interface PortfolioProject {

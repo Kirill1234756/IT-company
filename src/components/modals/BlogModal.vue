@@ -1,6 +1,14 @@
 <script setup lang="ts">
-import { defineProps, defineEmits, defineAsyncComponent, onMounted, onUnmounted } from 'vue'
+import {
+  defineProps,
+  defineEmits,
+  defineAsyncComponent,
+  onMounted,
+  onUnmounted,
+  computed,
+} from 'vue'
 import type { BlogPost } from '../../types/blog'
+import { useBlogStore } from '../../stores/blog'
 import { useYandexMetrika } from '../../composables/useYandexMetrika'
 import OptimizedImage from '../OptimizedImage.vue'
 
@@ -20,6 +28,18 @@ const emit = defineEmits<{
   (e: 'close'): void
   (e: 'relatedClick', post: BlogPost): void
 }>()
+
+const blogStore = useBlogStore()
+
+const modalBreadcrumbItems = computed(() => {
+  const tab = blogStore.tabs.find((t) => t.id === props.post.category)
+  const categoryLabel = tab?.name ?? 'Блог'
+  return [
+    { label: 'Главная', to: '/' },
+    { label: categoryLabel, to: `/blog/${props.post.category}` },
+    { label: props.post.fullTitle || props.post.title },
+  ]
+})
 
 const handleRelatedClick = (post: BlogPost) => {
   emit('relatedClick', post)
@@ -85,7 +105,7 @@ onUnmounted(() => {
           <div class="max-w-7xl mx-auto md:px-[3rem] px-[1rem] py-4">
             <button
               @click="$emit('close')"
-              class="flex items-center gap-2 text-text-muted hover:text-text transition-colors"
+              class="flex items-center gap-2 text-accent hover:text-text transition-colors"
               aria-label="Закрыть модальное окно блога"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -102,26 +122,16 @@ onUnmounted(() => {
         </div>
 
         <div class="max-w-7xl mx-auto px-[1rem] md:px-[3rem]">
-          <Breadcrumbs
-            :items="[
-              { label: 'Главная', to: '/' },
-              {
-                label: $props.post.category === 'development' ? 'Разработка' : 'Акция',
-                to: `/blog/${$props.post.category}`,
-              },
-              { label: $props.post.fullTitle || $props.post.title },
-            ]"
-            class="mb-4"
-          />
+          <Breadcrumbs :items="modalBreadcrumbItems" class="mb-8" />
 
-          <!-- Main Title -->
           <SectionHeading
             :level="1"
             size="lg"
             color="accent"
-            align="left"
+            align="center"
             weight="black"
-            class="mb-8 font-display text-condense"
+            animation-class="animate-cases-title"
+            class="mb-4 md:mb-6 lg:mb-8"
           >
             {{ $props.post.fullTitle || $props.post.title }}
           </SectionHeading>
@@ -129,19 +139,22 @@ onUnmounted(() => {
           <!-- Hero Section -->
 
           <div class="flex flex-col lg:flex-row gap-8 mb-5">
-            <!-- Main Image -->
-            <div class="lg:w-2/3" style="aspect-ratio: 16/9">
+            <!-- Main Image: без фиксированного 16:9 — инфографика и вертикальные макеты не обрезаются -->
+            <div
+              class="lg:w-2/3 w-full rounded-2xl overflow-hidden border border-[var(--color-border)] bg-[#050a1b] flex items-start justify-center"
+            >
               <OptimizedImage
+                layout="intrinsic"
                 :src="$props.post.image"
                 :alt="$props.post.title"
-                :width="800"
-                :height="450"
+                :width="1200"
+                :height="800"
                 :widths="[800, 1200, 1600]"
                 format="webp"
                 loading="lazy"
                 decoding="async"
                 fetchpriority="low"
-                class="w-full h-full object-cover rounded-2xl border border-[var(--color-border)]"
+                class="w-full max-w-full h-auto max-h-[min(88vh,960px)] object-contain object-top"
                 :sizes="{ mobile: '100vw', tablet: '66vw', desktop: '66vw' }"
               />
             </div>
