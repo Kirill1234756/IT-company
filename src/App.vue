@@ -71,20 +71,12 @@ useIntersectionObserver(
   <main id="app">
     <header
       ref="headerRef"
-      class="fixed top-[0.7rem] left-0 w-full flex justify-center items-center z-10 px-3 md:px-12 lg:px-[8rem]"
+      class="fixed bg-border/80 backdrop-blur top-0 left-0 z-10 flex w-full min-w-0 px-3 md:px-12 "
       style="pointer-events: none"
     >
-      <!-- Reserve space to avoid CLS when header fonts load -->
+      <!-- На всю ширину контентной области: max-width убран — иначе фон <nav> обрывался справа на широких экранах -->
       <div
-        style="
-          height: 48px;
-          width: 100%;
-          max-width: 1280px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          pointer-events: auto;
-        "
+        class="flex w-full min-w-0 flex-1 items-center justify-center pointer-events-auto"
       >
         <Header />
       </div>
@@ -128,17 +120,18 @@ useIntersectionObserver(
 
 <style>
 /* Global styles */
+/* Дублируем палитру из src/style.css (@theme), чтобы не перебивать актуальные токены */
 :root {
-  --color-bg: #0f0f23;
-  --color-border: #1e293b;
-  --color-accent: #00e5a0;
-  --color-purple: #6366f1;
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
-  --color-info: #3b82f6;
-  --color-text: #f8fafc;
-  --color-text-muted: #cbd5e1; /* Improved contrast from #94a3b8 */
+  --color-bg: #03122f;
+  --color-border: #19305c;
+  --color-accent: #ff8863;
+  --color-purple: #ae70ac;
+  --color-success: #54acbf;
+  --color-warning: #ff8863;
+  --color-error: #413b61;
+  --color-info: #e8f5f7;
+  --color-text: #e8f5f7;
+  --color-text-muted: #b8a5c7;
 }
 
 * {

@@ -90,12 +90,12 @@ onMounted(() => {
         align="center"
         weight="black"
         animation-class="animate-section-title"
-        class="mb-8"
+        class="mb-6"
       >
         Что мы делаем
       </SectionHeading>
 
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8 max-w-6xl w-full mx-auto mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-5 max-w-7xl w-full mx-auto mb-2">
         <template v-if="visible">
           <WhatWeDoCard
             v-for="(card, index) in whatWeDoCards"
@@ -132,7 +132,7 @@ onMounted(() => {
 
       <div class="flex justify-center">
         <div class="animate-section-cta delay-1250">
-          <CtaButton to="/services" @click="trackCtaClick('cta_whatwedo_services', { location: 'what_we_do_section' })">Узнать больше</CtaButton>
+          <CtaButton to="/services" @click="trackCtaClick('cta_whatwedo_services', { location: 'what_we_do_section' })">Смотреть все услуги</CtaButton>
         </div>
       </div>
     </div>

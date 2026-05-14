@@ -1,119 +1,48 @@
 <script setup lang="ts">
-import { defineAsyncComponent, computed, ref, onMounted, onUnmounted, shallowRef } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { throttle } from '../utils/performance'
 
 defineOptions({ name: 'AppFooter' })
 
-// Lazy load NavColumn component
-const NavColumn = defineAsyncComponent(() => import('../components/footer/NavColumn.vue'))
-
-// Navigation menu data - memoized with shallowRef for performance
-interface NavItem {
+type FooterLink = {
   to: string
   label: string
-  breakWords?: boolean
 }
 
-interface NavColumn {
-  title: string
-  items: NavItem[]
-  id: string
-}
-
-const navColumnsData: NavColumn[] = [
-  {
-    id: 'sections',
-    title: 'Разделы',
-    items: [
-      { to: '/', label: 'Главная' },
-      { to: '/services', label: 'Услуги' },
-      { to: '/packages', label: 'Пакеты' },
-      { to: '/cases', label: 'Кейсы' },
-      { to: '/blog', label: 'Блог' },
-    ],
-  },
-  {
-    id: 'popular-services',
-    title: 'Популярные услуги',
-    items: [
-      {
-        to: '/services/development-launch/site-development',
-        label: 'Корпоративный сайт',
-        breakWords: true,
-      },
-      {
-        to: '/services/development-launch/site-development',
-        label: 'Интернет-магазин',
-        breakWords: true,
-      },
-      { to: '/services/development-launch/site-development', label: 'Лендинг' },
-    ],
-  },
-  {
-    id: 'additional',
-    title: 'Дополнительно',
-    items: [
-      { to: '/calculator', label: 'Калькулятор' },
-      { to: '/contacts', label: 'Контакты' },
-      { to: '/client-form', label: 'Стать клиентом', breakWords: true },
-    ],
-  },
+const siteLinks: FooterLink[] = [
+  { to: '/', label: 'Главная' },
+  { to: '/services', label: 'Услуги' },
+  { to: '/packages', label: 'Пакеты' },
+  { to: '/cases', label: 'Кейсы' },
+  { to: '/blog', label: 'Блог' },
+  { to: '/calculator', label: 'Калькулятор' },
 ]
 
-// Memoized navigation columns
-const navColumns = shallowRef(navColumnsData)
+const serviceLinks: FooterLink[] = [
+  { to: '/services/development-launch/site-development', label: 'Корпоративные сайты' },
+  { to: '/services/development-launch/site-development', label: 'Интернет-магазины' },
+  { to: '/services/development-launch/site-development', label: 'Лендинги' },
+  { to: '/services/development-launch/site-development', label: 'Техподдержка' },
+]
 
-// Computed properties for better performance
-const firstTwoColumns = computed(() => navColumns.value.slice(0, 2))
-const additionalColumn = computed(() => {
-  const column = navColumns.value[2]
-  if (!column) {
-    throw new Error('Additional column not found in navigation data')
-  }
-  return column
-})
+const currentYear = computed(() => new Date().getFullYear())
 
-// Scroll to top functionality with custom smooth animation
 const scrollToTop = () => {
-  const startPosition = window.pageYOffset
-  const startTime = performance.now()
-  const duration = 1000 // 1 second for ultra smooth scroll
-
-  const easeInOutCubic = (t: number): number => {
-    return t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1
-  }
-
-  const animateScroll = (currentTime: number) => {
-    const timeElapsed = currentTime - startTime
-    const progress = Math.min(timeElapsed / duration, 1)
-    const ease = easeInOutCubic(progress)
-
-    window.scrollTo(0, startPosition * (1 - ease))
-
-    if (progress < 1) {
-      requestAnimationFrame(animateScroll)
-    }
-  }
-
-  requestAnimationFrame(animateScroll)
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  })
 }
 
-// Show/hide scroll to top button based on scroll position
 const showScrollButton = ref(false)
 
-// Throttled scroll handler to prevent spam
 const handleScroll = throttle(() => {
-  const scrollY = window.scrollY
-  const shouldShow = scrollY > 300
-
-  // Only update if state actually changed
-  if (showScrollButton.value !== shouldShow) {
-    showScrollButton.value = shouldShow
-  }
-}, 100) // Throttle to max 10 times per second
+  showScrollButton.value = window.scrollY > 300
+}, 100)
 
 onMounted(() => {
   window.addEventListener('scroll', handleScroll, { passive: true })
+  handleScroll()
 })
 
 onUnmounted(() => {
@@ -123,156 +52,166 @@ onUnmounted(() => {
 
 <template>
   <footer
-    class="stack-section bg-gradient-to-br from-[var(--color-bg)] to-[var(--color-border)] border-t border-[var(--color-accent)]/20"
+    class="stack-section border-t border-[var(--color-accent)]/25 bg-gradient-to-br from-[var(--color-bg)] via-[#0f2448] to-[var(--color-border)]"
     style="min-height: auto; height: auto;"
   >
-    <div class="max-w-7xl mx-auto px-4 py-8">
-      <!-- Navigation Menu -->
-      <!-- Mobile: 2 columns in a row, Desktop: flex justify-between with 3 columns -->
-      <div
-        class="grid grid-cols-2 gap-2 sm:gap-4 mb-6 md:mb-8 md:grid-cols-none md:flex md:justify-between md:gap-8"
-      >
-        <!-- First two columns: Разделы and Популярные услуги -->
-        <NavColumn v-for="column in firstTwoColumns" :key="column.id" :column="column" />
-
-        <!-- Column 3: Дополнительно - Hidden on mobile, shown on desktop -->
-        <div class="hidden md:flex">
-          <NavColumn :column="additionalColumn" />
-        </div>
-      </div>
-
-      <!-- Column 3: Дополнительно - Shown on mobile only, centered at bottom -->
-      <div class="w-full flex md:hidden flex-col items-center justify-center mb-6">
-        <NavColumn :column="additionalColumn" variant="mobile-centered" />
-      </div>
-
-      <!-- Logo, Privacy and Contacts - All centered on mobile -->
-      <div class="w-full border-t border-white/10 pt-6 md:pt-8 text-center md:text-left">
-        <!-- Logo and Privacy - Centered on mobile -->
-        <div
-          class="w-full flex flex-col items-center justify-center md:flex-row md:items-center md:justify-center mb-4 md:mb-6"
+    <div class="mx-auto max-w-7xl px-4 py-10 md:px-6 md:py-12">
+      <div class="mb-8 grid gap-4 md:grid-cols-[1.25fr_1fr_1fr]">
+        <section
+          class="rounded-3xl border border-white/15 bg-white/[0.04] p-5 backdrop-blur-sm md:p-6"
+          aria-label="О компании"
         >
-          <div class="flex flex-col items-center md:items-start space-y-2">
-            <div class="flex items-center justify-center space-x-2">
-              <div class="w-10 h-10 bg-bg rounded-[3rem] flex items-center justify-center">
-                <img class="w-[60%]" src="/logo3.webp" alt="KODIFY Logo" width="24" height="24" />
-              </div>
-              <span class="text-accent font-bold text-lg md:text-xl">KODIFY</span>
+          <div class="mb-4 flex items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-[2rem] bg-bg">
+              <img
+                class="w-[60%]"
+                src="/logo3.webp"
+                alt="KODIFY Logo"
+                width="24"
+                height="24"
+                loading="lazy"
+                decoding="async"
+              />
             </div>
-            <a
-              href="/privacy"
-              class="text-text hover:text-[var(--color-accent)]/80 text-xs md:text-sm transition-colors"
-            >
-              Privacy and Cookies Policy
-            </a>
+            <span class="text-xl font-black tracking-wide text-accent">KODIFY</span>
           </div>
-        </div>
+          <p class="max-w-md text-sm leading-6 text-white/80">
+            Разрабатываем сайты и digital-решения, которые превращают трафик в заявки и продажи.
+            Берем проект от стратегии до запуска и поддержки.
+          </p>
+          <div class="mt-5 flex flex-wrap gap-2">
+            <router-link
+              to="/contacts#project-discussion"
+              class="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-bg transition-colors hover:bg-accent/90"
+            >
+              Обсудить проект
+            </router-link>
+            <router-link
+              to="/cases"
+              class="rounded-full border border-accent/40 px-4 py-2 text-sm font-semibold text-accent transition-colors hover:bg-accent/10"
+            >
+              Смотреть кейсы
+            </router-link>
+          </div>
+        </section>
 
-        <!-- Contact methods - Centered on mobile, row on desktop -->
-        <div
-          class="w-full flex flex-col p-2 md:flex-row items-center justify-center md:gap-20 text-white/80 gap-3"
+        <section
+          class="rounded-3xl border border-white/10 bg-black/10 p-5 md:p-6"
+          aria-label="Разделы сайта"
         >
+          <h3 class="mb-4 text-sm font-bold uppercase tracking-[0.12em] text-white/70">Разделы</h3>
+          <nav class="grid gap-2">
+            <router-link
+              v-for="link in siteLinks"
+              :key="link.to"
+              :to="link.to"
+              class="w-fit rounded-lg px-1 py-1 text-sm text-white/85 transition-colors hover:text-accent"
+            >
+              {{ link.label }}
+            </router-link>
+          </nav>
+        </section>
+
+        <section
+          class="rounded-3xl border border-white/10 bg-black/10 p-5 md:p-6"
+          aria-label="Популярные услуги"
+        >
+          <h3 class="mb-4 text-sm font-bold uppercase tracking-[0.12em] text-white/70">Услуги</h3>
+          <nav class="grid gap-2">
+            <router-link
+              v-for="link in serviceLinks"
+              :key="link.label"
+              :to="link.to"
+              class="w-fit rounded-lg px-1 py-1 text-sm text-white/85 transition-colors hover:text-accent"
+            >
+              {{ link.label }}
+            </router-link>
+          </nav>
+          <router-link
+            to="/services"
+            class="mt-4 inline-flex w-fit items-center rounded-full border border-white/20 px-3 py-1.5 text-xs text-white/80 transition-colors hover:border-accent/50 hover:text-accent"
+          >
+            Все услуги
+          </router-link>
+        </section>
+      </div>
+
+      <div
+        class="rounded-3xl border border-white/10 bg-black/15 px-4 py-4 md:px-6"
+        aria-label="Контакты"
+      >
+        <div class="grid gap-4 text-sm sm:grid-cols-2 md:grid-cols-[1fr_1fr_1fr_auto] md:items-center">
           <a
             href="tel:+79042964072"
-            class="flex items-center space-x-3 hover:opacity-90 transition-opacity"
+            class="flex items-center gap-3 text-white/85 transition-opacity hover:opacity-90"
             aria-label="Позвонить по телефону"
           >
-            <span class="text-[var(--color-accent)] text-xl">📱</span>
-            <span class="text-sm sm:text-base">+7 904 296 40 72</span>
+            <span class="text-[var(--color-accent)]">📱</span>
+            <span>+7 904 296 40 72</span>
           </a>
-
           <a
             href="mailto:kodify@gmail.com"
-            class="flex items-center space-x-3 hover:opacity-90 transition-opacity"
+            class="flex items-center gap-3 text-white/85 transition-opacity hover:opacity-90"
             aria-label="Написать на email"
           >
-            <span class="text-[var(--color-accent)] text-xl">📧</span>
-            <span class="text-sm sm:text-base">kodify@gmail.com</span>
+            <span class="text-[var(--color-accent)]">📧</span>
+            <span>kodify@gmail.com</span>
           </a>
-
           <a
             href="https://t.me/kodify_tg"
             target="_blank"
             rel="noopener noreferrer"
-            class="flex items-center space-x-3 hover:opacity-90 transition-opacity"
+            class="flex items-center gap-3 text-white/85 transition-opacity hover:opacity-90"
             aria-label="Написать в Telegram"
           >
-            <span class="text-[var(--color-accent)] text-xl">💬</span>
-            <span class="text-sm sm:text-base">@kodify_tg</span>
+            <span class="text-[var(--color-accent)]">💬</span>
+            <span>@kodify_tg</span>
           </a>
+          <router-link
+            to="/privacy"
+            class="justify-self-start text-xs text-white/60 transition-colors hover:text-accent md:justify-self-end"
+          >
+            Privacy & Cookies
+          </router-link>
         </div>
       </div>
+      <p class="mt-6 px-1 text-xs text-white/50">
+        © {{ currentYear }} KODIFY. Все права защищены.
+      </p>
     </div>
 
-    <!-- Debug: Always visible button for testing -->
-    <button
-      @click="scrollToTop"
-      class="fixed bottom-20 right-6 md:bottom-24 md:right-8 w-12 h-12 text-white rounded-full flex items-center justify-center shadow-lg z-[1000] transition-all duration-300 hover:scale-110 bg-[var(--color-accent)] hover:bg-[var(--color-purple)]"
-      aria-label="Debug scroll to top"
-    >
-      <span class="text-xs font-bold">UP</span>
-    </button>
+    <Transition name="scroll-top-fade">
+      <button
+        v-if="showScrollButton"
+        @click="scrollToTop"
+        class="fixed bottom-20 right-6 md:bottom-24 md:right-8 w-12 h-12 text-white rounded-full flex items-center justify-center shadow-lg z-[1000] transition-all duration-300 hover:scale-110 bg-[var(--color-accent)] hover:bg-[var(--color-purple)]"
+        aria-label="Прокрутить наверх"
+      >
+        <span class="text-xs font-bold">UP</span>
+      </button>
+    </Transition>
   </footer>
 </template>
 
 <style scoped>
-/* Enhanced smooth scroll behavior */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Custom smooth scroll for better performance */
-* {
-  scroll-behavior: smooth;
-}
-
-/* Custom scrollbar for webkit browsers */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--color-bg);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--color-accent);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-accent) / 80;
-}
-
-/* Button hover effects */
-.group:hover svg {
-  transform: translateY(-2px);
-}
-
-/* Focus styles for accessibility */
 button:focus {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
-/* Animation for scroll button */
-@keyframes bounce {
-  0%,
-  20%,
-  50%,
-  80%,
-  100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-4px);
-  }
-  60% {
-    transform: translateY(-2px);
-  }
+button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
-.group:hover {
-  animation: bounce 1s ease-in-out;
+.scroll-top-fade-enter-active,
+.scroll-top-fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.scroll-top-fade-enter-from,
+.scroll-top-fade-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
 }
 </style>

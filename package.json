@@ -8,7 +8,7 @@
     "node": "^20.19.0 || >=22.12.0"
   },
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host 0.0.0.0",
     "dev:https": "vite --https",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
@@ -29,6 +29,9 @@
     "optimize:images": "node scripts/optimize-images.js"
   },
   "dependencies": {
+    "@fontsource-variable/manrope": "^5.2.8",
+    "@fontsource/ibm-plex-mono": "^5.2.7",
+    "@fontsource/ibm-plex-sans-condensed": "^5.2.8",
     "@tailwindcss/vite": "^4.1.14",
     "@unhead/vue": "^1.9.16",
     "@vueuse/core": "^13.9.0",
@@ -40,8 +43,7 @@
     "tailwind-merge": "^2.6.0",
     "tailwindcss": "^4.1.14",
     "vue": "^3.5.22",
-    "vue-router": "^4.5.1",
-    "vue3-lazyload": "^0.3.8"
+    "vue-router": "^4.5.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.1",

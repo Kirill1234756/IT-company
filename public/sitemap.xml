@@ -16,13 +16,6 @@
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
   </url>
-  <url>
-    <loc>https://kodifyweb.ru/client-form</loc>
-    <lastmod>2024-11-13</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>1.0</priority>
-  </url>
-  
   <!-- Услуги (актуальные slug категорий и карточки) -->
   <url>
     <loc>https://kodifyweb.ru/services/development-launch/site-development</loc>
@@ -132,8 +125,8 @@
   </url>
   <url>
     <loc>https://kodifyweb.ru/contacts</loc>
-    <lastmod>2024-11-13</lastmod>
+    <lastmod>2026-05-09</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.9</priority>
   </url>
 </urlset>

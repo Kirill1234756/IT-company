@@ -92,11 +92,13 @@ onUnmounted(() => {
 
 <template>
   <section
-    class="bg-text stack-section no-scrollbar h-screen flex flex-col items-center justify-start rounded-t-3xl px-[1rem] md:px-[3rem]"
-    style="min-height: 700px; box-sizing: border-box; contain: layout style paint"
+    class="welcome-packages-section bg-text stack-section no-scrollbar flex flex-col items-start justify-start rounded-t-3xl px-[1rem] pt-3 md:px-[3rem] md:min-h-[700px]"
+    style="box-sizing: border-box; contain: layout style paint"
   >
-    <div class="internal-scroll-container w-full h-full flex flex-col items-center justify-start">
-      <div class="w-full max-w-7xl mx-auto flex flex-col">
+    <div
+      class="internal-scroll-container welcome-packages-inner w-full min-h-0 flex flex-1 flex-col items-start justify-start"
+    >
+      <div class="w-full max-w-7xl mx-auto flex shrink-0 flex-col max-md:w-full md:pb-2">
         <SectionHeading
           :level="2"
           size="md"
@@ -104,14 +106,63 @@ onUnmounted(() => {
           align="center"
           weight="black"
           animation-class="animate-section-title"
-          class="!text-3xl md:!text-4xl mb-5"
+          class="!text-3xl md:!text-4xl mb-6 mt-3"
         >
           Welcome‑пакет для старта проекта
         </SectionHeading>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 w-full">
-          <!-- Left: navigation cards -->
-          <div class="w-full">
+          <!-- На мобильном блок «ДО встречи» первым; на lg порядок прежний: навигация слева, карточка справа -->
+          <!-- Карточка «Что подготовить ДО встречи» -->
+          <div
+            class="animate-section-card delay-2 order-1 w-full rounded-[3rem] bg-bg p-5 lg:order-2"
+          >
+            <div
+              class="text-center text-accent font-display font-semibold tracking-wide mb-4 md:mb-6 text-lg md:text-xl"
+            >
+              Что нужно подготовить клиенту ДО встречи
+            </div>
+            <div class="grid grid-cols-4 gap-2 md:gap-4">
+              <button
+                type="button"
+                class="col-span-2 rounded-[3rem] !border !border-accent !bg-transparent !text-white min-h-[60px] md:min-h-[100px] flex justify-center items-center hover:!bg-accent hover:!text-white cursor-pointer transition-all duration-200 hover:scale-[1.02]"
+                @click="openPrepModal('business')"
+              >
+                О бизнесе
+              </button>
+              <button
+                type="button"
+                class="col-span-2 rounded-[3rem] !border !border-accent !bg-transparent !text-white min-h-[60px] md:min-h-[100px] flex justify-center items-center hover:!bg-accent hover:!text-white cursor-pointer transition-all duration-200 hover:scale-[1.02]"
+                @click="openPrepModal('competitors')"
+              >
+                О конкурентах
+              </button>
+              <button
+                type="button"
+                class="col-span-4 rounded-[3rem] !border !border-accent !bg-transparent !text-white min-h-[60px] md:min-h-[100px] flex justify-center items-center hover:!bg-accent hover:!text-white cursor-pointer transition-all duration-200 hover:scale-[1.02]"
+                @click="openPrepModal('audience')"
+              >
+                О целевой аудитории
+              </button>
+              <button
+                type="button"
+                class="col-span-1 rounded-[3rem] !border !border-accent !bg-transparent !text-white min-h-[60px] md:min-h-[100px] flex justify-center items-center hover:!bg-accent hover:!text-white cursor-pointer transition-all duration-200 hover:scale-[1.02]"
+                @click="openPrepModal('goals')"
+              >
+                Цели
+              </button>
+              <button
+                type="button"
+                class="col-span-3 rounded-[3rem] !bg-accent !text-bg min-h-[60px] md:min-h-[100px] flex justify-center items-center hover:!bg-accent hover:!text-white cursor-pointer transition-all duration-200 hover:scale-[1.02]"
+                @click="router.push('/contacts#project-discussion')"
+              >
+                Обсудить проект
+              </button>
+            </div>
+          </div>
+
+          <!-- Сетка: Пакеты, Кейсы, CTA и т.д. -->
+          <div class="order-2 w-full lg:order-1">
             <div class="grid grid-cols-3 gap-[0.45rem] md:gap-4">
               <div
                 class="animate-section-card delay-0 rounded-[3rem] bg-bg min-h-[100px] md:min-h-[160px] flex justify-center items-center hover:text-accent hover:border-accent hover:border-2 cursor-pointer transition-all duration-200 hover:scale-[1.02]"
@@ -159,49 +210,6 @@ onUnmounted(() => {
                   Рассчитать стоимость проекта
                 </CtaButton>
               </div>
-            </div>
-          </div>
-
-          <!-- Right: что подготовить ДО встречи (ключевой блок) -->
-          <div class="animate-section-card delay-2 w-full rounded-[3rem] bg-bg p-5">
-            <div
-              class="text-center text-accent font-display font-semibold tracking-wide mb-4 md:mb-6 text-lg md:text-xl"
-            >
-              Что нужно подготовить клиенту ДО встречи
-            </div>
-            <div class="grid grid-cols-4 gap-2 md:gap-4">
-              <button
-                type="button"
-                class="col-span-2 rounded-[3rem] !border !border-accent !bg-transparent !text-white min-h-[60px] md:min-h-[100px] flex justify-center items-center hover:!bg-accent hover:!text-white cursor-pointer transition-all duration-200 hover:scale-[1.02]"
-                @click="openPrepModal('business')"
-              >
-                О бизнесе
-              </button>
-              <button
-                type="button"
-                class="col-span-2 rounded-[3rem] !border !border-accent !bg-transparent !text-white min-h-[60px] md:min-h-[100px] flex justify-center items-center hover:!bg-accent hover:!text-white cursor-pointer transition-all duration-200 hover:scale-[1.02]"
-                @click="openPrepModal('competitors')"
-              >
-                О конкурентах
-              </button>
-              <button
-                type="button"
-                class="col-span-4 rounded-[3rem] !border !border-accent !bg-transparent !text-white min-h-[60px] md:min-h-[100px] flex justify-center items-center hover:!bg-accent hover:!text-white cursor-pointer transition-all duration-200 hover:scale-[1.02]"
-                @click="openPrepModal('audience')"
-              >
-                О целевой аудитории
-              </button>
-              <button
-                type="button"
-                class="rounded-[3rem] !border !border-accent !bg-transparent !text-white min-h-[60px] md:min-h-[100px] flex justify-center items-center hover:!bg-accent hover:!text-white cursor-pointer transition-all duration-200 hover:scale-[1.02]"
-                @click="openPrepModal('goals')"
-              >
-                Цели
-              </button>
-              <div
-                class="col-span-3 rounded-[3rem] border border-accent min-h-[60px] md:min-h-[100px]"
-                aria-hidden="true"
-              />
             </div>
           </div>
         </div>
@@ -267,8 +275,6 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-
-
 /* Модалка: появление/исчезновение */
 .prep-modal-enter-active .prep-modal-backdrop,
 .prep-modal-leave-active .prep-modal-backdrop {
@@ -303,6 +309,16 @@ onUnmounted(() => {
   .prep-modal-leave-to .prep-modal-panel {
     opacity: 1;
     transform: scale(1);
+  }
+}
+</style>
+
+<style>
+/* Ослабляем глобальный overflow:hidden только для Welcome на узких экранах */
+@media (max-width: 767px) {
+  section.welcome-packages-section.stack-section
+    > .welcome-packages-inner.internal-scroll-container {
+    -webkit-overflow-scrolling: touch;
   }
 }
 </style>

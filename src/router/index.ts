@@ -16,7 +16,6 @@ export function setRouterMetaUpdateCallback(cb: (payload: MetaUpdatePayload) => 
 const HomePage = () => import('@/pages/HomePage.vue')
 const ServicesPage = () => import('@/pages/ServicesPage.vue')
 const CasesPage = () => import('@/pages/CasesPage.vue')
-const ClientFormPage = () => import('@/pages/ClientFormPage.vue')
 const ContactPage = () => import('@/pages/ContactPage.vue')
 const BlogPage = () => import('@/pages/BlogPage.vue')
 const CalculatorPage = () => import('@/pages/CalculatorPage.vue')
@@ -160,14 +159,18 @@ const router = createRouter({
     {
       path: '/client-form',
       name: 'client-form',
-      component: ClientFormPage,
-      meta: { title: 'Стать клиентом', description: 'Расскажите о задаче — рассчитаем стоимость и сроки разработки.', canonicalPath: '/client-form' }
+      redirect: '/contacts#project-discussion',
     },
     {
       path: '/contacts',
       name: 'contacts',
       component: ContactPage,
-      meta: { title: 'Контакты', description: 'Свяжитесь с нами: телефон, почта, Telegram. Работаем по всей России.', canonicalPath: '/contacts' }
+      meta: {
+        title: 'Контакты и бриф проекта',
+        description:
+          'Телефон, почта, Telegram и короткий пошаговый бриф: расскажите о задаче — мы предложим формат запуска. Работаем по всей России.',
+        canonicalPath: '/contacts',
+      },
     },
     {
       path: '/blog',

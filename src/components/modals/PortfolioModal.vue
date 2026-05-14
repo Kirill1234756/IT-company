@@ -55,7 +55,8 @@ const goOrder = () => {
     case_slug: slug,
   })
   router.push({
-    path: '/client-form',
+    path: '/contacts',
+    hash: '#project-discussion',
     query: {
       ...(slug ? { case: slug } : {}),
       ...(title ? { caseTitle: title } : {}),

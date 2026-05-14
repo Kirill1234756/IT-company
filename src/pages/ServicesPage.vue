@@ -682,7 +682,7 @@ watchEffect(() => {
             Рассчитать стоимость
           </a>
           <a
-            href="/client-form"
+            href="/contacts#project-discussion"
             class="px-8 py-4 rounded-full font-semibold border-2 border-accent text-accent hover:bg-accent/10 transition-colors"
           >
             Оставить заявку

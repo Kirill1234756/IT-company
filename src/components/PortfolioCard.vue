@@ -1,7 +1,7 @@
 <template>
   <div
     @click="handleClick"
-    class="group cursor-pointer overflow-hidden h-[24rem] flex flex-col transition-all duration-300 rounded-[3rem] hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02] relative"
+    class="group cursor-pointer overflow-hidden h-[19rem]  flex flex-col transition-all duration-300 rounded-[2.5rem] hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02] relative"
   >
     <!-- Прямая ссылка на проект -->
     <a
@@ -20,7 +20,7 @@
       </svg>
     </a>
     <!-- Project Image/Preview -->
-    <div class="flex rounded-[3rem] flex-1 m-2 duration-300" style="aspect-ratio: 16/9">
+    <div class="flex rounded-[3rem] flex-1 m-1.5 duration-300" style="aspect-ratio: 16/9">
       <OptimizedImage
         :src="image || '/img/placeholder.webp'"
         :alt="title"
@@ -31,7 +31,7 @@
         loading="lazy"
         decoding="async"
         fetchpriority="low"
-        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 rounded-[3rem]"
+        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 rounded-[2.5rem]"
         style="box-sizing: border-box; display: block; transform: translateZ(0)"
         :sizes="{ mobile: '100vw', tablet: '50vw', desktop: '33vw' }"
       />
@@ -39,10 +39,10 @@
 
     <!-- Project Info -->
     <div
-      class="p-4 flex flex-col items-center flex-shrink-0 transition-colors duration-300 rounded-b-[3rem]"
+      class="px-3 py-2.5 flex flex-col items-center flex-shrink-0 transition-colors duration-300 rounded-b-[2.5rem]"
     >
       <h3
-        class="text-lg font-semibold text-white mb-1 line-clamp-1 transition-transform duration-300 group-hover:scale-105 font-display"
+        class="text-base sm:text-lg font-semibold text-white mb-0.5 line-clamp-1 transition-transform duration-300 group-hover:scale-105 font-display"
       >
         {{ title }}
       </h3>
@@ -58,7 +58,7 @@
 <script setup lang="ts">
 import { defineProps, computed } from 'vue'
 import { usePortfolioStore } from '../stores/portfolio'
-// @ts-ignore - Vue component with script setup
+// @ts-expect-error Vue SFC default export typing
 import OptimizedImage from './OptimizedImage.vue'
 
 const props = defineProps<{

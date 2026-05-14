@@ -34,11 +34,11 @@ onMounted(() => {
 <template>
   <section
     ref="rootEl"
-    class="stack-section no-scrollbar h-screen bg-bg flex flex-col items-center justify-start rounded-t-3xl py-[2rem]"
-    style="min-height: 800px; box-sizing: border-box; contain: layout style paint"
+    class="stack-section no-scrollbar h-screen bg-bg flex flex-col items-center justify-start rounded-t-3xl py-2 md:py-3"
+    style="box-sizing: border-box; contain: layout style paint"
   >
     <div
-      class="internal-scroll-container w-full h-full"
+      class="internal-scroll-container flex min-h-0 w-full flex-1 flex-col"
       ref="scrollContainerRef"
     >
       <Suspense>
@@ -50,17 +50,17 @@ onMounted(() => {
             class="flex flex-col items-center justify-center w-full h-full text-center text-white/60"
           >
             <p class="text-xl font-semibold mb-4">Загружаем портфолио...</p>
-           
+
           </div>
         </template>
       </Suspense>
       <!-- CTA-кнопка снизу блока портфолио на главной странице -->
       <div
         v-if="isOnHomePage"
-        class="flex justify-center items-center w-full mt-auto pt-4 pb-4"
+        class="flex shrink-0 justify-center items-center w-full pt-3 pb-1 md:pt-4 md:pb-2"
       >
         <CtaButton to="/cases" bgClass="bg-accent" textClass="text-bg" @click="trackCtaClick('cta_portfolio_cases', { location: 'portfolio_section' })">
-          Все кейсы
+          Смотреть все кейсы
         </CtaButton>
       </div>
     </div>

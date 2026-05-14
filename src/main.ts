@@ -1,6 +1,5 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import VueLazyLoad from 'vue3-lazyload'
 import { initGlobalPerformanceMonitoring } from './utils/performance'
 import { installYandexMetrika } from './plugins/yandex-metrika'
 import { createHead } from '@unhead/vue'
@@ -8,6 +7,7 @@ import { MotionPlugin } from '@vueuse/motion'
 
 import App from './App.vue'
 import router, { setRouterMetaUpdateCallback } from './router'
+import './fonts.css'
 import './style.css'
 
 // Типы для scheduler API
@@ -47,25 +47,16 @@ const loadNonCriticalPlugins = () => {
   const win = window as Window & { scheduler?: Scheduler }
   if (win.scheduler?.postTask) {
     win.scheduler.postTask(() => {
-      app.use(VueLazyLoad, {
-        loading: '/favicon.ico',
-      })
       installYandexMetrika(app, router)
       initGlobalPerformanceMonitoring()
     }, { priority: 'background', delay: pluginDelay })
   } else if ('requestIdleCallback' in window) {
     requestIdleCallback(() => {
-      app.use(VueLazyLoad, {
-        loading: '/favicon.ico',
-      })
       installYandexMetrika(app, router)
       initGlobalPerformanceMonitoring()
     }, { timeout: pluginDelay })
   } else {
     setTimeout(() => {
-      app.use(VueLazyLoad, {
-        loading: '/favicon.ico',
-      })
       installYandexMetrika(app, router)
       initGlobalPerformanceMonitoring()
     }, pluginDelay)

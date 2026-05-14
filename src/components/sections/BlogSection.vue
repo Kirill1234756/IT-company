@@ -14,7 +14,12 @@ import { useRoute, useRouter } from 'vue-router'
 import { debounce } from '../../utils/performance'
 import type { BlogPost } from '../../types/blog'
 import FilterButtons from '../FilterButtons.vue'
-import TapeSwiper from '../TapeSwiper.vue'
+
+const TapeSwiper = defineAsyncComponent({
+  loader: () => import('../TapeSwiper.vue'),
+  delay: 200,
+  timeout: 15000,
+})
 
 const BlogCard = defineAsyncComponent(() => import('../BlogCard.vue'))
 const SectionHeading = defineAsyncComponent(() => import('../ui/SectionHeading.vue'))
@@ -195,7 +200,7 @@ onUnmounted(() => {
 
 <template>
   <!-- Как CasesPage: те же боковые отступы на lg, чтобы лента свайпера по ширине совпадала с портфолио -->
-  <div class="w-full max-w-7xl mx-auto px-[1rem] lg:px-[12rem]">
+  <div class="w-full max-w-7xl mx-auto px-[1rem]">
     <!-- Main Title -->
     <SectionHeading
       :level="1"
@@ -203,14 +208,14 @@ onUnmounted(() => {
       color="accent"
       align="center"
       weight="black"
-      class="mb-8 opacity-100"
+      class="mb-6 opacity-100"
     >
       Блог
     </SectionHeading>
 
     <!-- Category Tabs -->
     <FilterButtons
-      :items="blogStore.tabs.map(tab => ({ label: tab.name, value: tab.id }))"
+      :items="blogStore.tabs.map((tab) => ({ label: tab.name, value: tab.id }))"
       :model-value="activeTab"
       :colors="filterButtonColors"
       container-class="mb-12"
@@ -219,29 +224,31 @@ onUnmounted(() => {
 
     <!-- Blog Posts Grid with v-memo optimization -->
     <!-- Swiper для главной страницы с эффектом ленты -->
-    <TapeSwiper
-      v-if="shouldUseSwiper"
-      :items="displayedPosts"
-      unique-key="id"
-      button-class-prefix="blog"
-    
-      @item-click="handlePostClick"
-    >
-      <template #default="{ item }">
-        <BlogCard
-          class="blog-card h-full"
-          in-swiper
-          :post="item"
-          @click="handlePostClick"
-        />
+     <div class="md:px-[12rem]">
+    <Suspense class="" v-if="shouldUseSwiper">
+      <TapeSwiper
+        :items="displayedPosts"
+        unique-key="id"
+        button-class-prefix="blog"
+        @item-click="handlePostClick"
+      >
+        <template #default="{ item }">
+          <BlogCard class="blog-card h-full" in-swiper :post="item" @click="handlePostClick" />
+        </template>
+      </TapeSwiper>
+      <template #fallback>
+        <div
+          class="flex min-h-[200px] items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] text-white/50 text-sm"
+        >
+          Загрузка ленты…
+        </div>
       </template>
-    </TapeSwiper>
+    </Suspense>
+    </div>
 
     <!-- CTA снизу блока блога на главной странице -->
-    <div v-if="isOnHomePage" class="flex justify-center items-center w-full pb-4">
-      <CtaButton to="/blog" bgClass="bg-accent" textClass="text-bg" >
-        Все статьи
-      </CtaButton>
+    <div v-if="isOnHomePage" class="flex justify-center items-center w-full">
+      <CtaButton to="/blog" bgClass="bg-accent" textClass="text-bg">Смотреть все статьи</CtaButton>
     </div>
 
     <!-- Обычная сетка для отдельной страницы -->
@@ -257,7 +264,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Show More Button (только на главной странице, но не при использовании Swiper) -->
-    <div v-if="hasMoreItems && !shouldUseSwiper" class="flex justify-center mt-8 md:mt-12">
+    <div v-if="hasMoreItems && !shouldUseSwiper" class="flex justify-center mt-8 md:mt-12 md:px-[3rem]">
       <button
         @click="showMore"
         class="group flex items-center gap-3 px-6 py-3 md:px-8 md:py-4 rounded-full bg-accent text-bg font-semibold text-sm md:text-base hover:bg-accent/90 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
@@ -295,5 +302,4 @@ onUnmounted(() => {
 .grid {
   contain: layout;
 }
-
 </style>

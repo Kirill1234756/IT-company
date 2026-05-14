@@ -1,11 +1,17 @@
+import process from 'node:process'
 import { test, expect } from '@playwright/test'
 
 /**
  * Performance tests using Web Vitals metrics
  * Tests critical performance metrics: LCP, CLS, FCP, TBT, Speed Index
  */
+const runPerfBudgets = !!process.env.CI
+
 test.describe('Performance Tests', () => {
-    test.beforeEach(async ({ page }) => {
+    test.beforeEach(async ({ page }, testInfo) => {
+        if (!runPerfBudgets) {
+            testInfo.skip()
+        }
         // Navigate to homepage
         await page.goto('/')
         // Wait for page to be fully loaded

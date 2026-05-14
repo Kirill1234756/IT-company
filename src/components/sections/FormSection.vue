@@ -13,7 +13,7 @@
       :placeholder="placeholder"
       :class="[
         textColor,
-        'w-full min-h-[6.5rem] max-h-48 px-6 py-4 border border-border rounded-[3rem] text-lg resize-none focus:outline-none focus:border-accent focus:ring-0 placeholder:text-sm placeholder:text-accent overflow-y-auto',
+        'w-full min-h-[6.5rem] max-h-48 px-6 py-4 border border-accent rounded-[3rem] text-lg resize-none focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/25 placeholder:text-sm placeholder:text-accent/80 overflow-y-auto',
       ]"
       :style="{ height: textareaHeight }"
     />
@@ -111,7 +111,7 @@ watch(
 
 const sectionClasses = computed(() => [
   'rounded-[3rem] p-8 shadow-sm',
-  props.variant === 'blue' ? 'bg-text border border-bg' : 'bg-bg',
+  props.variant === 'blue' ? 'bg-text' : 'bg-bg border border-accent',
 ])
 const textColor = computed(() => [props.variant === 'blue' ? 'text-bg' : 'text-text'])
 const titleColor = computed(() => props.variant === 'white' ? 'text-accent' : 'text-bg')

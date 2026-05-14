@@ -41,7 +41,8 @@ const goOrder = () => {
     title: props.packageDetail.title,
   })
   router.push({
-    path: '/client-form',
+    path: '/contacts',
+    hash: '#project-discussion',
     query: {
       package: props.packageDetail.slug,
       packageTitle: props.packageDetail.title,

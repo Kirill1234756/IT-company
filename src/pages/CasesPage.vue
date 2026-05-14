@@ -19,8 +19,13 @@ import { useHead } from '@unhead/vue'
 import { useBreadcrumbSchema } from '../composables/useBreadcrumbSchema'
 import { runInBackground } from '../utils/performance'
 import FilterButtons from '../components/FilterButtons.vue'
-import TapeSwiper from '../components/TapeSwiper.vue'
 import SectionHeading from '../components/ui/SectionHeading.vue'
+
+const TapeSwiper = defineAsyncComponent({
+  loader: () => import('../components/TapeSwiper.vue'),
+  delay: 200,
+  timeout: 15000,
+})
 // import { cn } from '@/utils/cn'
 
 // Ленивая загрузка компонентов с оптимизацией
@@ -52,44 +57,13 @@ const portfolioContainer = ref<HTMLElement | null>(null)
 
 // Intersection-based lazy mounting for heavy sections
 const portfolioEl = ref<HTMLElement | null>(null)
-const portfolioVisible = ref(true) // Изменили на true для немедленного отображения
-
-// Optimized intersection observer with debouncing
-let lastIntersectionState = true
-let debounceTimer: ReturnType<typeof setTimeout> | null = null
-
-useIntersectionObserver(
-  portfolioEl,
-  ([entry]) => {
-    const isIntersecting = entry?.isIntersecting ?? false
-
-    // Debounce updates to prevent excessive re-renders
-    if (debounceTimer) {
-      clearTimeout(debounceTimer)
-    }
-
-    debounceTimer = setTimeout(() => {
-      if (isIntersecting !== lastIntersectionState) {
-        lastIntersectionState = isIntersecting
-        portfolioVisible.value = isIntersecting
-      }
-    }, 100) // 100ms debounce
-  },
-  {
-    rootMargin: '200px',
-    threshold: 0.1, // Only trigger when 10% of element is visible
-  }
-)
+/** Корень блока ленты/сетки: на главной ждём появления в вьюпорте; на /cases показываем сразу */
+const portfolioLazyRoot = ref<HTMLElement | null>(null)
 
 // Router (not needed here)
 
 // Мемоизированные константы
-const filters = computed(() => [
-  'Все',
-  'Корпоративные сайты',
-  'Лендинги',
-  'Промо-сайты',
-])
+const filters = computed(() => ['Все', 'Корпоративные сайты', 'Лендинги', 'Промо-сайты'])
 
 // Мемоизированное маппирование фильтров
 const filterMap = computed(
@@ -115,6 +89,18 @@ const {
 // Router
 const router = useRouter()
 const route = useRoute()
+
+/** На главной (клиент) откладываем тяжёлый блок до scroll; при SSR window нет — не откладываем (полный HTML для SEO) */
+const deferPortfolioUntilInView = computed(() => {
+  if (typeof window === 'undefined') return false
+  return route.path === '/' || route.path === '/home'
+})
+
+const portfolioVisible = ref(true)
+
+// Optimized intersection observer with debouncing
+let lastIntersectionState = false
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
 // Реактивное отслеживание размера экрана для определения количества карточек
 const isMobile = ref(false)
@@ -145,6 +131,43 @@ const isOnHomePage = computed(() => {
 const shouldUseSwiper = computed(() => {
   return props.useSwiper === true
 })
+
+watch(
+  deferPortfolioUntilInView,
+  (defer) => {
+    if (!defer) {
+      portfolioVisible.value = true
+    } else {
+      portfolioVisible.value = false
+      lastIntersectionState = false
+    }
+  },
+  { immediate: true }
+)
+
+useIntersectionObserver(
+  portfolioLazyRoot,
+  ([entry]) => {
+    if (!deferPortfolioUntilInView.value) return
+
+    const isIntersecting = entry?.isIntersecting ?? false
+
+    if (debounceTimer) {
+      clearTimeout(debounceTimer)
+    }
+
+    debounceTimer = setTimeout(() => {
+      if (isIntersecting !== lastIntersectionState) {
+        lastIntersectionState = isIntersecting
+        portfolioVisible.value = isIntersecting
+      }
+    }, 100)
+  },
+  {
+    rootMargin: '200px',
+    threshold: 0.1,
+  }
+)
 
 const showAllItems = ref(false)
 
@@ -405,7 +428,7 @@ watchEffect(async () => {
         align="center"
         weight="black"
         animation-class="animate-cases-title"
-        class="mb-4 md:mb-6 lg:mb-8"
+        class="mb-4 md:mb-6"
       >
         Портфолио — кейсы
       </SectionHeading>
@@ -417,130 +440,153 @@ watchEffect(async () => {
           :model-value="activeFilter"
           :filter-map="filterMap"
           :colors="filterButtonStyles"
-          container-class="mb-8 md:mb-10 lg:mb-12"
+          container-class="mb-4 md:mb-6"
           @update:model-value="handleFilterValueChange"
         />
       </div>
 
-      <!-- Portfolio Grid -->
-      <!-- Swiper для главной страницы с эффектом ленты -->
-      <TapeSwiper
-        v-if="shouldUseSwiper"
-        :items="displayedItems"
-        unique-key="id"
-        button-class-prefix="portfolio"
-        @item-click="openModal"
-      >
-        <template #default="{ item, index }">
+      <!-- Portfolio Grid: на главной тяжёлый блок вставляется по intersection -->
+      <div ref="portfolioLazyRoot" class="w-full min-h-[min(280px,45vh)]">
+        <template v-if="portfolioVisible">
+          <!-- Swiper для главной страницы с эффектом ленты -->
+          <Suspense v-if="shouldUseSwiper">
+            <TapeSwiper
+              :items="displayedItems"
+              unique-key="id"
+              button-class-prefix="portfolio"
+              @item-click="openModal"
+            >
+              <template #default="{ item, index }">
+                <div
+                  v-motion
+                  :initial="{ y: 60, opacity: 0, scale: 0.85, rotateY: 20 }"
+                  :visible-once="{
+                    y: 0,
+                    opacity: 1,
+                    scale: 1,
+                    rotateY: 0,
+                    transition: {
+                      duration: 800,
+                      delay: 600 + index * 120,
+                      ease: [0.34, 1.56, 0.64, 1],
+                    },
+                  }"
+                  :hovered="{
+                    scale: 1.02,
+                    y: -5,
+                    transition: { duration: 0.3, ease: 'easeOut' },
+                  }"
+                >
+                  <PortfolioCard
+                    :id="item.id"
+                    :title="item.title"
+                    :category="item.category"
+                    :description="item.description"
+                    :bgColor="item.bgColor"
+                    :logoColor="item.logoColor"
+                    :logoText="item.logoText"
+                    :technologies="item.technologies"
+                    :link="item.link"
+                    :image="item.image"
+                    :year="item.year"
+                    :status="item.status"
+                    @click="openModal"
+                  />
+                </div>
+              </template>
+            </TapeSwiper>
+            <template #fallback>
+              <div
+                class="flex min-h-[200px] items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] text-white/50 text-sm"
+              >
+                Загрузка ленты…
+              </div>
+            </template>
+          </Suspense>
+
+          <!-- Обычная сетка для отдельной страницы -->
           <div
-            v-motion
-            :initial="{ y: 60, opacity: 0, scale: 0.85, rotateY: 20 }"
-            :visible-once="{
-              y: 0,
-              opacity: 1,
-              scale: 1,
-              rotateY: 0,
-              transition: {
-                duration: 800,
-                delay: 600 + index * 120,
-                ease: [0.34, 1.56, 0.64, 1],
-              },
-            }"
-            :hovered="{
-              scale: 1.02,
-              y: -5,
-              transition: { duration: 0.3, ease: 'easeOut' },
-            }"
+            v-else
+            ref="portfolioEl"
+            class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 w-full"
           >
-            <PortfolioCard
-              :id="item.id"
-              :title="item.title"
-              :category="item.category"
-              :description="item.description"
-              :bgColor="item.bgColor"
-              :logoColor="item.logoColor"
-              :logoText="item.logoText"
-              :technologies="item.technologies"
-              :link="item.link"
-              :image="item.image"
-              :year="item.year"
-              :status="item.status"
-              @click="openModal"
-            />
+            <div
+              v-for="(item, index) in displayedItems"
+              :key="item.id"
+              class="animate-section-card-inline-delay cases-portfolio-card"
+              :style="{ animationDelay: 600 + index * 120 + 'ms' }"
+            >
+              <PortfolioCard
+                :id="item.id"
+                :title="item.title"
+                :category="item.category"
+                :description="item.description"
+                :bgColor="item.bgColor"
+                :logoColor="item.logoColor"
+                :logoText="item.logoText"
+                :technologies="item.technologies"
+                :link="item.link"
+                :image="item.image"
+                :year="item.year"
+                :status="item.status"
+                @click="openModal"
+              />
+            </div>
+          </div>
+
+          <!-- Show More Button (только на главной странице, но не при использовании Swiper) -->
+          <div v-if="hasMoreItems && !shouldUseSwiper" class="flex justify-center mt-8 md:mt-12">
+            <button
+              @click="showMore"
+              class="group flex items-center gap-3 px-6 py-3 md:px-8 md:py-4 rounded-full bg-accent text-bg font-semibold text-sm md:text-base hover:bg-accent/90 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
+            >
+              <span>Показать больше</span>
+              <svg
+                class="w-5 h-5 md:w-6 md:h-6 transition-transform duration-300 group-hover:translate-y-1"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Empty State -->
+          <div v-if="filteredItems.length === 0" class="text-center py-16">
+            <div
+              class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6"
+            >
+              <svg
+                class="w-12 h-12 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                ></path>
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">Проекты не найдены</h3>
+            <p class="text-gray-600">Попробуйте выбрать другую категорию</p>
           </div>
         </template>
-      </TapeSwiper>
-
-      <!-- Обычная сетка для отдельной страницы -->
-      <div v-else ref="portfolioEl" class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 w-full">
         <div
-          v-for="(item, index) in displayedItems"
-          :key="item.id"
-          class="animate-section-card-inline-delay cases-portfolio-card"
-          :style="{ animationDelay: 600 + index * 120 + 'ms' }"
+          v-else
+          class="flex min-h-[200px] items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] text-white/40 text-sm"
+          aria-hidden="true"
         >
-          <PortfolioCard
-            :id="item.id"
-            :title="item.title"
-            :category="item.category"
-            :description="item.description"
-            :bgColor="item.bgColor"
-            :logoColor="item.logoColor"
-            :logoText="item.logoText"
-            :technologies="item.technologies"
-            :link="item.link"
-            :image="item.image"
-            :year="item.year"
-            :status="item.status"
-            @click="openModal"
-          />
+          Загрузка портфолио…
         </div>
-      </div>
-
-      <!-- Show More Button (только на главной странице, но не при использовании Swiper) -->
-      <div v-if="hasMoreItems && !shouldUseSwiper" class="flex justify-center mt-8 md:mt-12">
-        <button
-          @click="showMore"
-          class="group flex items-center gap-3 px-6 py-3 md:px-8 md:py-4 rounded-full bg-accent text-bg font-semibold text-sm md:text-base hover:bg-accent/90 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
-        >
-          <span>Показать больше</span>
-          <svg
-            class="w-5 h-5 md:w-6 md:h-6 transition-transform duration-300 group-hover:translate-y-1"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
-        </button>
-      </div>
-
-      <!-- Empty State -->
-      <div v-if="filteredItems.length === 0" class="text-center py-16">
-        <div
-          class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6"
-        >
-          <svg
-            class="w-12 h-12 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-            ></path>
-          </svg>
-        </div>
-        <h3 class="text-xl font-semibold text-gray-900 mb-2">Проекты не найдены</h3>
-        <p class="text-gray-600">Попробуйте выбрать другую категорию</p>
       </div>
 
       <!-- CTA Section -->
@@ -573,7 +619,7 @@ watchEffect(async () => {
             Читать блог
           </a>
           <a
-            href="/client-form"
+            href="/contacts#project-discussion"
             class="px-4 py-3 md:px-8 md:py-4 rounded-full text-xs md:text-sm border-2 border-border text-text hover:border-accent transition-colors"
           >
             Оставить заявку

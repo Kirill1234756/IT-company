@@ -50,13 +50,16 @@ body {
 
 /* Form error banner: subtle shake (disabled when prefers-reduced-motion) */
 @keyframes form-error-shake {
+
   0%,
   100% {
     transform: translateX(0);
   }
+
   25% {
     transform: translateX(-4px);
   }
+
   75% {
     transform: translateX(4px);
   }
@@ -255,6 +258,7 @@ body {
 
 /* Отключение анимаций на мобильных для предотвращения CLS и улучшения производительности */
 @media (max-width: 768px) {
+
   .hero-animate-title,
   .hero-animate-desc,
   .hero-animate-card,
@@ -780,6 +784,14 @@ html:has(#stack) {
   /* Блокируем скролл html на главной странице */
 }
 
+/* Мобильное полноэкранное меню: не даём #stack перехватывать жесты под overlay (scroll-snap + GPU слои) */
+body.mobile-nav-open #stack {
+  overflow: hidden !important;
+  touch-action: none;
+  overscroll-behavior: none;
+  pointer-events: none;
+}
+
 /* Убрано scroll-behavior: smooth для html - используется v-motion для анимаций */
 
 /* ============================================
@@ -800,13 +812,21 @@ html:has(#stack) {
     min-height: 100vh;
   }
 
-  /* Исправление для fixed элементов на iOS */
-  .fixed {
+  /*
+   * Слой мобильного меню (.mobile-nav-overlay) не форсим в translateZ(0):
+   * вместе с полноэкранным overlay на WebKit давало артефакты отрисовки страницы под меню.
+   */
+  .fixed:not(.mobile-nav-overlay) {
     /* Убеждаемся, что fixed элементы правильно позиционируются */
     position: fixed;
     -webkit-transform: translateZ(0);
     /* Принудительное аппаратное ускорение */
     transform: translateZ(0);
+  }
+
+  .mobile-nav-overlay {
+    transform: none;
+    -webkit-transform: none;
   }
 
   /* Улучшение прокрутки для всех скроллируемых элементов */

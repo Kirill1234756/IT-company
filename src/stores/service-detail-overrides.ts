@@ -154,7 +154,7 @@ export function mergeCompetitorAnalysisDetail(base: ServiceDetail): ServiceDetai
     subtitle: 'Узнайте, как выигрывать рынок — а не просто «быть как все»',
     primaryCta: {
       label: 'Получить разбор конкурентов за 14 дней',
-      href: '/client-form',
+      href: '/contacts#project-discussion',
     },
     painHighlight:
       'Вы тратите деньги на рекламу, но заявки слабые? Скорее всего, проблема не в рекламе — а в том, что вы не понимаете рынок.',
@@ -327,7 +327,7 @@ export function mergeCrmIntegrationDetail(base: ServiceDetail): ServiceDetail {
     subtitle: 'Перестаньте терять заявки — начните управлять продажами.',
     primaryCta: {
       label: 'Настроить CRM под ваш бизнес',
-      href: '/client-form',
+      href: '/contacts#project-discussion',
     },
     painHighlight:
       'Каждый пропущенный лид — это реальные деньги, которые вы уже заработали… но не получили.',
@@ -479,7 +479,7 @@ export function mergeSiteIntegrationDetail(base: ServiceDetail): ServiceDetail {
     subtitle: 'Уберите ручной труд — постройте систему, которая работает сама',
     primaryCta: {
       label: 'Автоматизировать мой сайт',
-      href: '/client-form',
+      href: '/contacts#project-discussion',
     },
     painHighlight:
       'Вы платите за рекламу, но заявки теряются между почтой, мессенджерами и менеджерами.',
@@ -651,7 +651,7 @@ export function mergeDesignDevelopmentDetail(base: ServiceDetail): ServiceDetail
     subtitle: 'Не просто красиво — а чтобы продавало',
     primaryCta: {
       label: 'Разработать дизайн, который продаёт',
-      href: '/client-form',
+      href: '/contacts#project-discussion',
     },
     painHighlight:
       'Даже хороший продукт не продаётся, если сайт выглядит дешево или непонятно.',
@@ -808,7 +808,7 @@ export function mergeCostCalculatorDetail(base: ServiceDetail): ServiceDetail {
     subtitle: 'Превратите интерес в заявку за 30 секунд',
     primaryCta: {
       label: 'Сделать калькулятор под мой бизнес',
-      href: '/client-form',
+      href: '/contacts#project-discussion',
     },
     painHighlight:
       'Клиенты не хотят ждать расчёт — они уходят к тем, кто показывает цену сразу.',
@@ -974,7 +974,7 @@ export function mergeWebsiteCopywritingDetail(base: ServiceDetail): ServiceDetai
     subtitle: 'Тексты, которые превращают трафик в заявки',
     primaryCta: {
       label: 'Написать тексты, которые продают',
-      href: '/client-form',
+      href: '/contacts#project-discussion',
     },
     painHighlight:
       'Клиенты заходят, но не понимают, почему им нужно выбрать именно вас.',
@@ -1152,7 +1152,7 @@ export function mergeSeoPromotionDetail(base: ServiceDetail): ServiceDetail {
     subtitle: 'Привлекайте клиентов из поиска — без постоянных затрат на рекламу',
     primaryCta: {
       label: 'Получить SEO-аудит сайта',
-      href: '/client-form',
+      href: '/contacts#project-discussion',
     },
     painHighlight:
       'Каждый день вы теряете клиентов, просто потому что вас нет в поиске.',
@@ -1323,7 +1323,7 @@ export function mergeMarketingStrategyDetail(base: ServiceDetail): ServiceDetail
     subtitle: 'Поймите, как расти системно — а не хаотично',
     primaryCta: {
       label: 'Разработать стратегию роста',
-      href: '/client-form',
+      href: '/contacts#project-discussion',
     },
     painHighlight:
       'Вы запускаете рекламу, но не понимаете, почему она не работает.',
@@ -1494,7 +1494,7 @@ export function mergeContextAdsSetupDetail(base: ServiceDetail): ServiceDetail {
     subtitle: 'Приводим клиентов уже в первые дни после запуска',
     primaryCta: {
       label: 'Запустить рекламу под мой бизнес',
-      href: '/client-form',
+      href: '/contacts#project-discussion',
     },
     painHighlight: 'Вы платите за клики, но не получаете заявки.',
     about: {
@@ -1668,7 +1668,7 @@ export function mergeBrandingDetail(base: ServiceDetail): ServiceDetail {
     subtitle: 'Сделайте так, чтобы вас запоминали, понимали и выбирали',
     primaryCta: {
       label: 'Создать сильный бренд',
-      href: '/client-form',
+      href: '/contacts#project-discussion',
     },
     painHighlight:
       'Даже хороший продукт проигрывает, если он не понятен и не отличается.',
@@ -1838,7 +1838,7 @@ export function mergeSiteDevelopmentDetail(base: ServiceDetail): ServiceDetail {
     subtitle: 'Сайт, который не просто существует — а приносит заявки и деньги',
     primaryCta: {
       label: 'Разработать сайт под мой бизнес',
-      href: '/client-form',
+      href: '/contacts#project-discussion',
     },
     painHighlight:
       'Вы можете тратить деньги на рекламу, но если сайт слабый — вы просто сливаете бюджет.',
@@ -2019,7 +2019,7 @@ export function mergeOnlineBookingDetail(base: ServiceDetail): ServiceDetail {
     subtitle: 'Автоматизируйте поток клиентов и перестаньте терять заявки',
     primaryCta: {
       label: 'Внедрить онлайн-запись на сайт',
-      href: '/client-form',
+      href: '/contacts#project-discussion',
     },
     painHighlight:
       'Пока клиент не может записаться быстро — он уходит к другому.',
@@ -2201,7 +2201,7 @@ export function mergePersonalCabinetDetail(base: ServiceDetail): ServiceDetail {
     subtitle: 'Превратите разовых клиентов в постоянных',
     primaryCta: {
       label: 'Создать личный кабинет под мой бизнес',
-      href: '/client-form',
+      href: '/contacts#project-discussion',
     },
     painHighlight:
       'Каждый раз вы заново продаёте клиенту, вместо того чтобы удерживать его.',

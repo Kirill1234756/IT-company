@@ -60,7 +60,7 @@ const swiperBreakpoints = computed(() => ({
   768: {
     slidesPerView: desktopSlidesPerView.value,
     slidesPerGroup: 1,
-    spaceBetween: centerTape.value ? 14 : 24,
+    spaceBetween: centerTape.value ? 12 : 16,
     loopAdditionalSlides: loopAdditionalSlides.value,
     centeredSlides: centerTape.value,
     centerInsufficientSlides: centerTape.value,
@@ -186,7 +186,7 @@ const handleItemClick = (item: any, index: number) => {
       :round-lengths="true"
       :centered-slides="centerTape"
       :center-insufficient-slides="centerTape"
-      :space-between="16"
+      :space-between="12"
       :breakpoints="swiperBreakpoints"
       :pagination="{ clickable: true }"
       :mousewheel="{ forceToAxis: true }"
@@ -233,8 +233,8 @@ const handleItemClick = (item: any, index: number) => {
 
 /* Swiper styles для эффекта ленты */
 .tape-swiper {
-  /* Симметричные отступы: padding слева/справа адаптируем под десктоп/мобайл */
-  padding: 0 60px 50px 60px;
+  /* Симметричные отступы: компактнее снизу, чтобы секция помещалась в один экран */
+  padding: 0 32px 10px 32px;
   overflow: visible;
   position: relative;
 }
@@ -331,13 +331,13 @@ const handleItemClick = (item: any, index: number) => {
   cursor: pointer;
 }
 
-/* Кастомные кнопки навигации на затемненных частях */
+/* Кастомные кнопки: вертикальный центр всей высоты ленты (карточка = превью + подпись). top: 37% визуально совпадал только с центром картинки */
 .tape-nav-button {
   position: absolute;
-  top: 37%;
+  top: 50%;
   transform: translateY(-50%);
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   z-index: 10;
   cursor: pointer;
   display: flex;
@@ -403,7 +403,7 @@ const handleItemClick = (item: any, index: number) => {
   }
 
   .tape-swiper {
-    padding: 0 0px 24px 0px;
+    padding: 0 0 6px 0;
     overflow: hidden !important;
     width: 100%;
     max-width: 100%;
@@ -428,7 +428,7 @@ const handleItemClick = (item: any, index: number) => {
 
 /* Пагинация */
 .tape-swiper :deep(.swiper-pagination) {
-  bottom: 10px;
+  bottom: 0;
 }
 
 .tape-swiper :deep(.swiper-pagination-bullet-active) {
@@ -437,8 +437,8 @@ const handleItemClick = (item: any, index: number) => {
 
 .tape-swiper :deep(.swiper-pagination-bullet) {
   background-color: rgba(255, 255, 255, 0.5);
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 </style>

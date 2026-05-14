@@ -199,11 +199,7 @@ export const useServicesStore = defineStore('services', {
     getCategoryBySlug(slug: string): ServiceCategory | null {
       this.loadDataIfNeeded()
       const normalized = slug.toLowerCase()
-      return (
-        this.categories.find(
-          (c) => c.slug?.toLowerCase() === normalized || c.title.toLowerCase().includes(normalized)
-        ) ?? null
-      )
+      return this.categories.find((c) => c.slug?.toLowerCase() === normalized) ?? null
     },
 
     /** Название из каталога без загрузки service-detail-overrides (роутер, крошки). */

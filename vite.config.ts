@@ -160,8 +160,7 @@ export default defineConfig({
             if (
               id.includes('vue-router') ||
               id.includes('pinia') ||
-              id.includes('@unhead') ||
-              id.includes('vue3-lazyload')
+              id.includes('@unhead')
             ) {
               return true
             }
@@ -194,6 +193,7 @@ export default defineConfig({
   },
   // Оптимизация для разработки + прокси API на бэкенд (избегаем CORS и ERR_CONNECTION_RESET)
   server: {
+    host: '0.0.0.0',
     headers: {
       'Cache-Control': 'no-cache',
     },

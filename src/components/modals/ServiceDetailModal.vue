@@ -47,7 +47,7 @@ const serviceBreadcrumbItems = computed(() => {
 
 <template>
   <div class="fixed inset-0 bg-opacity-50 z-50 overflow-y-auto ios-modal-fix">
-    <div class="min-h-screen  bg-[var(--color-bg)] text-[var(--color-text)]">
+    <div class="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)]">
       <!-- Header -->
       <div
         class="sticky top-0 z-10 bg-[rgba(3,18,47,0.95)] border-b border-[var(--color-border)] backdrop-blur-[10px]"
@@ -76,7 +76,7 @@ const serviceBreadcrumbItems = computed(() => {
         <SectionHeading
           :level="1"
           size="lg"
-          color=accent
+          color="accent"
           align="center"
           weight="black"
           animation-class="animate-cases-title"
@@ -107,7 +107,7 @@ const serviceBreadcrumbItems = computed(() => {
           </p>
           <a
             v-if="service.primaryCta"
-            :href="service.primaryCta.href || '/client-form'"
+            :href="service.primaryCta.href || '/contacts#project-discussion'"
             class="inline-flex items-center justify-center px-6 py-3 rounded-[3rem] bg-[var(--color-accent)] text-[var(--color-bg)] font-semibold text-sm hover:opacity-95 transition-opacity"
           >
             {{ service.primaryCta.label }}
@@ -143,10 +143,7 @@ const serviceBreadcrumbItems = computed(() => {
           <h2 class="text-xl font-bold mb-4 font-display text-[var(--color-accent)]">
             {{ service.problemBlock.title }}
           </h2>
-          <p
-            v-if="service.problemBlock.intro"
-            class="text-sm text-[var(--color-text-muted)] mb-3"
-          >
+          <p v-if="service.problemBlock.intro" class="text-sm text-[var(--color-text-muted)] mb-3">
             {{ service.problemBlock.intro }}
           </p>
           <ul class="list-disc pl-5 space-y-2 text-sm leading-relaxed text-[var(--color-text)]">
@@ -164,10 +161,7 @@ const serviceBreadcrumbItems = computed(() => {
           <h2 class="text-xl font-bold mb-4 font-display text-[var(--color-accent)]">
             {{ service.receiveAfter.title }}
           </h2>
-          <p
-            v-if="service.receiveAfter.intro"
-            class="text-sm text-[var(--color-text-muted)] mb-3"
-          >
+          <p v-if="service.receiveAfter.intro" class="text-sm text-[var(--color-text-muted)] mb-3">
             {{ service.receiveAfter.intro }}
           </p>
           <ul class="list-disc pl-5 space-y-2 text-sm leading-relaxed text-[var(--color-text)]">
@@ -182,9 +176,7 @@ const serviceBreadcrumbItems = computed(() => {
           <h2 class="text-xl font-bold mb-4 font-display text-[var(--color-accent)]">
             {{ service.foundationBlock.title }}
           </h2>
-          <p
-            class="text-sm leading-relaxed text-[var(--color-text)] whitespace-pre-line"
-          >
+          <p class="text-sm leading-relaxed text-[var(--color-text)] whitespace-pre-line">
             {{ service.foundationBlock.description }}
           </p>
         </div>
@@ -293,7 +285,9 @@ const serviceBreadcrumbItems = computed(() => {
           <div
             class="rounded-[3rem] p-8 bg-[rgba(3,18,47,0.8)] border border-[var(--color-border)]"
           >
-            <h3 class="text-base font-bold text-[var(--color-accent)] mb-3">Структурированный отчёт</h3>
+            <h3 class="text-base font-bold text-[var(--color-accent)] mb-3">
+              Структурированный отчёт
+            </h3>
             <ul class="list-disc pl-5 space-y-1 text-sm text-[var(--color-text)]">
               <li v-for="(x, i) in service.deliverables.report" :key="i">{{ x }}</li>
             </ul>
@@ -330,9 +324,7 @@ const serviceBreadcrumbItems = computed(() => {
               class="rounded-[3rem] p-6 border border-[var(--color-border)] bg-[rgba(3,18,47,0.8)]"
             >
               <h3 class="text-sm font-bold text-[var(--color-accent)] mb-3">{{ block.title }}</h3>
-              <p
-                class="text-sm leading-relaxed text-[var(--color-text)] whitespace-pre-line"
-              >
+              <p class="text-sm leading-relaxed text-[var(--color-text)] whitespace-pre-line">
                 {{ block.description }}
               </p>
             </div>
@@ -359,9 +351,7 @@ const serviceBreadcrumbItems = computed(() => {
           <h2 class="text-xl font-bold mb-4 font-display text-[var(--color-accent)]">
             {{ service.impactBlock.title }}
           </h2>
-          <p
-            class="text-sm leading-relaxed text-[var(--color-text)] whitespace-pre-line"
-          >
+          <p class="text-sm leading-relaxed text-[var(--color-text)] whitespace-pre-line">
             {{ service.impactBlock.description }}
           </p>
         </div>
@@ -387,7 +377,9 @@ const serviceBreadcrumbItems = computed(() => {
             class="rounded-[3rem] p-8 border border-[var(--color-border)] bg-[rgba(3,18,47,0.8)]"
           >
             <h2 class="text-lg font-bold mb-4 font-display text-[var(--color-accent)]">Сроки</h2>
-            <p class="text-sm leading-relaxed text-[var(--color-text)]">{{ service.timelineNote }}</p>
+            <p class="text-sm leading-relaxed text-[var(--color-text)]">
+              {{ service.timelineNote }}
+            </p>
           </div>
         </div>
 
@@ -466,9 +458,7 @@ const serviceBreadcrumbItems = computed(() => {
 
         <!-- Development Stages -->
         <div v-if="service.stages" class="mb-12">
-          <h2
-            class="text-xl font-bold mb-8 font-display text-[var(--color-accent)]"
-          >
+          <h2 class="text-xl font-bold mb-8 font-display text-[var(--color-accent)]">
             Этапы разработки
           </h2>
           <div class="relative">
@@ -490,9 +480,7 @@ const serviceBreadcrumbItems = computed(() => {
 
                 <!-- Stage content -->
                 <div class="flex-1 border border-accent/40 rounded-[3rem] p-6 shadow-sm">
-                  <h3
-                    class="text-xl font-bold mb-3 font-display text-[var(--color-accent)]"
-                  >
+                  <h3 class="text-xl font-bold mb-3 font-display text-[var(--color-accent)]">
                     {{ stage.title }}
                   </h3>
                   <p class="text-sm leading-relaxed text-[var(--color-text)]">
@@ -506,9 +494,7 @@ const serviceBreadcrumbItems = computed(() => {
 
         <!-- FAQ Section -->
         <div v-if="service.faq" class="mb-12">
-          <h2
-            class="text-xl font-bold mb-8 font-display text-[var(--color-accent)]"
-          >
+          <h2 class="text-xl font-bold mb-8 font-display text-[var(--color-accent)]">
             Часто задаваемые вопросы
           </h2>
           <div class="space-y-2">
@@ -520,10 +506,8 @@ const serviceBreadcrumbItems = computed(() => {
               <button
                 @click="toggleFaq(index)"
                 class="w-full p-6 text-left flex items-center justify-between hover:bg-accent/5 transition-colors duration-200"
-                >
-                <h3
-                  class="text-lg font-bold font-display pr-4 text-[var(--color-text)]"
-                >
+              >
+                <h3 class="text-lg font-bold font-display pr-4 text-[var(--color-text)]">
                   {{ faq.question }}
                 </h3>
                 <div
@@ -558,8 +542,6 @@ const serviceBreadcrumbItems = computed(() => {
             </div>
           </div>
         </div>
-
-
       </div>
 
       <!-- Contact Section -->

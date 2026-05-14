@@ -1,11 +1,11 @@
 <template>
-  <div :class="['flex flex-wrap justify-center gap-2 md:gap-3 lg:gap-4 w-full', containerClass]">
+  <div :class="['flex flex-wrap justify-center gap-1.5 md:gap-2 lg:gap-2.5 w-full', containerClass]">
     <button
       v-for="item in items"
       :key="getItemKey(item)"
       @click="handleClick(item)"
       :class="[
-        'border-none px-3 py-1.5 sm:px-4 sm:py-2 md:px-5 md:py-2.5 lg:px-6 lg:py-3 rounded-full transition-all duration-300 text-xs sm:text-sm font-semibold font-display relative overflow-hidden group shadow-lg hover:shadow-xl hover:-translate-y-0.5 border-2',
+        'border-none px-2.5 py-1 sm:px-3 sm:py-1.5 md:px-4 md:py-2 lg:px-5 lg:py-2 rounded-full transition-all duration-300 text-xs sm:text-sm font-semibold font-display relative overflow-hidden group shadow-lg hover:shadow-xl hover:-translate-y-0.5 border-2',
         isActive(item) ? activeTextColor : textColor,
         getButtonClasses(item),
       ]"
